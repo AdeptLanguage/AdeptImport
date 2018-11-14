@@ -1,0 +1,70 @@
+
+import "cstdlib.adept"
+
+SEEK_SET == 0
+SEEK_CUR == 1
+SEEK_END == 2
+BUFSIZ == 512
+EOF == (-1)
+FILENAME_MAX == 260
+FOPEN_MAX == 20
+TMP_MAX == 32767
+_IOFBF == 0x0000
+_IOLBF == 0x0040
+_IONBF == 0x0004
+
+foreign __iob_func() *FILE
+
+STDIN  == &__iob_func()[0]
+STDOUT == &__iob_func()[1]
+STDERR == &__iob_func()[2]
+
+struct FILE (
+    _ptr *ubyte,
+    _cnt int,
+    _base *ubyte,
+    _flag int,
+    _file int,
+    _charbuf int,
+    _bufsiz int,
+    _tmpfname *ubyte
+)
+
+foreign remove(in *ubyte) int
+foreign rename(in *ubyte, in *ubyte) int
+foreign tmpfile() *FILE
+foreign tmpnam(out *ubyte) *ubyte
+foreign fclose(in *FILE) int
+foreign fflush(in *FILE) int
+foreign fopen(in *ubyte, in *ubyte) *FILE
+foreign freopen(in *ubyte, in *ubyte, in *FILE) *FILE
+foreign setbuf(in *FILE, in *ubyte) void
+foreign setvbuf(in *FILE, in *ubyte, in int, in usize) int
+foreign fgetc(in *FILE) int
+foreign fgets(out *ubyte, in int, in *FILE) *ubyte
+foreign fputc(in int, in *FILE) int
+foreign fputs(in *ubyte, in *FILE) int
+foreign getc(in *FILE) int
+foreign putc(in int, in *FILE) int
+foreign putchar(in int) int
+foreign getchar() int
+foreign ungetc(in int, in *FILE) int
+foreign puts(in *ubyte) int
+foreign gets(in *ubyte) *ubyte
+foreign fread(out ptr, in usize, in usize, in *FILE) int
+foreign fwrite(in ptr, in usize, in usize, in *FILE) int
+foreign fgetpos(in *FILE, out *long) int
+foreign fseek(in *FILE, in int, in int) int
+foreign fsetpos(in *FILE, in *long) int
+foreign ftell(in *FILE) int
+foreign rewind(in *FILE) void
+foreign clearerr(in *FILE) void
+foreign feof(in *FILE) int
+foreign ferror(in *FILE) int
+foreign perror(in *ubyte) void
+foreign printf(in *ubyte, in ...) int
+foreign fprintf(in *FILE, in *ubyte, in ...) int
+foreign sprintf(out *ubyte, in *ubyte, in ...) int
+foreign scanf (in *ubyte, out ...) int
+foreign fscanf (in *FILE, in *ubyte, out ...) int
+foreign sscanf (in *ubyte, in *ubyte, out ...) int

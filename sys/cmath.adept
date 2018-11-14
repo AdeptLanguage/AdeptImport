@@ -1,0 +1,45 @@
+
+foreign acos(in double) double
+foreign acosf(in float) float
+foreign asin(in double) double
+foreign asinf(in float) float
+foreign atan(in double) double
+foreign atanf(in float) float
+foreign atan2(in double, in double) double
+foreign atan2f(in float, in float) float
+foreign cos(in double) double
+foreign cosf(in float) float
+foreign cosh(in double) double
+foreign coshf(in float) float
+foreign sin(in double) double
+foreign sinf(in float) float
+foreign sinh(in double) double
+foreign sinhf(in float) float
+foreign tan(in double) double
+foreign tanf(in float) float
+foreign tanh(in double) double
+foreign tanhf(in float) float
+foreign exp(in double) double
+foreign expf(in float) float
+foreign frexp(in double, out *int) double
+foreign frexpf(in float, out *int) float
+foreign lxexp(in double, in int) double
+foreign lxexpd(in float, in int) float
+foreign log(in double) double
+foreign logf(in float) float
+foreign log10(in double) double
+foreign log10f(in float) float
+foreign modf(in double, out *double) double
+foreign modff(in float, out *float) float
+foreign pow(in double, in double) double
+foreign powf(in float, in float) float
+foreign sqrt(in double) double
+foreign sqrtf(in float) float
+foreign ceil(in double) double
+foreign ceilf(in float) float
+foreign fabs(in double) double
+foreign fabsf(in float) float
+foreign floor(in double) double
+foreign floorf(in float) float
+foreign fmod(in double, in double) double
+foreign fmodf(in float, in float) float

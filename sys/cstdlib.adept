@@ -1,0 +1,26 @@
+
+RAND_MAX == 0x7fff
+
+foreign system(in *ubyte) void
+foreign exit(in int) void
+foreign abort() void
+foreign atexit(in func() void) void
+
+foreign calloc(in usize, in usize) ptr
+foreign free(in ptr) void
+foreign malloc(in usize) ptr
+foreign realloc(in ptr, in usize) ptr
+
+foreign atof(in *ubyte) double
+foreign atoi(in *ubyte) int
+foreign atol(in *ubyte) long
+foreign strtod(in *ubyte, out **ubyte) double
+foreign strtol(in *ubyte, out **ubyte, in int) long
+foreign strtoul(in *ubyte, out **ubyte, in int) ulong
+foreign abs(in int) int
+foreign labs(in long) long
+foreign getenv(in *ubyte) *ubyte
+foreign qsort(out ptr, in usize, in usize, in ptr) void
+foreign bsearch(in ptr, in ptr, in usize, in usize, in func(ptr, ptr) int) ptr
+foreign rand() int
+foreign srand(in uint) void

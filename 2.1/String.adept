@@ -1,0 +1,218 @@
+
+import 'sys/cstring.adept'
+
+enum StringOwnership (REFERENCE, OWN, GIVEN)
+
+struct String (
+    array *ubyte,   length usize,
+    capacity usize, ownership StringOwnership
+)
+
+func __defer__(this *String) void {
+    if this.ownership == StringOwnership::OWN, delete this.array
+}
+
+func __pass__(string POD String) String {
+    if      string.ownership == StringOwnership::OWN,   string.ownership = StringOwnership::REFERENCE
+    else if string.ownership == StringOwnership::GIVEN, string.ownership = StringOwnership::OWN
+    
+    return string
+}
+
+func __assign__(this *String, other POD String) void {
+    if other.ownership == StringOwnership::GIVEN {
+        this.__defer__()
+        this.array = other.array
+        this.length = other.length
+        this.capacity = other.capacity
+        this.ownership = StringOwnership::OWN
+        return
+    }
+    
+    if other.ownership == StringOwnership::REFERENCE {
+        if (this.ownership == StringOwnership::OWN) && (other.array >= this.array) && (other.array < this.array + this.capacity as ptr) {
+            array *ubyte = new ubyte * other.length
+            memcpy(array, other.array, other.length)
+            
+            delete this.array
+            this.array = array
+            this.length = other.length
+            this.capacity = other.capacity
+            this.ownership = StringOwnership::OWN
+            return
+        }
+
+        this.__defer__()
+        this.array = other.array
+        this.length = other.length
+        this.capacity = other.capacity
+        this.ownership = StringOwnership::REFERENCE
+        return
+    }
+    
+    this.__defer__()
+    this.array = other.array
+    this.length = other.length
+    this.capacity = other.capacity
+    this.ownership = StringOwnership::REFERENCE
+}
+
+func __add__(lhs String, rhs String) String {
+    together POD String = undef
+    
+    together.length = lhs.length + rhs.length
+    together.array = new ubyte * together.length
+    memcpy(together.array, lhs.array, lhs.length)
+    memcpy(together.array at lhs.length, rhs.array, rhs.length)
+    
+    together.capacity = together.length
+    together.ownership = StringOwnership::GIVEN
+    return together
+}
+
+func __multiply__(lhs String, times int) String {
+    result POD String = undef
+    
+    if times > 0 {
+        result.length = lhs.length * times
+        result.array = new ubyte * result.length
+        
+        repeat times,
+            memcpy(result.array at (lhs.length * idx), lhs.array, lhs.length)
+    } else if times == 0 {
+        result.array = null
+        result.length = 0
+        result.capacity = 0
+        result.ownership = StringOwnership::REFERENCE
+        return result
+    } else {
+        times = 0 - times
+        result.length = lhs.length * times
+        result.array = new ubyte * result.length
+        
+        reversed String = lhs.reversed()
+        
+        repeat times,
+            memcpy(result.array at (reversed.length * idx), reversed.array, reversed.length)
+    }
+    
+    result.capacity = result.length
+    result.ownership = StringOwnership::GIVEN
+    return result
+}
+
+func __modulus__(lhs POD String, rhs String) String {
+    formatted POD String = undef
+    percent long = lhs.first('%'ub)
+    
+    if percent == -1, return lhs
+    
+    formatted.length = lhs.length + rhs.length - 1
+    formatted.capacity = formatted.length
+    formatted.ownership = StringOwnership::GIVEN
+    
+    formatted.array = new ubyte * formatted.length
+    
+    memcpy(formatted.array, lhs.array, percent)
+    memcpy(formatted.array at percent, rhs.array, rhs.length)
+    memcpy(formatted.array at (percent + rhs.length), lhs.array at (percent + 1), lhs.length - percent - 1)
+    
+    lhs.__defer__()
+    return formatted
+}
+
+func __modulus__(lhs POD String, rhs int) String {
+    formatted POD String = undef
+    percent long = lhs.first('%'ub)
+    
+    if percent == -1, return lhs
+    
+    int_string 12 ubyte = undef
+    sprintf(&int_string as *ubyte, '%d', rhs)
+    int_string_length usize = strlen(&int_string as *ubyte)
+    
+    formatted.length = lhs.length + int_string_length - 1
+    formatted.capacity = formatted.length
+    formatted.ownership = StringOwnership::GIVEN
+    
+    formatted.array = new ubyte * formatted.length
+    
+    memcpy(formatted.array, lhs.array, percent)
+    memcpy(formatted.array at percent, &int_string as *ubyte, int_string_length)
+    memcpy(formatted.array at (percent + int_string_length), lhs.array at (percent + 1), lhs.length - percent - 1)
+    
+    lhs.__defer__()
+    return formatted
+}
+
+func __modulus__(lhs POD String, rhs double) String {
+    formatted POD String = undef
+    percent long = lhs.first('%'ub)
+    
+    if percent == -1, return lhs
+    
+    float_string 24 ubyte = undef
+    sprintf(&float_string as *ubyte, '%f', rhs)
+    float_string_length usize = strlen(&float_string as *ubyte)
+    
+    formatted.length = lhs.length + float_string_length - 1
+    formatted.capacity = formatted.length
+    formatted.ownership = StringOwnership::GIVEN
+    
+    formatted.array = new ubyte * formatted.length
+    
+    memcpy(formatted.array, lhs.array, percent)
+    memcpy(formatted.array at percent, &float_string as *ubyte, float_string_length)
+    memcpy(formatted.array at (percent + float_string_length), lhs.array at (percent + 1), lhs.length - percent - 1)
+    
+    lhs.__defer__()
+    return formatted
+}
+
+func first(this *String, character ubyte) long {
+    repeat this.length,
+        if this.array[idx] == character,
+            return idx as long
+    return -1
+}
+
+func reverse(this *String) void {
+    repeat this.length / 2 {
+        preserved ubyte = this.array[idx]
+        this.array[idx] = this.array[this.length - idx - 1]
+        this.array[this.length - idx - 1] = preserved
+    }
+}
+
+func reversed(this *String) String {
+    reversed POD String = undef
+    reversed.array = new ubyte * this.length
+    reversed.length = this.length
+    reversed.capacity = this.length
+    reversed.ownership = StringOwnership::GIVEN
+    
+    repeat this.length {
+        reversed.array[this.length - idx - 1] = this.array[idx]
+    }
+    
+    return reversed
+}
+
+func sub(this *String, a, n usize) String {
+    substring POD String = undef
+    substring.array = this.array at a
+    substring.length = n
+    substring.capacity = this.capacity - a
+    substring.ownership = StringOwnership::REFERENCE
+    return substring
+}
+
+func clone(this *String) String {
+    cloned POD String = undef
+    cloned.array = new ubyte * this.capacity
+    cloned.length = this.length
+    cloned.capacity = this.capacity
+    cloned.ownership = StringOwnership::GIVEN
+    memcpy(cloned.array, this.array, this.length)
+    return cloned
+}

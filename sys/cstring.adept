@@ -1,0 +1,26 @@
+
+foreign memcpy(out ptr, in ptr, in usize) ptr
+foreign memmove(out ptr, in ptr, in usize) ptr
+
+foreign strcpy(out *ubyte, in *ubyte) *ubyte
+foreign strncpy(out *ubyte, in *ubyte, in usize) *ubyte
+
+foreign strcat(out *ubyte, in *ubyte) *ubyte
+foreign strncat(out *ubyte, in *ubyte, in usize) *ubyte
+
+foreign memcmp(in ptr, in ptr, in usize) int
+foreign strcmp(in *ubyte, in *ubyte) int
+foreign strcoll(in *ubyte, in *ubyte) int
+foreign strncmp(in *ubyte, in *ubyte, in usize) int
+
+foreign memchr(in ptr, in ubyte, in usize) ptr
+foreign strchr(in *ubyte, in ubyte) *ubyte
+foreign strcspn(in *ubyte, in *ubyte) usize
+foreign strpbrk(in *ubyte, in *ubyte) *ubyte
+foreign strrchr(in *ubyte, in ubyte) *ubyte
+foreign strspn(in *ubyte, in *ubyte) usize
+foreign strstr(in *ubyte, in *ubyte) *ubyte
+foreign strtok(inout *ubyte, in *ubyte) *ubyte
+
+foreign memset(out ptr, in ubyte, in usize) ptr
+foreign strlen(in *ubyte) usize

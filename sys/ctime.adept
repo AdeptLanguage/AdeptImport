@@ -1,0 +1,19 @@
+
+alias time_t = long
+alias clock_t = long
+
+packed struct tm (tm_sec int, tm_min int, tm_hour int,
+    tm_mday int, tm_mon int, tm_year int,
+    tm_wday int, tm_yday int, tm_isdst int)
+
+CLOCKS_PER_SEC == 1000
+
+foreign clock() clock_t
+foreign difftime(in time_t, in time_t) double
+foreign mkdir(in *tm) time_t
+foreign time(in *time_t) time_t
+foreign asctime(in *tm) *ubyte
+foreign ctime(in *time_t) *ubyte
+foreign gmtime(in *time_t) *tm
+foreign localtime(in *time_t) *tm
+foreign strftime(out *ubyte, in usize, in *ubyte, in *tm) usize

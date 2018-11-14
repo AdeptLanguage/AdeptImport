@@ -1,0 +1,137 @@
+
+import 'sys/cstdio.adept'
+
+import 'String.adept'
+
+func print(in string String) {
+    repeat string.length, putchar(string.array[idx])
+    putchar(0x0A)
+}
+
+func place(in string String) {
+    repeat string.length, putchar(string.array[idx])
+}
+
+func newline {
+    putchar(0x0A)
+}
+
+func scan String {
+    result POD String = undef
+    result.array = new ubyte * 32
+    result.length = 0
+    result.capacity = 32
+    result.ownership = StringOwnership::GIVEN
+    
+    until break {
+        c int = fgetc(STDIN)
+        if c == 0x0A || c == EOF, break
+        
+        if result.length == result.capacity {
+            result.capacity *= 2
+            result.array = realloc(result.array, result.capacity)
+        }
+        
+        result.array[result.length] = c
+        result.length += 1
+    }
+    
+    return result
+}
+
+func scan(in prompt String) String {
+    place(prompt)
+    return scan()
+}
+
+func skim String {
+    result POD String = undef
+    result.array = new ubyte * 16
+    result.length = 0
+    result.capacity = 16
+    result.ownership = StringOwnership::GIVEN
+    
+    until break {
+        c int = fgetc(STDIN)
+        
+        if c == 0x20, if result.length == 0, continue else break
+        if c == 0x0A || c == EOF, break
+        
+        if result.length == result.capacity {
+            result.capacity *= 2
+            result.array = realloc(result.array, result.capacity)
+        }
+        
+        result.array[result.length] = c
+        result.length += 1
+    }
+    
+    return result
+}
+
+func skim(in prompt String) String {
+    place(prompt)
+    return skim()
+}
+
+func skimInt int {
+    result int = undef
+    skimIntInto(&result)
+    return result
+}
+
+func skimInt(in prompt String) int {
+    place(prompt)
+    skimIntInto(undef result int)
+    return result
+}
+
+func skimIntInto(out result *int) successful {
+    *result = 0
+    
+    skimmed String = skim()
+    is_negative bool = false
+    
+    repeat skimmed.length {
+        c ubyte = skimmed.array[idx]
+        
+        if c < 0x30 || c > 0x39 {
+            unless idx == 0 && c == '-'ub, return false
+            
+            is_negative = true
+            continue
+        }
+        
+        *result = *result * 10 + (c - 0x30)
+    }
+    
+    if is_negative, *result = 0 - *result
+    return true
+}
+
+func skimIntInto(in prompt String, out result *int) successful {
+    place(prompt)
+    return skimIntInto(result)
+}
+
+func skimDouble double {
+    skimDoubleInto(undef result double)
+    return result
+}
+
+func skimDouble(in prompt String) double {
+    place(prompt)
+    skimDoubleInto(undef result double)
+    return result
+}
+
+func skimDoubleInto(out result *double) successful {
+    skimmed String = skim() + "\0"
+    *result = strtod(skimmed.array, undef end *ubyte)
+    return (end == skimmed.array at (skimmed.length - 1))
+}
+
+func skimDoubleInto(in prompt String, out result *double) successful {
+    place(prompt)
+    return skimDoubleInto(result)
+}

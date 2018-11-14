@@ -1,0 +1,1052 @@
+
+pragma deprecated
+
+import 'sys/cmath.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'adept/string.adept'
+
+func toString(number byte) string {
+	new_string string
+
+	index usize = 0
+	is_negative bool = false
+	string_buffer *ubyte = malloc(5)
+
+	if number == 0sb {
+		copy(string_buffer, '0')
+		new_string.length = 1
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	if number < 0sb {
+		is_negative = true
+		number *= -1sb
+	}
+
+	while number != 0sb {
+		remainder ubyte = cast ubyte(number % 10sb)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10sb
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(number ubyte) string {
+	new_string string
+
+	index usize = 0uz
+	string_buffer *ubyte = malloc(4)
+
+	if number == 0ub {
+		copy(string_buffer, '0')
+		new_string.length = 1uz
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	while number != 0ub {
+		remainder ubyte = number % 10ub
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ub
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(number short) string {
+	new_string string
+
+	index usize = 0uz
+	is_negative bool = false
+	string_buffer *ubyte = malloc(7)
+
+	if number == 0ss {
+		copy(string_buffer, '0')
+		new_string.length = 1uz
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	if number < 0ss {
+		is_negative = true
+		number *= -1ss
+	}
+
+	while number != 0ss {
+		remainder ubyte = cast ubyte(number % 10ss)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ss
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(number ushort) string {
+	new_string string
+
+	index usize = 0uz
+	string_buffer *ubyte = malloc(6)
+
+	if number == 0us {
+		copy(string_buffer, '0')
+		new_string.length = 1uz
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	while number != 0us {
+		remainder ubyte = cast ubyte(number % 10us)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10us
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(number int) string {
+	new_string string
+
+	index usize = 0uz
+	is_negative bool = false
+	string_buffer *ubyte = malloc(12)
+
+	if number == 0si {
+		copy(string_buffer, '0')
+		new_string.length = 1uz
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	if number < 0si {
+		is_negative = true
+		number *= -1si
+	}
+
+	while number != 0si {
+		remainder ubyte = cast ubyte(number % 10si)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10si
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(number uint) string {
+	new_string string
+
+	index usize = 0uz
+	string_buffer *ubyte = malloc(11)
+
+	if number == 0ui {
+		copy(string_buffer, '0')
+		new_string.length = 1uz
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	while number != 0ui {
+		remainder ubyte = cast ubyte(number % 10ui)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ui
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(number long) string {
+	new_string string
+
+	index usize = 0uz
+	is_negative bool = false
+	string_buffer *ubyte = malloc(21)
+
+	if number == 0sl {
+		copy(string_buffer, '0')
+		new_string.length = 1uz
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	if number < 0sl {
+		is_negative = true
+		number *= -1sl
+	}
+
+	while number != 0sl {
+		remainder ubyte = cast ubyte(number % 10sl)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10sl
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(number ulong) string {
+	new_string string
+
+	index usize = 0uz
+	string_buffer *ubyte = malloc(21)
+
+	if number == 0ul {
+		copy(string_buffer, '0')
+		new_string.length = 1uz
+		new_string.data = string_buffer
+		return new_string
+	}
+
+	while number != 0ul {
+		remainder ubyte = cast ubyte(number % 10ul)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ul
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+
+	new_string.data = string_buffer
+	new_string.length = cast usize index
+	return new_string
+}
+
+func toString(boolean bool) string {
+	if boolean, return clone('true')
+	else return clone('false')
+}
+
+func toString(floating_point float) string {
+	new_string string
+	new_string.data = malloc(64)
+	floatToRawString(floating_point, new_string.data, 6)
+	new_string.length = length(new_string.data)
+
+	for i usize = new_string.length - 1uz, (i != 0uz) and (new_string[i] == 48ub and new_string[i - 1uz] != 46ub), i -= 1uz {
+		new_string.length -= 1uz
+	}
+
+	new_string[new_string.length] = 0ub
+	return new_string
+}
+
+func toString(floating_point double) string {
+	new_string string
+	new_string.data = malloc(64)
+	doubleToRawString(floating_point, new_string.data, 6)
+	new_string.length = length(new_string.data)
+
+	for i usize = new_string.length - 1uz, (i != 0uz) and (new_string[i] == 48ub and new_string[i - 1uz] != 46ub), i -= 1uz {
+		new_string.length -= 1uz
+	}
+
+	new_string[new_string.length] = 0ub
+	return new_string
+}
+
+func toRawString(number byte) *ubyte {
+	index usize = 0uz
+	is_negative bool = false
+	string_buffer *ubyte = malloc(5)
+
+	if number == 0sb {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	if number < 0sb {
+		is_negative = true
+		number *= -1sb
+	}
+
+	while number != 0sb {
+		remainder ubyte = cast ubyte(number % 10sb)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10sb
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+func toRawString(string_buffer *ubyte, number byte) void {
+	index usize = 0uz
+	is_negative bool = false
+
+	if number == 0sb {
+		copy(string_buffer, '0')
+		return
+	}
+
+	if number < 0sb {
+		is_negative = true
+		number *= -1sb
+	}
+
+	while number != 0sb {
+		remainder ubyte = cast ubyte(number % 10sb)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10sb
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(number ubyte) *ubyte {
+	index usize = 0uz
+	string_buffer *ubyte = new ubyte * 4
+
+	if number == 0ub {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	while number != 0ub {
+		remainder ubyte = number % 10ub
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ub
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+
+public def toRawString(string_buffer *ubyte, number ubyte) void {
+	index usize = 0uz
+
+	if number == 0ub {
+		copy(string_buffer, '0')
+		return
+	}
+
+	while number != 0ub {
+		remainder ubyte = number % 10ub
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ub
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(number short) *ubyte {
+	index usize = 0uz
+	is_negative bool = false
+	string_buffer *ubyte = new ubyte * 7
+
+	if number == 0ss {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	if number < 0ss {
+		is_negative = true
+		number *= -1ss
+	}
+
+	while number != 0ss {
+		remainder ubyte = cast ubyte(number % 10ss)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ss
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, number short) void {
+	index usize = 0uz
+	is_negative bool = false
+
+	if number == 0ss {
+		copy(string_buffer, '0')
+		return
+	}
+
+	if number < 0ss {
+		is_negative = true
+		number *= -1ss
+	}
+
+	while number != 0ss {
+		remainder ubyte = cast ubyte(number % 10ss)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ss
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(number ushort) *ubyte {
+	index usize = 0uz
+	string_buffer *ubyte = new ubyte * 6
+
+	if number == 0us {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	while number != 0us {
+		remainder ubyte = cast ubyte(number % 10us)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10us
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, number ushort) void {
+	index usize = 0uz
+
+	if number == 0us {
+		copy(string_buffer, '0')
+		return
+	}
+
+	while number != 0us {
+		remainder ubyte = cast ubyte(number % 10us)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10us
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(number int) *ubyte {
+	index usize = 0uz
+	is_negative bool = false
+	string_buffer *ubyte = new ubyte * 12
+
+	if number == 0si {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	if number < 0si {
+		is_negative = true
+		number *= -1si
+	}
+
+	while number != 0si {
+		remainder ubyte = cast ubyte(number % 10si)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10si
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, number int) void {
+	index usize = 0uz
+	is_negative bool = false
+
+	if number == 0si {
+		copy(string_buffer, '0')
+		return
+	}
+
+	if number < 0si {
+		is_negative = true
+		number *= -1si
+	}
+
+	while number != 0si {
+		remainder ubyte = cast ubyte(number % 10si)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10si
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(number uint) *ubyte {
+	index usize = 0uz
+	string_buffer *ubyte = new ubyte * 11
+
+	if number == 0ui {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	while number != 0ui {
+		remainder ubyte = cast ubyte(number % 10ui)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ui
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, number uint) void {
+	index usize = 0uz
+
+	if number == 0ui {
+		copy(string_buffer, '0')
+		return
+	}
+
+	while number != 0ui {
+		remainder ubyte = cast ubyte(number % 10ui)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ui
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(number long) *ubyte {
+	index usize = 0uz
+	is_negative bool = false
+	string_buffer *ubyte = new ubyte * 21
+
+	if number == 0sl {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	if number < 0sl {
+		is_negative = true
+		number *= -1sl
+	}
+
+	while number != 0sl {
+		remainder ubyte = cast ubyte(number % 10sl)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10sl
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, number long) void {
+	index usize = 0uz
+	is_negative bool = false
+
+	if number == 0sl {
+		copy(string_buffer, '0')
+		return
+	}
+
+	if number < 0sl {
+		is_negative = true
+		number *= -1sl
+	}
+
+	while number != 0sl {
+		remainder ubyte = cast ubyte(number % 10sl)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10sl
+	}
+
+	if is_negative {
+		string_buffer[index] = 45ub
+		index += 1uz
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(number ulong) *ubyte {
+	index usize = 0uz
+	string_buffer *ubyte = new ubyte * 21
+
+	if number == 0ul {
+		copy(string_buffer, '0')
+		return string_buffer
+	}
+
+	while number != 0ul {
+		remainder ubyte = cast ubyte(number % 10ul)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ul
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, number ulong) void {
+	index usize = 0uz
+
+	if number == 0ul {
+		copy(string_buffer, '0')
+		return
+	}
+
+	while number != 0ul {
+		remainder ubyte = cast ubyte(number % 10ul)
+
+		if remainder > 9ub {
+			string_buffer[index] = remainder + 87ub
+		} else {
+			string_buffer[index] = remainder + 48ub
+			index += 1uz
+		}
+
+		number /= 10ul
+	}
+
+	string_buffer[index] = 0ub
+	reverse(string_buffer, index)
+}
+
+public def toRawString(boolean bool) *ubyte {
+	if boolean {
+		return clone('true')
+	} else {
+		return clone('false')
+	}
+}
+
+public def toRawString(string_buffer *ubyte, boolean bool) void {
+	if boolean {
+		copy(string_buffer, 'true')
+	} else {
+		copy(string_buffer, 'false')
+	}
+}
+
+public def toRawString(floating_point float) *ubyte {
+	string_buffer *ubyte = new ubyte * 64
+	floatToRawString(floating_point, string_buffer, 6)
+	string_buffer_length usize = length(string_buffer)
+
+	for i usize = string_buffer_length - 1uz, (i != 0uz) and (string_buffer[i] == 48ub and string_buffer[i - 1uz] != 46ub), i -= 1uz {
+		string_buffer_length -= 1uz
+	}
+
+	string_buffer[string_buffer_length] = 0ub
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, floating_point float) void {
+	floatToRawString(floating_point, string_buffer, 6)
+	string_buffer_length usize = length(string_buffer)
+
+	for i usize = string_buffer_length - 1uz, (i != 0uz) and (string_buffer[i] == 48ub and string_buffer[i - 1uz] != 46ub), i -= 1uz {
+		string_buffer_length -= 1uz
+	}
+
+	string_buffer[string_buffer_length] = 0ub
+}
+
+public def toRawString(floating_point double) *ubyte {
+	string_buffer *ubyte = new ubyte * 64
+	doubleToRawString(floating_point, string_buffer, 6)
+	string_buffer_length usize = length(string_buffer)
+
+	for i usize = string_buffer_length - 1uz, (i != 0uz) and (string_buffer[i] == 48ub and string_buffer[i - 1uz] != 46ub), i -= 1uz {
+		string_buffer_length -= 1uz
+	}
+
+	string_buffer[string_buffer_length] = 0ub
+	return string_buffer
+}
+
+public def toRawString(string_buffer *ubyte, floating_point double) void {
+	doubleToRawString(floating_point, string_buffer, 6)
+	string_buffer_length usize = length(string_buffer)
+
+	for i usize = string_buffer_length - 1uz, (i != 0uz) and (string_buffer[i] == 48ub and string_buffer[i - 1uz] != 46ub), i -= 1uz {
+		string_buffer_length -= 1uz
+	}
+
+	string_buffer[string_buffer_length] = 0ub
+}
+
+public def toByte(a_byte string) byte {
+	return cast byte atoi(a_byte.data)
+}
+
+public def toByte(a_byte *ubyte) byte {
+	return cast byte atoi(a_byte)
+}
+
+public def toShort(a_short string) short {
+	return cast short atoi(a_short.data)
+}
+
+public def toShort(a_short *ubyte) short {
+	return cast short atoi(a_short)
+}
+
+public def toInt(an_int string) int {
+	return atoi(an_int.data)
+}
+
+public def toInt(an_int *ubyte) int {
+	return atoi(an_int)
+}
+
+public def toLong(a_long string) long {
+	return atol(a_long.data)
+}
+
+public def toLong(a_long *ubyte) long {
+	return atol(a_long)
+}
+
+public def toFloat(a_float string) float {
+	return cast float atof(a_float.data)
+}
+
+public def toFloat(a_float *ubyte) float {
+	return cast float atof(a_float)
+}
+
+public def toDouble(a_double string) double {
+	return atof(a_double.data)
+}
+
+public def toDouble(a_double *ubyte) double {
+	return atof(a_double)
+}
+
+private def reverse(raw *ubyte, length usize) void {
+	start int = 0
+	end int = cast int length - 1
+
+	while start < end {
+		tmp ubyte = raw[start]
+		raw[start] = raw[end]
+		raw[end] = tmp
+
+		start += 1
+		end -= 1
+	}
+}
+
+private def intToStringFixed(integer int, destination *ubyte, digits int) int {
+	i int = 0
+	is_negative bool = false
+
+	if integer < 0 {
+		is_negative = true
+		integer *= -1
+	}
+
+	if integer != 0 {
+		while integer != 0 {
+			destination[i] = cast ubyte(integer % 10) + 48ub
+			integer /= 10
+			i += 1
+		}
+	} else {
+		destination[i] = 48ub
+		i += 1
+	}
+
+	while i < digits {
+		destination[i] = 48ub
+		i += 1
+	}
+
+	if(is_negative){
+		destination[i] = 45ub
+		i += 1
+	}
+
+	reverse(destination, cast usize i)
+	destination[i] = 0ub
+	return i
+}
+
+private def floatToRawString(fp float, output *ubyte, after_point int) *ubyte {
+	integer int = cast int fp
+	floating float = fp - cast float integer
+
+	i int = intToStringFixed(integer, output, 0)
+
+	if after_point != 0 {
+		output[i] = 46ub
+		floating = floating * powf(10.0f, cast float after_point)
+		intToStringFixed(cast int floating, output + cast ptr(i + 1), after_point)
+	}
+
+	return output
+}
+
+private def doubleToRawString(fp double, output *ubyte, after_point int) *ubyte {
+	integer int = cast int fp
+	floating double = fp - cast double integer
+
+	i int = intToStringFixed(integer, output, 0)
+
+	if after_point != 0 {
+		output[i] = 46ub
+		floating = floating * pow(10.0, cast double after_point)
+		intToStringFixed(cast int floating, output + cast ptr(i + 1), after_point)
+	}
+
+	return output
+}
