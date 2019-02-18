@@ -13,22 +13,47 @@ _IOFBF == 0x0000
 _IOLBF == 0x0040
 _IONBF == 0x0004
 
-foreign __iob_func() *FILE
+#if __windows__
+    foreign __iob_func() *FILE
+    stdin  == &__iob_func()[0]    
+    STDIN  == &__iob_func()[0]
+    stdout == &__iob_func()[1]
+    STDOUT == &__iob_func()[1]
+    stderr == &__iob_func()[2]
+    STDERR == &__iob_func()[2]
+#elif __macos__
+    external __stdinp *FILE
+    external __stdoutp *FILE
+    external __stderrp *FILE
+    stdin == __stdinp
+    STDIN == __stdinp
+    stdout == __stdoutp
+    STDOUT == __stdoutp
+    stderr == __stderrp
+    STDERR == __stderrp
+#else
+    external stdin *FILE
+    external stdout *FILE
+    external stderr *FILE
+    STDIN == stdin
+    STDOUT == stdout
+    STDERR == stderr
+#end
 
-STDIN  == &__iob_func()[0]
-STDOUT == &__iob_func()[1]
-STDERR == &__iob_func()[2]
-
-struct FILE (
-    _ptr *ubyte,
-    _cnt int,
-    _base *ubyte,
-    _flag int,
-    _file int,
-    _charbuf int,
-    _bufsiz int,
-    _tmpfname *ubyte
-)
+#if __windows__
+    struct FILE (
+        _ptr *ubyte,
+        _cnt int,
+        _base *ubyte,
+        _flag int,
+        _file int,
+        _charbuf int,
+        _bufsiz int,
+        _tmpfname *ubyte
+    )
+#else
+    struct FILE (_opaque 32 usize)
+#end
 
 foreign remove(in *ubyte) int
 foreign rename(in *ubyte, in *ubyte) int

@@ -1,5 +1,12 @@
 
-RAND_MAX == 0x7fff
+#if __windows__
+    RAND_MAX == 0x7fff
+#elif __macos__
+    RAND_MAX == 0x7fffffff
+#else
+    #print "STDLIB WARNING - Assuming RAND_MAX for Unrecognized Platform"
+    RAND_MAX == 0x7fffffff
+#end
 
 foreign system(in *ubyte) void
 foreign exit(in int) void
