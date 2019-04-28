@@ -1,0 +1,20 @@
+
+// Minimal wrapper for stb_image - 'stb/image.adept'
+
+#if __windows__
+    foreign 'windows_stb_image.a'
+#elif __macos__
+    foreign 'macos_stb_image.a'
+#else
+    #print_error "stb_image not implemented for this platform"
+    #halt
+#end
+
+STBI_default    == 0
+STBI_grey       == 1
+STBI_grey_alpha == 2
+STBI_rgb        == 3
+STBI_rgb_alpha  == 4
+
+foreign stbi_load(in *ubyte, out *int, out *int, out *int, in int) *ubyte
+foreign stbi_image_free(in *ubyte) void
