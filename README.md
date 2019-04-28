@@ -1,4 +1,4 @@
-# AdeptStandardLibrary
+# AdeptImport
 The standard library for Adept
 
 ```
