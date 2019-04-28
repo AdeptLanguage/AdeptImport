@@ -1,0 +1,30 @@
+
+struct <$T> List (items *$T, length, capacity usize, ownership Ownership)
+
+func __defer__(this *<$T> List) {
+    if this.ownership == Ownership::OWN, delete this.items
+}
+
+func __pass__(list POD <$T> List) <$T> List {
+    if      list.ownership == Ownership::OWN,   list.ownership = Ownership::REFERENCE
+    else if list.ownership == Ownership::GIVEN, list.ownership = Ownership::OWN
+    
+    return list
+}
+
+func __assign__(this *<$T> List, other <$T> List) {
+    this.__defer__()
+    
+    if other.ownership == Ownership::GIVEN {
+        this.items = other.items
+        this.length = other.length
+        this.capacity = other.capacity
+        this.ownership = Ownership::OWN
+        return
+    }
+    
+    this.items = other.items
+    this.length = other.length
+    this.capacity = other.capacity
+    this.ownership = Ownership::REFERENCE
+}

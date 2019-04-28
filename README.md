@@ -8,6 +8,14 @@ import
 │       String.adept        (Standard String)
 │       terminal.adept      (Terminal IO)
 │
+├───2.2 (Standard Library for Adept 2.2)
+│       basics.adept        (Basics of Standard Library)
+│       Array.adept         (Minimal Array)
+│       List.adept          (Extendable List)
+│       Ownership.adept     (Standard Ownership)
+│       String.adept        (Standard String)
+│       terminal.adept      (Terminal IO)
+│
 ├───adept (Legacy Support Library for Adept 1.1)
 │   │   conversion.adept    (Legacy support for data conversion)
 │   │   string.adept        (Legacy support for string manipulation)
@@ -21,12 +29,12 @@ import
 │
 ├───glfw (GLFW 3 Interface)
 │       glfw.adept
-│       libgdi32.a
-│       libglfw3.a
 │
 ├───opengl (OpenGL Interface)
-│       libopengl32.a
 │       opengl.adept
+│
+├───stb (Sean Barrett's Public Domain Libraries)
+│       image.adept         (Public Domain Image Loader)
 │
 ├───sys (Native Interface via libc)
 │       cmath.adept

@@ -1,0 +1,2 @@
+
+struct <$T> Array (items *$T, length usize)

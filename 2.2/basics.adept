@@ -1,0 +1,8 @@
+
+pragma compiler_supports '2.2'
+
+import 'String.adept'
+import 'terminal.adept'
+import 'Array.adept'
+import 'List.adept'
+import 'Ownership.adept'
