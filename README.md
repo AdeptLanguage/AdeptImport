@@ -12,8 +12,11 @@ import
 │       basics.adept        (Basics of Standard Library)
 │       Array.adept         (Minimal Array)
 │       List.adept          (Extendable List)
+│       Matrix4f.adept      (4x4 Float Matrix)
 │       Ownership.adept     (Standard Ownership)
 │       String.adept        (Standard String)
+│       Vector3f.adept      (3 Float Vector)
+│       random.adept        (Random Numbers)
 │       terminal.adept      (Terminal IO)
 │
 ├───adept (Legacy Support Library for Adept 1.1)
