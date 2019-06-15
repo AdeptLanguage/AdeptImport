@@ -54,7 +54,9 @@ func skim String {
     until break {
         c int = fgetc(STDIN)
         
-        if c == 0x20, if result.length == 0, continue else break
+        if c == 0x20 {
+            if result.length == 0, continue else break
+        }
         if c == 0x0A || c == EOF, break
         
         if result.length == result.capacity {

@@ -1,0 +1,128 @@
+
+pragma compiler_supports '2.2'
+import 'sys/cmath.adept'
+import 'sys/cstdio.adept'
+
+struct Vector3f (x, y, z float) {
+    func zero {
+        this.x = 0.0f
+        this.y = 0.0f
+        this.z = 0.0f
+    }
+    
+    func set(x, y, z float) {
+        this.x = x
+        this.y = y
+        this.z = z
+    }
+    
+    func set(other Vector3f) {
+        this.x = other.x
+        this.y = other.y
+        this.z = other.z
+    }
+    
+    func add(other Vector3f) {
+        this.x += other.x
+        this.y += other.y
+        this.z += other.z
+    }
+    
+    func subtract(other Vector3f) {
+        this.x -= other.x
+        this.y -= other.y
+        this.z -= other.z
+    }
+    
+    func multiply(other Vector3f) {
+        this.x *= other.x
+        this.y *= other.y
+        this.z *= other.z
+    }
+    
+    func negate {
+        this.x *= -1.0f
+        this.y *= -1.0f
+        this.z *= -1.0f
+    }
+    
+    func scale(amount float) {
+        this.x *= amount
+        this.y *= amount
+        this.z *= amount
+    }
+    
+    func normalize {
+        x float = this.x
+        y float = this.y
+        z float = this.z
+        len float = sqrtf(x * x + y * y + z * z)
+    
+        if len == 0.0f, this.set(0.0f, 0.0f, 0.0f); return
+        else if len == 1.0f, return
+    
+        len = 1.0f / len
+        this.set(x * len, y * len, z * len)
+    }
+    
+    func cross(other Vector3f) {
+        x_a float = this.x
+        y_a float = this.y
+        z_a float = this.z
+        x_b float = other.x
+        y_b float = other.y
+        z_b float = other.z
+    
+        this.x = y_a * z_b - z_a * y_b
+        this.y = z_a * x_b - x_a * z_b
+        this.z = x_a * y_b - y_a * x_b
+    }
+    
+    func length float {
+        x float = this.x
+        y float = this.y
+        z float = this.z
+        return sqrtf(x * x + y * y + z * z)
+    }
+    
+    func dot(other Vector3f) float {
+        return this.x * other.x + this.y * other.y + this.z * other.z
+    }
+    
+    func direction(other Vector3f) {
+        x float = this.x - other.x
+        y float = this.y - other.y
+        z float = this.z - other.z
+        len float = sqrtf(x * x + y * y + z * z)
+    
+        if len == 0.0f, this.set(0.0f, 0.0f, 0.0f); return
+    
+        len = 1.0f / len
+        this.set(x * len, y * len, z * len)
+    }
+    
+    func lerp(other Vector3f, lerp float) {
+        this.x += lerp * (other.x - this.x)
+        this.y += lerp * (other.y - this.y)
+        this.z += lerp * (other.z - this.z)
+    }
+    
+    func lerp(other Vector3f) {
+        this.lerp(other, 0.5f)
+    }
+    
+    func distance(other Vector3f) float {
+        x float = other.x - this.x
+        y float = other.y - this.y
+        z float = other.z - this.z
+        return sqrtf(x * x + y * y + z * z)
+    }
+    
+    func toString String {
+        return "Vector3f {%, %, %}" % cast double this.x % cast double this.y % cast double this.z
+    }
+    
+    func print {
+        printf('Vector3f {%f, %f, %f}\n', cast double this.x, cast double this.y, cast double this.z)
+    }
+}

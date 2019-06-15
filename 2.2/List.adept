@@ -1,30 +1,123 @@
 
+#default list_bounds_checks true
+#default list_ownership_checks true
+#default list_disable_safety false
+
+#if list_disable_safety
+    #set list_bounds_checks false
+    #set list_ownership_checks false
+#end
+
+import 'sys/cstdio.adept'
+import 'sys/cstring.adept'
+
 struct <$T> List (items *$T, length, capacity usize, ownership Ownership)
 
+func add(this *<$T> List, item POD $T) {
+    if this.items == null {
+        this.items = new $T * 4
+        this.length = 0
+        this.capacity = 4
+        this.ownership = Ownership::OWN
+    } else if this.length == this.capacity {
+        this.capacity *= 2
+        new_items *$T = new $T * this.capacity
+        memcpy(new_items, this.items, sizeof $T * this.length)
+        delete this.items
+        this.items = new_items
+    }
+    
+    #if list_ownership_checks
+        if this.ownership != Ownership::OWN {
+            printf('<$T> List Error: can\'t add to list via reference\n')
+            return
+        }
+    #end
+    
+    this.items[this.length] = item
+    this.length += 1
+}
+
+func remove(this *<$T> List, index usize) {
+    #if list_bounds_checks
+        if this.length == 0 {
+            printf('<$T> List Error: remove() called on empty list')
+            return
+        }
+        
+        if index < 0 || index >= this.length {
+            printf('<$T> List Error: remove() index out of range')
+            return
+        }
+    #end
+    
+    #if list_ownership_checks
+        if this.ownership != Ownership::OWN {
+            printf('<$T> List Error: can\'t remove from list via reference\n')
+            return
+        }
+    #end
+    
+    this.length -= 1
+    this.items[index].?__defer__()
+    memmove(this.items at index, this.items at (index + 1), (this.length - index) * sizeof $T)
+}
+
+func get(this *<$T> List, index usize) $T {
+    #if list_bounds_checks
+        if index < 0 || index >= this.length {
+            printf('<$T> List Error: get() index out of range')
+            return this.items[0]
+        }
+    #end
+    
+    return this.items[index]
+}
+
+func getPointer(this *<$T> List, index usize) *$T {
+    #if list_bounds_checks
+        if index < 0 || index >= this.length {
+            printf('<$T> List Error: getPointer() index out of range')
+            return this.items
+        }
+    #end
+    
+    return this.items at index
+}
+
+func clear(this *<$T> List) {
+    if this.ownership == Ownership::OWN {
+        each $T in [this.items, this.length], it.?__defer__()
+        this.length = 0
+    }
+}
+
 func __defer__(this *<$T> List) {
-    if this.ownership == Ownership::OWN, delete this.items
+    if this.ownership == Ownership::OWN {
+        each $T in [this.items, this.length], it.?__defer__()
+        delete this.items
+    }
 }
 
 func __pass__(list POD <$T> List) <$T> List {
     if      list.ownership == Ownership::OWN,   list.ownership = Ownership::REFERENCE
-    else if list.ownership == Ownership::GIVEN, list.ownership = Ownership::OWN
-    
+    else if list.ownership == Ownership::GIVEN, list.ownership = Ownership::OWN    
     return list
 }
 
-func __assign__(this *<$T> List, other <$T> List) {
-    this.__defer__()
-    
-    if other.ownership == Ownership::GIVEN {
-        this.items = other.items
-        this.length = other.length
-        this.capacity = other.capacity
-        this.ownership = Ownership::OWN
-        return
-    }
-    
-    this.items = other.items
-    this.length = other.length
-    this.capacity = other.capacity
-    this.ownership = Ownership::REFERENCE
-}
+// func __assign__(this *<$T> List, other <$T> List) {
+//     this.__defer__()
+//     
+//     if other.ownership == Ownership::GIVEN {
+//         this.items = other.items
+//         this.length = other.length
+//         this.capacity = other.capacity
+//         this.ownership = Ownership::OWN
+//         return
+//     }
+//     
+//     this.items = other.items
+//     this.length = other.length
+//     this.capacity = other.capacity
+//     this.ownership = Ownership::REFERENCE
+// }

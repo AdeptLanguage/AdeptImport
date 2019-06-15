@@ -1,7 +1,10 @@
 
+#default log_string_deletion false
+
+import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
 
-enum StringOwnership (REFERENCE, OWN, GIVEN)
+enum StringOwnership (REFERENCE, OWN, GIVEN, DONOR)
 
 struct String (
     array *ubyte,   length usize,
@@ -9,7 +12,20 @@ struct String (
 )
 
 func __defer__(this *String) void {
-    if this.ownership == StringOwnership::OWN, delete this.array
+    if this.ownership == StringOwnership::OWN {
+        #if log_string_deletion
+            printf('[String Deletion] "')
+            repeat this.length, putchar(this.array[idx])
+            putchar('"'ub)
+            putchar(0x0A)
+        #end
+        
+        delete this.array
+        this.array = null
+        this.length = 0
+        this.capacity = 0
+        this.ownership = StringOwnership::REFERENCE
+    }
 }
 
 func __pass__(string POD String) String {
@@ -54,7 +70,12 @@ func __assign__(this *String, other POD String) void {
     this.array = other.array
     this.length = other.length
     this.capacity = other.capacity
-    this.ownership = StringOwnership::REFERENCE
+    
+    if other.ownership == StringOwnership::DONOR {
+        this.ownership = StringOwnership::DONOR
+    } else {
+        this.ownership = StringOwnership::REFERENCE
+    }
 }
 
 func __add__(lhs String, rhs String) String {
@@ -116,7 +137,7 @@ func __modulus__(lhs POD String, rhs String) String {
     memcpy(formatted.array, lhs.array, percent)
     memcpy(formatted.array at percent, rhs.array, rhs.length)
     memcpy(formatted.array at (percent + rhs.length), lhs.array at (percent + 1), lhs.length - percent - 1)
-    
+    lhs = POD __pass__(lhs)
     lhs.__defer__()
     return formatted
 }
@@ -140,7 +161,7 @@ func __modulus__(lhs POD String, rhs int) String {
     memcpy(formatted.array, lhs.array, percent)
     memcpy(formatted.array at percent, &int_string as *ubyte, int_string_length)
     memcpy(formatted.array at (percent + int_string_length), lhs.array at (percent + 1), lhs.length - percent - 1)
-    
+    lhs = POD __pass__(lhs)
     lhs.__defer__()
     return formatted
 }
@@ -164,9 +185,37 @@ func __modulus__(lhs POD String, rhs double) String {
     memcpy(formatted.array, lhs.array, percent)
     memcpy(formatted.array at percent, &float_string as *ubyte, float_string_length)
     memcpy(formatted.array at (percent + float_string_length), lhs.array at (percent + 1), lhs.length - percent - 1)
-    
+    lhs = POD __pass__(lhs)
     lhs.__defer__()
     return formatted
+}
+
+func commit(this *String) String {
+    if this.ownership == StringOwnership::OWN {
+        this.ownership = StringOwnership::REFERENCE
+        given POD String = undef
+        given.array = this.array
+        given.length = this.length
+        given.capacity = this.capacity
+        given.ownership = StringOwnership::GIVEN
+        return given
+    }
+    return *this
+}
+
+func donate(this *String) String {
+    if this.ownership == StringOwnership::OWN {
+        given POD String = undef
+        given.array = this.array
+        given.length = this.length
+        given.capacity = this.capacity
+        given.ownership = StringOwnership::GIVEN
+        this.ownership = StringOwnership::REFERENCE
+        *this = "<DONATED>"
+        this.ownership = StringOwnership::DONOR
+        return given
+    }
+    return *this
 }
 
 func first(this *String, character ubyte) long {
@@ -215,4 +264,17 @@ func clone(this *String) String {
     cloned.ownership = StringOwnership::GIVEN
     memcpy(cloned.array, this.array, this.length)
     return cloned
+}
+
+func equals(this *String, other POD String) bool {
+    if this.length != other.length, return false
+    repeat this.length, if this.array[idx] != other.array[idx], return false
+    return true
+}
+
+func cstr(this *String) *ubyte {
+    str *ubyte = new ubyte * (this.length + 1)
+    memcpy(str, this.array, this.length)
+    str[this.length] = 0x00
+    return str
 }

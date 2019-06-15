@@ -1,6 +1,4 @@
 
-pragma compiler_version '2.1'
-
 #if __windows__
     import 'windows_opengl.adept'
 #elif __macos__
