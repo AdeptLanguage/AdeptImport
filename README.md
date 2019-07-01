@@ -1,4 +1,4 @@
-# AdeptImport
+﻿# AdeptImport
 The standard library for Adept
 
 ```
@@ -40,11 +40,13 @@ import
 │       image.adept         (Public Domain Image Loader)
 │
 ├───sys (Native Interface via libc)
+│       cerrno.adept
 │       cmath.adept
 │       cstdio.adept
 │       cstdlib.adept
 │       cstring.adept
 │       ctime.adept
+│       dlfcn.adept [mac only]
 │
 └───windows (Windows Standard Libraries)
         winsock2.adept
