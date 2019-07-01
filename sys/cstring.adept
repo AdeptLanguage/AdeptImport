@@ -24,3 +24,4 @@ foreign strtok(inout *ubyte, in *ubyte) *ubyte
 
 foreign memset(out ptr, in ubyte, in usize) ptr
 foreign strlen(in *ubyte) usize
+foreign strerror(in int) *ubyte
