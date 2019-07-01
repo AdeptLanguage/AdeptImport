@@ -1,0 +1,7 @@
+
+#if __windows__
+    foreign _errno() *int
+    errno == *_errno()
+#else
+    external errno int
+#end
