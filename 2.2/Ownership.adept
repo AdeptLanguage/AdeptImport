@@ -1,2 +1,2 @@
 
-enum Ownership (REFERENCE, OWN, GIVEN)
+enum Ownership (REFERENCE, OWN, GIVEN, DONATED)

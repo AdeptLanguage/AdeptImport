@@ -4,7 +4,7 @@
 import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
 
-enum StringOwnership (REFERENCE, OWN, GIVEN, DONOR)
+enum StringOwnership (REFERENCE, OWN, GIVEN, DONATED)
 
 struct String (
     array *ubyte,   length usize,
@@ -71,11 +71,17 @@ func __assign__(this *String, other POD String) void {
     this.length = other.length
     this.capacity = other.capacity
     
-    if other.ownership == StringOwnership::DONOR {
-        this.ownership = StringOwnership::DONOR
+    if other.ownership == StringOwnership::DONATED {
+        this.ownership = StringOwnership::DONATED
     } else {
         this.ownership = StringOwnership::REFERENCE
     }
+}
+
+func __equals__(lhs String, rhs String) bool {
+    if lhs.length != rhs.length, return false
+    repeat lhs.length, if lhs.array[idx] != rhs.array[idx], return false
+    return true
 }
 
 func __add__(lhs String, rhs String) String {
@@ -85,6 +91,19 @@ func __add__(lhs String, rhs String) String {
     together.array = new ubyte * together.length
     memcpy(together.array, lhs.array, lhs.length)
     memcpy(together.array at lhs.length, rhs.array, rhs.length)
+    
+    together.capacity = together.length
+    together.ownership = StringOwnership::GIVEN
+    return together
+}
+
+func __add__(lhs String, rhs ubyte) String {
+    together POD String = undef
+    
+    together.length = lhs.length + 1
+    together.array = new ubyte * together.length
+    memcpy(together.array, lhs.array, lhs.length)
+    together.array[lhs.length] = rhs
     
     together.capacity = together.length
     together.ownership = StringOwnership::GIVEN
@@ -210,9 +229,8 @@ func donate(this *String) String {
         given.length = this.length
         given.capacity = this.capacity
         given.ownership = StringOwnership::GIVEN
-        this.ownership = StringOwnership::REFERENCE
-        *this = "<DONATED>"
-        this.ownership = StringOwnership::DONOR
+        *this = POD "<DONATED>"
+        this.ownership = StringOwnership::DONATED
         return given
     }
     return *this
@@ -222,6 +240,29 @@ func first(this *String, character ubyte) long {
     repeat this.length,
         if this.array[idx] == character,
             return idx as long
+    return -1
+}
+
+func first(this *String, sub String) long {
+    if sub.length > this.length, return -1
+    times usize = this.length - sub.length + 1
+    repeat times,
+        if sub.equals(this.range(idx, sub.length)), return idx as long
+    return -1
+}
+
+func last(this *String, character ubyte) long {
+    repeat this.length,
+        if this.array[this.length - idx - 1] == character,
+            return (this.length - idx - 1) as long
+    return -1
+}
+
+func last(this *String, sub String) long {
+    if sub.length > this.length, return -1
+    times usize = this.length - sub.length + 1
+    repeat times,
+        if sub.equals(this.range(this.length - idx - 1, sub.length)), return (this.length - idx - 1) as long
     return -1
 }
 
@@ -248,12 +289,21 @@ func reversed(this *String) String {
 }
 
 func sub(this *String, a, n usize) String {
+    range String = this.range(a, n)
+    return range.clone()
+}
+
+func range(this *String, a, n usize) String {
     substring POD String = undef
     substring.array = this.array at a
     substring.length = n
     substring.capacity = this.capacity - a
     substring.ownership = StringOwnership::REFERENCE
     return substring
+}
+
+func reduce(this *String, amount usize) {
+    this.length = cast bool (amount > this.length) ? 0uz : this.length - amount
 }
 
 func clone(this *String) String {
@@ -264,6 +314,51 @@ func clone(this *String) String {
     cloned.ownership = StringOwnership::GIVEN
     memcpy(cloned.array, this.array, this.length)
     return cloned
+}
+
+func reference(this *String) String {
+    ref POD String = undef
+    ref.array = this.array
+    ref.length = this.length
+    ref.capacity = this.capacity
+    ref.ownership = StringOwnership::REFERENCE
+    return ref
+}
+
+func replaceOnce(this *String, from ubyte, to String) String {
+    pos long = this.first(from)
+    if pos < 0, return this.reference()
+    return this.range(0, pos) + to + this.range(pos + 1, this.length - pos - 1)
+}
+
+func replaceOnce(this *String, from, to String) String {
+    pos long = this.first(from)
+    if pos < 0, return this.reference()
+    return this.range(0, pos) + to + this.range(pos + from.length, this.length - pos - from.length)
+}
+
+func replace(this *String, from ubyte, to String) String {
+    result String = this.reference()
+    
+    until break {
+        pos long = result.first(from)
+        if pos < 0, break
+        result = result.range(0, pos) + to + result.range(pos + 1, result.length - pos - 1)
+    }
+    
+    return result.commit()
+}
+
+func replace(this *String, from, to String) String {
+    result String = this.reference()
+    
+    until break {
+        pos long = result.first(from)
+        if pos < 0, break
+        result = result.range(0, pos) + to + result.range(pos + from.length, result.length - pos - from.length)
+    }
+    
+    return result.commit()
 }
 
 func equals(this *String, other POD String) bool {
@@ -277,4 +372,23 @@ func cstr(this *String) *ubyte {
     memcpy(str, this.array, this.length)
     str[this.length] = 0x00
     return str
+}
+
+func string(null_terminated *ubyte) String {
+    created POD String = undef
+    created.length = strlen(null_terminated)
+    created.array = new ubyte * created.length
+    memcpy(created.array, null_terminated, created.length)
+    created.capacity = created.length
+    created.ownership = StringOwnership::GIVEN
+    return created
+}
+
+func stringConstant(null_terminated *ubyte) String {
+    reference POD String = undef
+    reference.length = strlen(null_terminated)
+    reference.array = null_terminated
+    reference.capacity = reference.length
+    reference.ownership = StringOwnership::REFERENCE
+    return reference
 }

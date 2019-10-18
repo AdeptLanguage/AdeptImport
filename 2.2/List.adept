@@ -2,18 +2,45 @@
 #default list_bounds_checks true
 #default list_ownership_checks true
 #default list_disable_safety false
+#default list_preparation_checks false
+#default list_experimental false
 
 #if list_disable_safety
     #set list_bounds_checks false
     #set list_ownership_checks false
+    #set list_preparation_checks false
+#end
+
+#if list_preparation_checks && !list_experimental
+    #print_error "<$T> List Config Error: Can't do list preparation checks while 'list_experimental' is disabled"
+    #halt
 #end
 
 import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
 
-struct <$T> List (items *$T, length, capacity usize, ownership Ownership)
+#if !list_preparation_checks
+    struct <$T> List (items *$T, length, capacity usize, ownership Ownership)
+#else
+    struct <$T> List (items *$T, length, capacity, prepared usize, ownership Ownership)
+#end
+
+func __array__(this *<$T> List) *$T {
+    return this.items
+}
+
+func __length__(this *<$T> List) usize {
+    return this.length
+}
 
 func add(this *<$T> List, item POD $T) {
+    #if list_preparation_checks
+        if this.prepared != 0 {
+            printf('<$T> List Error: adding to list that was prepared to expect more data than given\n')
+            return
+        }
+    #end
+    
     if this.items == null {
         this.items = new $T * 4
         this.length = 0
@@ -63,6 +90,79 @@ func remove(this *<$T> List, index usize) {
     memmove(this.items at index, this.items at (index + 1), (this.length - index) * sizeof $T)
 }
 
+#if list_experimental
+    func prepare(this *<$T> List, amount usize) {
+        printf('<$T> List Warning: prepare(usize) is experimental\n')
+        
+        #if list_ownership_checks
+            if this.ownership != Ownership::OWN {
+                printf('<$T> List Error: can\'t prepare to add to list via reference\n')
+                return
+            }
+        #end
+        
+        if this.items == null {
+            this.items = new $T * amount
+            this.length = 0
+            this.capacity = amount
+            this.ownership = Ownership::OWN
+        } else if this.length + amount >= this.capacity {
+            this.capacity = this.length + amount
+            new_items *$T = new $T * this.capacity
+            memcpy(new_items, this.items, sizeof $T * this.length)
+            delete this.items
+            this.items = new_items
+        }
+        
+        #if list_preparation_checks
+            this.prepared += amount
+        #end
+    }
+    
+    func ready(this *<$T> List, item POD $T) {
+        printf('<$T> List Warning: ready(POD $T) is experimental\n')
+        
+        #if list_ownership_checks
+            if this.ownership != Ownership::OWN {
+                printf('<$T> List Error: readying to list via reference\n')
+                return
+            }
+        #end
+        
+        #if list_preparation_checks
+            unless this.prepared >= 1 {
+                printf('<$T> List Error: readying to list with nothing prepared\n')
+                return
+            }
+        #end
+        
+        this.items[this.length] = item
+        this.length += 1
+        
+    }
+    
+    func ready(this *<$T> List, items POD *$T, length usize) {
+        printf('<$T> List Warning: ready(*$T, usize) is experimental\n')
+        
+        #if list_ownership_checks
+            if this.ownership != Ownership::OWN {
+                printf('<$T> List Error: readying to list via reference\n')
+                return
+            }
+        #end
+        
+        #if list_preparation_checks
+            unless this.prepared >= length {
+                printf(this.prepared == 0 ? '<$T> List Error: readying to list with nothing prepared\n' : '<$T> List Error: readying to list with not enough space prepared\n')
+                return
+            }
+        #end
+        
+        repeat length, this.items[this.length + idx] = items[idx]
+        this.length += length
+    }
+#end
+
 func get(this *<$T> List, index usize) $T {
     #if list_bounds_checks
         if index < 0 || index >= this.length {
@@ -105,19 +205,55 @@ func __pass__(list POD <$T> List) <$T> List {
     return list
 }
 
-// func __assign__(this *<$T> List, other <$T> List) {
-//     this.__defer__()
-//     
-//     if other.ownership == Ownership::GIVEN {
-//         this.items = other.items
-//         this.length = other.length
-//         this.capacity = other.capacity
-//         this.ownership = Ownership::OWN
-//         return
-//     }
-//     
-//     this.items = other.items
-//     this.length = other.length
-//     this.capacity = other.capacity
-//     this.ownership = Ownership::REFERENCE
-// }
+func commit(this *<$T> List) <$T> List {
+    if this.ownership == Ownership::OWN {
+        this.ownership = Ownership::REFERENCE
+        given POD <$T> List = undef
+        given.items = this.items
+        given.length = this.length
+        given.capacity = this.capacity
+        given.ownership = Ownership::GIVEN
+        return given
+    }
+    return *this
+}
+
+func reverse(this *<$T> List) void {
+    repeat this.length / 2 {
+        preserved POD $T = this.items[idx]
+        this.items[idx] = this.items[this.length - idx - 1]
+        this.items[this.length - idx - 1] = POD preserved
+    }
+}
+
+/*
+func __assign__(this *<$T> List, other <$T> List) {
+    this.__defer__()
+    
+    if other.ownership == Ownership::GIVEN {
+        this.items = other.items
+        this.length = other.length
+        this.capacity = other.capacity
+        this.ownership = Ownership::OWN
+        return
+    }
+    
+    this.items = other.items
+    this.length = other.length
+    this.capacity = other.capacity
+    this.ownership = Ownership::REFERENCE
+}
+
+func donate(this *<$T> List) <$T> List {
+    if this.ownership == StringOwnership::OWN {
+        given POD <$T> List = undef
+        given.items = this.items
+        given.length = this.length
+        given.capacity = this.capacity
+        given.ownership = StringOwnership::GIVEN
+        this.ownership = StringOwnership::DONOR
+        return given
+    }
+    return *this
+}
+*/

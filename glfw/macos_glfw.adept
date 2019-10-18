@@ -2,7 +2,7 @@
 pragma mac_only
 import "opengl/opengl.adept"
 
-foreign 'macos_libglfw.3.3.dylib'
+foreign 'macos_libglfw3.a'
 foreign 'Cocoa' framework
 foreign 'IOKit' framework
 foreign 'CoreFoundation' framework
