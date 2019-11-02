@@ -200,6 +200,7 @@ func __defer__(this *<$T> List) {
 }
 
 func __pass__(list POD <$T> List) <$T> List {
+    list.ownership.pass()
     if      list.ownership == Ownership::OWN,   list.ownership = Ownership::REFERENCE
     else if list.ownership == Ownership::GIVEN, list.ownership = Ownership::OWN    
     return list
