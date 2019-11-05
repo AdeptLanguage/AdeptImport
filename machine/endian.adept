@@ -1,0 +1,38 @@
+
+func swapEndiannessShort(x short) short =
+    (x & 0xff00 >>> 8) | (x & 0x00ff << 8)
+
+func swapEndiannessUShort(x ushort) ushort =
+    (x & 0xff00 >> 8) | (x & 0x00ff << 8)
+
+func swapEndiannessInt(x int) int =
+    ((x & 0xff000000) >>> 24) |
+    ((x & 0x00ff0000) >>>  8) |
+    ((x & 0x0000ff00) <<   8) |
+    ((x & 0x000000ff) << 24)
+
+func swapEndiannessUInt(x uint) uint =
+    ((x & 0xff000000) >> 24) |
+    ((x & 0x00ff0000) >>  8) |
+    ((x & 0x0000ff00) <<  8) |
+    ((x & 0x000000ff) << 24)
+
+func swapEndiannessLong(x long) long  =
+    (x & 0xff00000000000000sl >>> 56) |
+	   (x & 0x00ff000000000000sl >>> 40) |
+	   (x & 0x0000ff0000000000sl >>> 24) |
+	   (x & 0x000000ff00000000sl >>>  8) |
+	   (x & 0x00000000ff000000sl <<   8) |
+	   (x & 0x0000000000ff0000sl <<  24) |
+	   (x & 0x000000000000ff00sl <<  40) |
+	   (x & 0x00000000000000ffsl <<  56)
+
+func swapEndiannessULong(x ulong) ulong  =
+    (x & 0xff00000000000000ul >> 56) |
+	   (x & 0x00ff000000000000ul >> 40) |
+	   (x & 0x0000ff0000000000ul >> 24) |
+	   (x & 0x000000ff00000000ul >>  8) |
+	   (x & 0x00000000ff000000ul <<  8) |
+	   (x & 0x0000000000ff0000ul << 24) |
+	   (x & 0x000000000000ff00ul << 40) |
+	   (x & 0x00000000000000fful << 56)
