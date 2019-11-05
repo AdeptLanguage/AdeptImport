@@ -1,5 +1,8 @@
 
-foreign 'libpthread.a'
+#if __windows__
+    foreign 'windows_libpthread.a'
+#end
+
 import 'sys/ctime.adept'
 
 struct pthread_t (_opaque ptr)
