@@ -13,6 +13,8 @@ struct WSADATA (
 	szSystemStatus 129 ubyte
 )
 
+// NOTE: 'ai_next' is of type 'ptr' because the compiler can't handle self-referencing pointer '*addrinfo'
+// Isaac Shelton - Nov 5th 2019
 struct addrinfo (
 	ai_flags int,
 	ai_family int,
@@ -21,12 +23,21 @@ struct addrinfo (
 	ai_addrlen usize,
 	ai_canonname *ubyte,
 	ai_addr *sockaddr,
-	ai_next *addrinfo
+	ai_next ptr
 )
 
 struct sockaddr (sa_family ushort, sa_data 14 ubyte)
 struct sockaddr_in (sin_family short, sin_port ushort, sin_addr in_addr, sin_zero 8 ubyte)
-struct in_addr (s_b1, s_b2, s_b3, s_b4 ubyte)
+
+struct in_addr (s_addr uint)
+struct in_addr_uint_version (S_addr uint)
+struct in_addr_words_version (s_w1, s_w2 ushort)
+struct in_addr_bytes_version (s_b1, s_b2, s_b3, s_b4 ubyte)
+
+struct hostent (h_name *ubyte, h_aliases **ubyte, h_addrtype short, h_length short, h_addr_list **ubyte)
+struct netent (n_name *ubyte, n_aliases **ubyte, n_addrtype short, n_net uint)
+struct servent (s_name *ubyte, s_aliases **ubyte, s_proto *ubyte, s_port short)
+struct protoent (p_name *ubyte, p_aliases **ubyte, p_proto short)
 
 alias SOCKET = *uint
 
@@ -155,6 +166,24 @@ foreign accept(SOCKET, *sockaddr, *int) SOCKET
 foreign recv(SOCKET, *ubyte, int, int) int
 foreign connect(SOCKET, *sockaddr, int) int
 foreign send(SOCKET, *ubyte, int, int) int
+foreign ioctlsocket(SOCKET, long, *uint) int
+foreign getpeername(SOCKET, *sockaddr, *int) int
+foreign getsockname(SOCKET, *sockaddr, *int) int;
+foreign getsockopt(SOCKET, int, int, *ubyte, *int) int
+foreign inet_addr(*ubyte) uint
+foreign inet_ntoa(in_addr) *ubyte
+foreign recvfrom(SOCKET, *ubyte, int, int, *sockaddr, *int) int
+foreign sendto(SOCKET, *ubyte, int, int, *sockaddr, int) int
+foreign setsockopt(SOCKET, int, int, *ubyte, int) int
+foreign shutdown(SOCKET, int) int
+
+foreign gethostbyaddr(*ubyte, int, int) *hostent
+foreign gethostbyname(*ubyte) *hostent
+foreign gethostname(*ubyte, int) int
+foreign getservbyport(int, *ubyte) *servent
+foreign getservbyname(*ubyte, *ubyte) *servent
+foreign getprotobynumber(int) *protoent
+foreign getprotobyname(*ubyte) *protoent
 
 import 'machine/endian.adept'
 
