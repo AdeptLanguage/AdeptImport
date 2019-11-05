@@ -1,0 +1,171 @@
+
+pragma windows_only
+
+foreign 'libws2_32.a'
+
+struct WSADATA (
+	wVersion       short,
+	wHighVersion   short,
+	iMaxSockets    ushort,
+	iMaxUdpDg      ushort,
+	lpVendorInfo   *ubyte,
+	szDescription  257 ubyte,
+	szSystemStatus 129 ubyte
+)
+
+struct addrinfo (
+	ai_flags int,
+	ai_family int,
+	ai_socktype int,
+	ai_protocol int,
+	ai_addrlen usize,
+	ai_canonname *ubyte,
+	ai_addr *sockaddr,
+	ai_next *addrinfo
+)
+
+struct sockaddr (sa_family ushort, sa_data 14 ubyte)
+struct sockaddr_in (sin_family short, sin_port ushort, sin_addr in_addr, sin_zero 8 ubyte)
+struct in_addr (s_b1, s_b2, s_b3, s_b4 ubyte)
+
+alias SOCKET = *uint
+
+INVALID_SOCKET == cast SOCKET 0xFFFFFFFFFFFFFFFFFF
+SOCKET_ERROR == -1
+
+AI_PASSIVE                == 0x00000001
+AI_CANONNAME              == 0x00000002
+AI_NUMERICHOST            == 0x00000004
+AI_NUMERICSERV            == 0x00000008
+AI_ALL                    == 0x00000100
+AI_ADDRCONFIG             == 0x00000400
+AI_V4MAPPED               == 0x00000800
+AI_NON_AUTHORITATIVE      == 0x00004000
+AI_SECURE                 == 0x00008000
+AI_RETURN_PREFERRED_NAMES == 0x00010000
+AI_FQDN                   == 0x00020000
+AI_FILESERVER             == 0x00040000
+
+SOCK_STREAM    == 1
+SOCK_DGRAM     == 2
+SOCK_RAW       == 3
+SOCK_RDM       == 4
+SOCK_SEQPACKET == 5
+
+IPPROTO_IP       == 0
+IPPROTO_HOPOPTS  == 0
+IPPROTO_ICMP     == 1
+IPPROTO_IGMP     == 2
+IPPROTO_GGP      == 3
+IPPROTO_IPV4     == 4
+IPPROTO_TCP      == 6
+IPPROTO_PUP      == 12
+IPPROTO_UDP      == 17
+IPPROTO_IDP      == 22
+IPPROTO_IPV6     == 41
+IPPROTO_ROUTING  == 43
+IPPROTO_FRAGMENT == 44
+IPPROTO_ESP      == 50
+IPPROTO_AH       == 51
+IPPROTO_ICMPV6   == 58
+IPPROTO_NONE     == 59
+IPPROTO_DSTOPTS  == 60
+IPPROTO_ND       == 77
+IPPROTO_ICLFXBM  == 78
+IPPROTO_RAW      == 255
+IPPROTO_MAX      == 256
+
+AF_UNSPEC     == 0
+AF_UNIX       == 1
+AF_INET       == 2
+AF_IMPLINK    == 3
+AF_PUP        == 4
+AF_CHAOS      == 5
+AF_NS         == 6
+AF_IPX        == AF_NS
+AF_ISO        == 7
+AF_OSI        == AF_ISO
+AF_ECMA       == 8
+AF_DATAKIT    == 9
+AF_CCITT      == 10
+AF_SNA        == 11
+AF_DECnet     == 12
+AF_DLI        == 13
+AF_LAT        == 14
+AF_HYLINK     == 15
+AF_APPLETALK  == 16
+AF_NETBIOS    == 17
+AF_VOICEVIEW  == 18
+AF_FIREFOX    == 19
+AF_UNKNOWN1   == 20
+AF_BAN        == 21
+AF_ATM        == 22
+AF_INET6      == 23
+AF_CLUSTER    == 24
+AF_12844      == 25
+AF_IRDA       == 26
+AF_NETDES     == 28
+AF_TCNPROCESS == 29
+AF_TCNMESSAGE == 30
+AF_ICLFXBM    == 31
+AF_BTH        == 32
+AF_MAX        == 33
+
+SOMAXCONN == 0x7FFFFFFF
+
+WINSOCK_1_0 == 1us
+WINSOCK_1_1 == 257us
+WINSOCK_2_0 == 2us
+WINSOCK_2_1 == 258us
+WINSOCK_2_2 == 514us
+
+func IN_CLASSA(i uint) bool = (i & 0x80000000) == 0
+IN_CLASSA_NET == 0xff000000
+IN_CLASSA_NSHIFT == 24
+IN_CLASSA_HOST == 0x00ffffff
+IN_CLASSA_MAX == 128
+
+func IN_CLASSB(i uint) bool = (i & 0xc0000000) == 0x80000000
+IN_CLASSB_NET == 0xffff0000
+IN_CLASSB_NSHIFT == 16
+IN_CLASSB_HOST == 0x0000ffff
+IN_CLASSB_MAX == 65536
+
+func IN_CLASSC(i uint) bool = (i & 0xe0000000) == 0xc0000000
+IN_CLASSC_NET == 0xffffff00
+IN_CLASSC_NSHIFT == 8
+IN_CLASSC_HOST == 0x000000ff
+
+INADDR_ANY == 0x00000000
+INADDR_LOOPBACK == 0x7f000001
+INADDR_BROADCAST == 0xffffffff
+INADDR_NONE == 0xffffffff
+
+alias socklen_t = int
+
+foreign WSAStartup(ushort, *WSADATA) int
+foreign getaddrinfo(*ubyte, *ubyte, *addrinfo, **addrinfo) int
+foreign WSACleanup() void
+foreign socket(int, int, int) SOCKET
+foreign freeaddrinfo(*addrinfo) void
+foreign bind(SOCKET, *sockaddr, int) int
+foreign closesocket(SOCKET) void
+foreign listen(SOCKET, int) int
+foreign accept(SOCKET, *sockaddr, *int) SOCKET
+foreign recv(SOCKET, *ubyte, int, int) int
+foreign connect(SOCKET, *sockaddr, int) int
+foreign send(SOCKET, *ubyte, int, int) int
+
+import 'machine/endian.adept'
+
+#if little_endian
+    func htonl(x uint) uint = swapEndiannessUInt(x)
+    func ntohl(x uint) uint = swapEndiannessUInt(x)
+    func htons(x ushort) ushort = swapEndiannessUShort(x)
+    func ntohs(x ushort) ushort = swapEndiannessUShort(x)
+#else
+    func htonl(x uint) uint = x
+    func ntohl(x uint) uint = x
+    func htons(x ushort) ushort = x
+    func ntohs(x ushort) ushort = x
+#end
