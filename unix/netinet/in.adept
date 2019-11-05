@@ -1,0 +1,356 @@
+/*
+ * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-
+ * Repurposed 'netinet/in.h' for usage in Adept
+ * Isaac Shelton - November 4th 2019
+ * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-
+ *
+ * Portions Copyright (c) 1999-2003 Apple Computer, Inc. All Rights
+ * Reserved.
+ * 
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this
+ * file.
+ * 
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ *
+ * Copyright (c) 2000-2018 Apple Inc. All rights reserved.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_START@
+ *
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. The rights granted to you under the License
+ * may not be used to create, or enable the creation or redistribution of,
+ * unlawful or unlicensed copies of an Apple operating system, or to
+ * circumvent, violate, or enable the circumvention or violation of, any
+ * terms of an Apple operating system software license agreement.
+ *
+ * Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this file.
+ *
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
+ *
+ *
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *    The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by the University of
+ *    California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *    @(#)in.h    8.3 (Berkeley) 1/3/94
+ * $FreeBSD: src/sys/netinet/in.h,v 1.48.2.2 2001/04/21 14:53:06 ume Exp $
+ */
+
+#if __windows__
+    #print_error "File 'unix/netinet/in.adept' is not meant for Windows, use 'windows/winsock.adept' instead"
+    #halt
+#end
+
+import 'unix/in_port_t.adept'
+import 'unix/in_addr_t.adept'
+import 'unix/sys/socket.adept'
+
+import 'machine/endian.adept'
+
+IPPROTO_IP == 0
+    IPPROTO_HOPOPTS == 0
+IPPROTO_ICMP == 1
+    IPPROTO_IGMP == 2
+    IPPROTO_GGP  == 3
+    IPPROTO_IPV4 == 4
+    IPPROTO_IPIP == IPPROTO_IPV4
+IPPROTO_TCP == 6
+    IPPROTO_ST     == 7
+    IPPROTO_EGP    == 8
+    IPPROTO_PIGP   == 9
+    IPPROTO_RCCMON == 10
+    IPPROTO_NVPII  == 11
+    IPPROTO_PUP    == 12
+    IPPROTO_ARGUS  == 13
+    IPPROTO_EMCON  == 14
+    IPPROTO_XNET   == 15
+    IPPROTO_CHAOS  == 16
+IPPROTO_UDP == 17
+    IPPROTO_MUX     == 18
+    IPPROTO_MEAS    == 19
+    IPPROTO_HMP     == 20
+    IPPROTO_PRM     == 21
+    IPPROTO_IDP     == 22
+    IPPROTO_TRUNK1  == 23
+    IPPROTO_TRUNK2  == 24
+    IPPROTO_LEAF1   == 25
+    IPPROTO_LEAF2   == 26
+    IPPROTO_RDP     == 27
+    IPPROTO_IRTP    == 28
+    IPPROTO_TP      == 29
+    IPPROTO_BLT     == 30
+    IPPROTO_NSP     == 31
+    IPPROTO_INP     == 32
+    IPPROTO_SEP     == 33
+    IPPROTO_3PC     == 34
+    IPPROTO_IDPR    == 35
+    IPPROTO_XTP     == 36
+    IPPROTO_DDP     == 37
+    IPPROTO_CMTP    == 38
+    IPPROTO_TPXX    == 39
+    IPPROTO_IL      == 40
+IPPROTO_IPV6 == 41
+    IPPROTO_SDRP      == 42        
+    IPPROTO_ROUTING   == 43        
+    IPPROTO_FRAGMENT  == 44
+    IPPROTO_IDRP      == 45        
+    IPPROTO_RSVP      == 46
+    IPPROTO_GRE       == 47        
+    IPPROTO_MHRP      == 48        
+    IPPROTO_BHA       == 49        
+    IPPROTO_ESP       == 50        
+    IPPROTO_AH        == 51        
+    IPPROTO_INLSP     == 52        
+    IPPROTO_SWIPE     == 53        
+    IPPROTO_NHRP      == 54        
+    IPPROTO_ICMPV6    == 58        
+    IPPROTO_NONE      == 59        
+    IPPROTO_DSTOPTS   == 60        
+    IPPROTO_AHIP      == 61        
+    IPPROTO_CFTP      == 62        
+    IPPROTO_HELLO     == 63        
+    IPPROTO_SATEXPAK  == 64        
+    IPPROTO_KRYPTOLAN == 65
+    IPPROTO_RVD       == 66
+    IPPROTO_IPPC      == 67
+    IPPROTO_ADFS      == 68
+    IPPROTO_SATMON    == 69
+    IPPROTO_VISA      == 70
+    IPPROTO_IPCV      == 71
+    IPPROTO_CPNX      == 72
+    IPPROTO_CPHB      == 73
+    IPPROTO_WSN       == 74
+    IPPROTO_PVP       == 75
+    IPPROTO_BRSATMON  == 76
+    IPPROTO_ND        == 77
+    IPPROTO_WBMON     == 78
+    IPPROTO_WBEXPAK   == 79
+    IPPROTO_EON       == 80
+    IPPROTO_VMTP      == 81
+    IPPROTO_SVMTP     == 82
+    IPPROTO_VINES     == 83
+    IPPROTO_TTP       == 84
+    IPPROTO_IGP       == 85
+    IPPROTO_DGP       == 86
+    IPPROTO_TCF       == 87
+    IPPROTO_IGRP      == 88
+    IPPROTO_OSPFIGP   == 89
+    IPPROTO_SRPC      == 90
+    IPPROTO_LARP      == 91
+    IPPROTO_MTP       == 92
+    IPPROTO_AX25      == 93
+    IPPROTO_IPEIP     == 94
+    IPPROTO_MICP      == 95
+    IPPROTO_SCCSP     == 96
+    IPPROTO_ETHERIP   == 97
+    IPPROTO_ENCAP     == 98
+    IPPROTO_APES      == 99
+    IPPROTO_GMTP      == 100
+    IPPROTO_PIM       == 103
+    IPPROTO_IPCOMP    == 108
+    IPPROTO_PGM       == 113
+    IPPROTO_SCTP      == 132
+    IPPROTO_DIVERT    == 254
+IPPROTO_RAW == 255
+    IPPROTO_MAX == 256
+    IPPROTO_DONE == 257
+
+struct in_addr (s_addr in_addr_t)
+
+INADDR_ANY       == 0x00000000
+INADDR_BROADCAST == 0xffffffff
+
+// #if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+func IN_CLASSA(i uint) bool = (i & 0x80000000) == 0
+IN_CLASSA_NET    == 0xff000000
+IN_CLASSA_NSHIFT == 24
+IN_CLASSA_HOST   == 0x00ffffff
+IN_CLASSA_MAX    == 128
+
+func IN_CLASSB(i uint) bool = (i & 0xc0000000) == 0x80000000
+IN_CLASSB_NET    == 0xffff0000
+IN_CLASSB_NSHIFT == 16
+IN_CLASSB_HOST   == 0x0000ffff
+IN_CLASSB_MAX    == 65536
+
+func IN_CLASSC(i uint) bool = (i & 0xe0000000) == 0xc0000000
+IN_CLASSC_NET    == 0xffffff00
+IN_CLASSC_NSHIFT == 8
+IN_CLASSC_HOST   == 0x000000ff
+
+func IN_CLASSD(i uint) bool = (i & 0xf0000000) == 0xe0000000
+func IN_MULTICAST(i uint) bool = IN_CLASSD(i)
+IN_CLASSD_NET    == 0xf0000000
+IN_CLASSD_NSHIFT == 28
+IN_CLASSD_HOST   == 0x0fffffff
+
+func IN_EXPERIMENTAL(i uint) bool = (i & 0xf0000000) == 0xf0000000
+func IN_BADCLASS(i uint) bool = (i & 0xf0000000) == 0xf0000000
+
+INADDR_LOOPBACK == 0x7f000001
+
+INADDR_UNSPEC_GROUP    == 0xe0000000 // 224.0.0.0
+INADDR_ALLHOSTS_GROUP  == 0xe0000001 // 224.0.0.1
+INADDR_ALLRTRS_GROUP   == 0xe0000002 // 224.0.0.2
+INADDR_ALLRPTS_GROUP   == 0xe0000016 // 224.0.0.22, IGMPv3
+INADDR_CARP_GROUP      == 0xe0000012 // 224.0.0.18
+INADDR_PFSYNC_GROUP    == 0xe00000f0 // 224.0.0.240
+INADDR_ALLMDNS_GROUP   == 0xe00000fb // 224.0.0.251
+INADDR_MAX_LOCAL_GROUP == 0xe00000ff // 224.0.0.255
+
+#if __macos__
+    IN_LINKLOCALNETNUM == 0xA9FE0000 // 169.254.0.0
+    func IN_LINKLOCAL(i uint) bool = (i & IN_CLASSB_NET) == IN_LINKLOCALNETNUM
+    func IN_LOOPBACK(i uint) bool = (i & 0xff000000) == 0x7f000000
+    func IN_ZERONET(i uint) bool = (i & 0xff000000) == 0
+    
+    func IN_PRIVATE(i uint) bool =
+        (i & 0xff000000) == 0x0a000000 ||
+        (i & 0xfff00000) == 0xac100000 ||
+        (i & 0xffff0000) == 0xc0a80000
+
+    func IN_LOCAL_GROUP(i uint) bool = (i & 0xffffff00) == 0xe0000000
+    func IN_ANY_LOCAL(i uint) bool = IN_LINKLOCAL(i) || IN_LOCAL_GROUP(i)
+#end
+
+IN_LOOPBACKNET == 127
+// #endif /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+
+struct sockaddr_in (sin_len ubyte, sin_family sa_family_t, sin_port in_port_t, sin_addr in_addr, sin_zero 8 ubyte)
+
+INET_ADDRSTRLEN  == 16
+INET6_ADDRSTRLEN == 46
+MAX_IPv4_STR_LEN == 16
+MAX_IPv6_STR_LEN == 64
+
+struct in6_addr (__u6_addr8 16 ubyte, __u6_addr16 8 ushort, __u6_addr32 4 uint)
+alias in6_addr_t = in6_addr
+
+external in6addr_any in6_addr
+external in6addr_loopback in6_addr
+
+func IN6ADDR_ANY_INIT in6_addr {
+    res in6_addr // Rely on zero init
+    return res
+}
+
+func IN6ADDR_LOOPBACK_INIT in6_addr {
+    res in6_addr // Rely on zero init
+    res.__u6_addr8[15] = 0x01ub
+    return res
+}
+
+struct ipv6_mreq (ipv6mr_multiaddr in6_addr, ipv6mr_interface uint)
+
+IPV6_UNICAST_HOPS   == 4
+IPV6_MULTICAST_IF   == 9
+IPV6_MULTICAST_HOPS == 10
+IPV6_MULTICAST_LOOP == 11
+IPV6_JOIN_GROUP     == 12
+IPV6_LEAVE_GROUP    == 13
+IPV6_V6ONLY         == 27
+__IPV6_ADDR_SCOPE_NODELOCAL    == 0x01
+__IPV6_ADDR_SCOPE_INTFACELOCAL == 0x01
+__IPV6_ADDR_SCOPE_LINKLOCAL    == 0x02
+__IPV6_ADDR_SCOPE_SITELOCAL    == 0x05
+__IPV6_ADDR_SCOPE_ORGLOCAL     == 0x08
+__IPV6_ADDR_SCOPE_GLOBAL       == 0x0e
+
+func IN6_IS_ADDR_UNSPECIFIED(a *in6_addr) bool =
+    (*cast *uint (a.__u6_addr8 at 0) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 4) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 8) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 12) == 0)
+
+func IN6_IS_ADDR_LOOPBACK(a *in6_addr) bool =
+    (*cast *uint (a.__u6_addr8 at 0) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 4) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 8) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 12) == ntohl(1))
+
+func IN6_IS_ADDR_MULTICAST(a *in6_addr) bool =
+    a.__u6_addr8[0] == 0xff
+
+func IN6_IS_ADDR_LINKLOCAL(a *in6_addr) bool =
+    a.__u6_addr8[0] == 0xfe && (a.__u6_addr8[1] & 0xc0) == 0x80
+
+func IN6_IS_ADDR_SITELOCAL(a *in6_addr) bool =
+    a.__u6_addr8[0] == 0xfe && (a.__u6_addr8[1] & 0xc0) == 0xc0
+
+func IN6_IS_ADDR_V4MAPPED(a *in6_addr) bool =
+    (*cast *uint (a.__u6_addr8 at 0) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 4) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 8) == ntohl(0x0000ffff))
+
+func IN6_IS_ADDR_V4COMPAT(a *in6_addr) bool =
+    (*cast *uint (a.__u6_addr8 at 0) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 4) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 8) == 0) &&
+    (*cast *uint (a.__u6_addr8 at 12) != 0) &&
+    (*cast *uint (a.__u6_addr8 at 12) != ntohl(1))
+
+func __IPV6_ADDR_MC_SCOPE(a *in6_addr) ubyte =
+    a.__u6_addr8[1] & 0x0f
+
+func IN6_IS_ADDR_MC_NODELOCAL(a *in6_addr) bool =
+    IN6_IS_ADDR_MULTICAST(a) && (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_NODELOCAL)
+
+func IN6_IS_ADDR_MC_LINKLOCAL(a *in6_addr) bool =
+    IN6_IS_ADDR_MULTICAST(a) && (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_LINKLOCAL)
+
+func IN6_IS_ADDR_MC_SITELOCAL(a *in6_addr) bool =
+    IN6_IS_ADDR_MULTICAST(a) && (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_SITELOCAL)
+
+func IN6_IS_ADDR_MC_ORGLOCAL(a *in6_addr) bool =
+    IN6_IS_ADDR_MULTICAST(a) && (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_ORGLOCAL)
+
+func IN6_IS_ADDR_MC_GLOBAL(a *in6_addr) bool =
+    IN6_IS_ADDR_MULTICAST(a) && (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_GLOBAL)

@@ -1,0 +1,92 @@
+
+import 'unix/gid_t.adept'
+import 'unix/off_t.adept'
+import 'unix/pid_t.adept'
+import 'unix/uid_t.adept'
+import 'unix/useconds_t.adept'
+
+foreign access(*ubyte, int) int
+foreign alarm(uint) uint
+foreign brk(ptr) int
+foreign chdir(*ubyte) int
+foreign chroot(*ubyte) int
+foreign chown(*ubyte, uid_t, gid_t) int
+foreign close(int) int
+foreign confstr(int, *ubyte, usize) usize
+foreign crypt(*ubyte, *ubyte) *ubyte
+foreign ctermid(*ubyte) *ubyte
+foreign cuserid(*ubyte) *ubyte
+foreign dup(int) int
+foreign dup2(int, int) int
+foreign encrypt(64 ubyte, int) void
+foreign execl(*ubyte, *ubyte, ...) int
+foreign execle(*ubyte, *ubyte, ...) int
+foreign execlp(*ubyte, *ubyte, ...) int
+foreign execv(*ubyte, **ubyte) int
+foreign execve(*ubyte, **ubyte, **ubyte) int
+foreign execvp(*ubyte, **ubyte) int
+foreign _exit(int) void
+foreign fchown(int, uid_t, gid_t) int
+foreign fchdir(int) int
+foreign fdatasync(int) int
+foreign fork() pid_t
+foreign fpathconf(int, int) long
+foreign fsync(int) int
+foreign ftruncate(int, off_t) int
+foreign getcwd(*ubyte, usize) *ubyte
+foreign getdtablesize() int
+foreign getegid() gid_t
+foreign geteuid() uid_t
+foreign getgid() gid_t
+foreign getgroups(int, *gid_t) int
+foreign gethostid() long
+foreign getlogin() *ubyte
+foreign getlogic_r(*ubyte, usize) int
+foreign getopt(int, **ubyte, *ubyte) int
+foreign getpagesize() int
+foreign getpass(*ubyte) *ubyte
+foreign getpgid(pid_t) pid_t
+foreign getpgrp() pid_t
+foreign getpid() pid_t
+foreign getppid() pid_t
+foreign getsid(pid_t) pid_t
+foreign getuid() uid_t
+foreign getwd(*ubyte) *ubyte
+foreign isatty(int) int
+foreign lchown(*ubyte, uid_t, gid_t) int
+foreign link(*ubyte, *ubyte) int
+foreign lockf(int, int, off_t) int
+foreign lseek(int, off_t, int) off_t
+foreign nice(int) int
+foreign pathconf(*ubyte, int) long
+foreign pause() int
+foreign pipe(2 int) int
+foreign pread(int, ptr, usize, off_t) long
+foreign pthread_atfork(func() void, func() void, func() void) int
+foreign pwrite(int, ptr, usize, off_t) long
+foreign read(int, ptr, usize) long
+foreign readlink(*ubyte, *ubyte, usize) int
+foreign rmdir(*ubyte) int
+foreign sbrk(ptr) ptr
+foreign setgid(gid_t) int
+foreign setpgid(pid_t, pid_t) int
+foreign setpgrp() pid_t
+foreign setregid(gid_t, gid_t) int
+foreign setreuid(uid_t, uid_t) int
+foreign setsid() pid_t
+foreign setuid(uid_t) int
+foreign sleep(uint) uint
+foreign swab(ptr, ptr, long) void
+foreign symlink(*ubyte, *ubyte) int
+foreign sync() void
+foreign sysconf(int) long
+foreign tcgetpgrp(int) pid_t
+foreign tcsetpgrp(int, pid_t) int
+foreign truncate(*ubyte, off_t) int
+foreign ttyname(int) *ubyte
+foreign ttyname_r(int, *ubyte, usize) int
+foreign ualarm(useconds_t, useconds_t) useconds_t
+foreign unlink(*ubyte) int
+foreign usleep(useconds_t) int
+foreign vfork() pid_t
+foreign write(int, ptr, usize) long

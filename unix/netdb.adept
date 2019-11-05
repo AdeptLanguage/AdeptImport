@@ -1,0 +1,171 @@
+/*
+ * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-
+ * Repurposed 'netdb.h' for usage in Adept
+ * Isaac Shelton - November 5th 2019
+ * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-
+ *
+ * Portions Copyright (c) 1999-2003 Apple Computer, Inc. All Rights
+ * Reserved.
+ * 
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this
+ * file.
+ * 
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ *
+ * Copyright (c) 2000-2009 Apple Inc. All rights reserved.
+ *
+ * @APPLE_LICENSE_HEADER_START@
+ * 
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this
+ * file.
+ * 
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ * 
+ * @APPLE_LICENSE_HEADER_END@
+ */
+/*
+ * ++Copyright++ 1980, 1983, 1988, 1993
+ * -
+ * Copyright (c) 1980, 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
+ *
+ *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
+ */
+
+import 'unix/socklen_t.adept'
+import 'unix/netinet/in.adept'
+
+struct hostent (h_name *ubyte, h_aliases **ubyte, h_addrtype int, h_length int, h_addr_list **ubyte)
+struct netent (n_name *ubyte, n_aliases **ubyte, n_addrtype int, n_net uint)
+struct protoent (p_name *ubyte, p_aliases **ubyte, p_proto int)
+struct servent (s_name *ubyte, s_aliases **ubyte, s_port int, s_proto *ubyte)
+
+// NOTE: 'ai_next' is of type 'ptr' because the compiler can't handle self-referencing pointer '*addrinfo'
+// Isaac Shelton - Nov 5th 2019
+struct addrinfo (ai_flags, ai_family, ai_socktype, ai_protocol int, ai_addrlen socklen_t, ai_canonname *ubyte, ai_addr *sockaddr, ai_next ptr)
+
+IPPORT_RESERVED == 1024
+
+AI_PASSIVE	== 0x00000001
+AI_CANONNAME	== 0x00000002
+AI_NUMERICHOST	== 0x00000004
+AI_NUMERICSERV	== 0x00001000
+AI_V4MAPPED	== 0x00000800
+AI_ALL == 0x00000100
+AI_ADDRCONFIG ==	0x00000400
+
+NI_NOFQDN	== 0x00000001
+NI_NUMERICHOST	== 0x00000002
+NI_NAMEREQD	== 0x00000004
+NI_NUMERICSERV	== 0x00000008
+NI_NUMERICSCOPE == 0x00000100
+NI_DGRAM	== 0x00000010
+
+EAI_AGAIN    == 2
+EAI_BADFLAGS ==	3
+EAI_FAIL     == 4
+EAI_FAMILY   == 5
+EAI_MEMORY   == 6
+EAI_NONAME   == 8
+EAI_SERVICE  == 9
+EAI_SOCKTYPE ==	10
+EAI_SYSTEM   ==	11
+EAI_OVERFLOW ==	14
+
+external h_errno int
+foreign herror(*ubyte) void
+foreign hstrerror(int) *ubyte
+
+foreign endhostent() void
+foreign endnetent() void
+foreign endprotoent() void
+foreign endservent() void
+foreign freeaddrinfo(*addrinfo) void
+foreign gai_strerror(int) *ubyte
+foreign getaddrinfo(*ubyte, *ubyte, *addrinfo, **addrinfo) int
+foreign gethostbyaddr(ptr, socklen_t, int) *hostent
+foreign gethostbyname(*ubyte) *hostent
+foreign gethostent() *hostent
+foreign getnameinfo(*sockaddr, socklen_t, *ubyte, socklen_t, *ubyte, socklen_t, int) int
+foreign getnetbyaddr(uint, int) *netent
+foreign getnetbyname(*ubyte) *netent
+foreign getnetent() *netent
+foreign getprotobyname(*ubyte) *protoent
+foreign getprotobynumber(int) *protoent
+foreign getprotoent() *protoent
+foreign getservbyname(*ubyte, *ubyte) *servent
+foreign getservbyport(int, *ubyte) *servent
+foreign getservent() *servent
+foreign sethostent(int) void
+foreign setnetent(int) void
+foreign setprotoent() int
+foreign setservent(int) void
