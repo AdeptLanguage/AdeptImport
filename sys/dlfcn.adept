@@ -1,2 +1,3 @@
 // Moved 'sys/dlfnc.adept' to 'unix/dlfnc.adept' in Adept 2.2
-import 'unix/dlfnc.adept'
+
+import 'unix/dlfcn.adept'
