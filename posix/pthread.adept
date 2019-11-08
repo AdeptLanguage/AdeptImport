@@ -1,21 +1,36 @@
 
 #if __windows__
     foreign 'windows_libpthread.a'
+    struct pthread_t (_opaque ptr)
+    struct pthread_mutex_t (_opaque ptr)
+    struct pthread_cond_t (_opaque ptr)
+    struct pthread_rwlock_t (_opaque ptr)
+    struct pthread_once_t (_opaque int)
+    struct pthread_mutexattr_t (_opaque uint)
+    struct pthread_key_t (_opaque uint)
+    struct pthread_condattr_t (_opaque int)
+    struct pthread_rwlockattr_t (_opaque int)
+    struct pthread_attr_t (p_state uint, stack ptr, s_size usize, param sched_param)
+    struct sched_param (sched_priority int)
+#else
+    #unless __macos__
+        #print "Warning: 'posix/pthread.adept' guessing sizes of types"
+    #end
+    
+    struct pthread_t (_opaque 1024 ulong)
+    struct pthread_mutex_t (_opaque 8 ulong)
+    struct pthread_cond_t (_opaque 6 ulong)
+    struct pthread_rwlock_t (_opaque 25 ulong)
+    struct pthread_once_t (_opaque 2 ulong)
+    struct pthread_mutexattr_t (_opaque 8 ulong)
+    struct pthread_key_t (_opaque ulong)
+    struct pthread_condattr_t (_opaque 2 ulong)
+    struct pthread_rwlockattr_t (_opaque 3 ulong)
+    struct pthread_attr_t (_opaque 8 ulong)
+    struct sched_param (sched_priority int)
 #end
 
 import 'sys/ctime.adept'
-
-struct pthread_t (_opaque ptr)
-struct pthread_mutex_t (_opaque ptr)
-struct pthread_cond_t (_opaque ptr)
-struct pthread_rwlock_t (_opaque ptr)
-struct pthread_once_t (_opaque int)
-struct pthread_mutexattr_t (_opaque uint)
-struct pthread_key_t (_opaque uint)
-struct pthread_condattr_t (_opaque int)
-struct pthread_rwlockattr_t (_opaque int)
-struct pthread_attr_t (p_state uint, stack ptr, s_size usize, param sched_param)
-struct sched_param (sched_priority int)
 struct timespec (tv_sec time_t, tv_nsec int)
 
 foreign pthread_attr_destroy(*pthread_attr_t) int

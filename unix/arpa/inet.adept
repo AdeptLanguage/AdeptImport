@@ -92,7 +92,7 @@ import 'unix/in_addr_t.adept'
 import 'unix/socklen_t.adept'
 import 'unix/netinet/in.adept'
 
-#if little_endian
+#if __little_endian__
     func htonl(x uint) uint = swapEndiannessUInt(x)
     func ntohl(x uint) uint = swapEndiannessUInt(x)
     func htons(x ushort) ushort = swapEndiannessUShort(x)

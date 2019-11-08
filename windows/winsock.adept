@@ -4,26 +4,26 @@ pragma windows_only
 foreign 'libws2_32.a'
 
 struct WSADATA (
-	wVersion       short,
-	wHighVersion   short,
-	iMaxSockets    ushort,
-	iMaxUdpDg      ushort,
-	lpVendorInfo   *ubyte,
-	szDescription  257 ubyte,
-	szSystemStatus 129 ubyte
+    wVersion       short,
+    wHighVersion   short,
+    iMaxSockets    ushort,
+    iMaxUdpDg      ushort,
+    lpVendorInfo   *ubyte,
+    szDescription  257 ubyte,
+    szSystemStatus 129 ubyte
 )
 
 // NOTE: 'ai_next' is of type 'ptr' because the compiler can't handle self-referencing pointer '*addrinfo'
 // Isaac Shelton - Nov 5th 2019
 struct addrinfo (
-	ai_flags int,
-	ai_family int,
-	ai_socktype int,
-	ai_protocol int,
-	ai_addrlen usize,
-	ai_canonname *ubyte,
-	ai_addr *sockaddr,
-	ai_next ptr
+    ai_flags int,
+    ai_family int,
+    ai_socktype int,
+    ai_protocol int,
+    ai_addrlen usize,
+    ai_canonname *ubyte,
+    ai_addr *sockaddr,
+    ai_next ptr
 )
 
 struct sockaddr (sa_family ushort, sa_data 14 ubyte)
@@ -38,6 +38,8 @@ struct hostent (h_name *ubyte, h_aliases **ubyte, h_addrtype short, h_length sho
 struct netent (n_name *ubyte, n_aliases **ubyte, n_addrtype short, n_net uint)
 struct servent (s_name *ubyte, s_aliases **ubyte, s_proto *ubyte, s_port short)
 struct protoent (p_name *ubyte, p_aliases **ubyte, p_proto short)
+
+struct timeval (tv_sec int, tv_usec int)
 
 alias SOCKET = *uint
 
