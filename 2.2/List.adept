@@ -166,7 +166,7 @@ func remove(this *<$T> List, index usize) {
 func get(this *<$T> List, index usize) $T {
     #if list_bounds_checks
         if index < 0 || index >= this.length {
-            printf('<$T> List Error: get() index out of range')
+            printf('<$T> List Error: get() index out of range\n')
             return this.items[0]
         }
     #end
@@ -177,7 +177,7 @@ func get(this *<$T> List, index usize) $T {
 func getPointer(this *<$T> List, index usize) *$T {
     #if list_bounds_checks
         if index < 0 || index >= this.length {
-            printf('<$T> List Error: getPointer() index out of range')
+            printf('<$T> List Error: getPointer() index out of range\n')
             return this.items
         }
     #end

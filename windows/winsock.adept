@@ -194,9 +194,13 @@ import 'machine/endian.adept'
     func ntohl(x uint) uint = swapEndiannessUInt(x)
     func htons(x ushort) ushort = swapEndiannessUShort(x)
     func ntohs(x ushort) ushort = swapEndiannessUShort(x)
+    func hton64(x ulong) ulong = swapEndiannessULong(x)
+    func ntoh64(x ulong) ulong = swapEndiannessULong(x)
 #else
     func htonl(x uint) uint = x
     func ntohl(x uint) uint = x
     func htons(x ushort) ushort = x
     func ntohs(x ushort) ushort = x
+    func hton64(x ulong) ulong = x
+    func ntoh64(x ulong) ulong = x
 #end

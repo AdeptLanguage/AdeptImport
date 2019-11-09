@@ -80,7 +80,7 @@
  *    $Id: inet.h,v 1.10 2006/02/01 18:09:47 majka Exp $
  */
 
-#default no_arpa_inet_extras false
+#default arpa_inet_extras false
 
 #if __windows__
     #print_error "File 'unix/arpa/inet.adept' is not meant for Windows, use 'windows/winsock.adept' instead"
@@ -97,11 +97,15 @@ import 'unix/netinet/in.adept'
     func ntohl(x uint) uint = swapEndiannessUInt(x)
     func htons(x ushort) ushort = swapEndiannessUShort(x)
     func ntohs(x ushort) ushort = swapEndiannessUShort(x)
+    func hton64(x ulong) ulong = swapEndiannessULong(x)
+    func ntoh64(x ulong) ulong = swapEndiannessULong(x)
 #else
     func htonl(x uint) uint = x
     func ntohl(x uint) uint = x
     func htons(x ushort) ushort = x
     func ntohs(x ushort) ushort = x
+    func hton64(x ulong) ulong = x
+    func ntoh64(x ulong) ulong = x
 #end
 
 foreign inet_addr(*ubyte) in_addr_t
@@ -110,7 +114,7 @@ foreign inet_ntop(int, ptr, *ubyte, socklen_t) *ubyte
 foreign inet_pton(int, *ubyte, ptr) int
 
 /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
-#if __macos__ && !no_arpa_inet_extras
+#if __macos__ && arpa_inet_extras
     foreign ascii2addr(int, *ubyte, ptr) int
     foreign addr2ascii(int, ptr, int, *ubyte) *ubyte
     foreign inet_aton(*ubyte, *in_addr) int
