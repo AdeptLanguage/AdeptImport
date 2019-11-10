@@ -1,0 +1,5 @@
+
+import 'unix/fd_set.adept'
+import 'unix/timeval.adept'
+
+foreign select(int, *fd_set, *fd_set, *fd_set, *timeval) int

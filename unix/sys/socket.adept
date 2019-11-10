@@ -102,8 +102,8 @@
     #print "Warning: Guessing for struct layouts in 'sys/socket.adept'"
 #end
 
-import 'sys/ctime.adept'
 import 'unix/iovec_t.adept'
+import 'unix/timeval.adept'
 import 'unix/socklen_t.adept'
 import 'unix/sa_family_t.adept'
 
@@ -115,9 +115,6 @@ struct sockaddr_storage (ss_len ubyte, ss_family sa_family_t, __ss_pad1 6 ubyte,
 struct msghdr (msg_name ptr, msg_namelen socklen_t, msg_iov *iovec, msg_iovlen int, msg_control ptr, msg_controllen socklen_t, msg_flags int)
 struct cmsghdr (cmsg_len socklen_t, cmsg_level int, cmsg_type int /* followed by data array */)
 struct linger (l_onoff int, l_linger int)
-
-alias suseconds_t = int
-struct timeval (tv_sec time_t, tv_usec suseconds_t)
 
 SCM_RIGHTS == 0x01
 

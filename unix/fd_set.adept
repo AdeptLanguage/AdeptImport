@@ -1,0 +1,25 @@
+
+FD_SETSIZE == 1024
+
+struct fd_set (fds_bits 32 uint)
+
+func FD_ISSET(n int, p *fd_set) bool {
+    mask uint = 1 <<< (n % 32)
+    return p.fds_bits[n / 32] & mask
+}
+
+func FD_SET(n int, p *fd_set) {
+    mask uint = 1 <<< (n % 32)
+    target *uint = p.fds_bits at (n / 32)
+    *target = *target | mask
+}
+
+func FD_CLR(n int, p *fd_set) {
+    mask uint = 1 <<< (n % 32)
+    target *uint = p.fds_bits at (n / 32)
+    *target = *target & ~mask
+}
+
+func FD_ZERO(p *fd_set) {
+    repeat 32, p.fds_bits[idx] = 0
+}
