@@ -43,7 +43,7 @@ struct timeval (tv_sec int, tv_usec int)
 
 alias SOCKET = *uint
 
-INVALID_SOCKET == cast SOCKET 0xFFFFFFFFFFFFFFFFFF
+INVALID_SOCKET == cast SOCKET 0xFFFFFFFFFFFFFFFFFFul
 SOCKET_ERROR == -1
 
 AI_PASSIVE                == 0x00000001
@@ -154,6 +154,53 @@ INADDR_LOOPBACK == 0x7f000001
 INADDR_BROADCAST == 0xffffffff
 INADDR_NONE == 0xffffffff
 
+SOL_SOCKET == 0xffff
+
+SO_DEBUG                 == 0x0001
+SO_ACCEPTCONN            == 0x0002
+SO_REUSEADDR             == 0x0004
+SO_KEEPALIVE             == 0x0008
+SO_DONTROUTE             == 0x0010
+SO_BROADCAST             == 0x0020
+SO_USELOOPBACK           == 0x0040
+SO_LINGER                == 0x0080
+SO_OOBINLINE             == 0x0100
+SO_DONTLINGER            == ~SO_LINGER
+SO_SNDBUF                == 0x1001
+SO_RCVBUF                == 0x1002
+SO_SNDLOWAT              == 0x1003
+SO_RCVLOWAT              == 0x1004
+SO_SNDTIMEO              == 0x1005
+SO_RCVTIMEO              == 0x1006
+SO_ERROR                 == 0x1007
+SO_TYPE                  == 0x1008
+SO_CONNDATA              == 0x7000
+SO_CONNOPT               == 0x7001
+SO_DISCDATA              == 0x7002
+SO_DISCOPT               == 0x7003
+SO_CONNDATALEN           == 0x7004
+SO_CONNOPTLEN            == 0x7005
+SO_DISCDATALEN           == 0x7006
+SO_DISCOPTLEN            == 0x7007
+SO_OPENTYPE              == 0x7008
+SO_SYNCHRONOUS_ALERT     == 0x10
+SO_SYNCHRONOUS_NONALERT  == 0x20
+SO_MAXDG                 == 0x7009
+SO_MAXPATHDG             == 0x700A
+SO_UPDATE_ACCEPT_CONTEXT == 0x700B
+SO_CONNECT_TIME          == 0x700C
+TCP_NODELAY              == 0x0001
+TCP_BSDURGENT            == 0x7000
+
+FIONREAD == 1074030207
+FIONBIO == -2147195266
+FIOASYNC == -2147195267
+SIOCSHIWAT == -2147192064
+SIOCGHIWAT == 1074033409
+SIOCSLOWAT == -2147192062
+SIOCGLOWAT == 1074033411
+SIOCATMARK == 1074033415
+
 alias socklen_t = int
 
 foreign WSAStartup(ushort, *WSADATA) int
@@ -162,21 +209,21 @@ foreign WSACleanup() void
 foreign socket(int, int, int) SOCKET
 foreign freeaddrinfo(*addrinfo) void
 foreign bind(SOCKET, *sockaddr, int) int
-foreign closesocket(SOCKET) void
+foreign closesocket(SOCKET) int
 foreign listen(SOCKET, int) int
 foreign accept(SOCKET, *sockaddr, *int) SOCKET
-foreign recv(SOCKET, *ubyte, int, int) int
+foreign recv(SOCKET, ptr, int, int) int
 foreign connect(SOCKET, *sockaddr, int) int
-foreign send(SOCKET, *ubyte, int, int) int
+foreign send(SOCKET, ptr, int, int) int
 foreign ioctlsocket(SOCKET, long, *uint) int
 foreign getpeername(SOCKET, *sockaddr, *int) int
 foreign getsockname(SOCKET, *sockaddr, *int) int;
 foreign getsockopt(SOCKET, int, int, *ubyte, *int) int
 foreign inet_addr(*ubyte) uint
 foreign inet_ntoa(in_addr) *ubyte
-foreign recvfrom(SOCKET, *ubyte, int, int, *sockaddr, *int) int
-foreign sendto(SOCKET, *ubyte, int, int, *sockaddr, int) int
-foreign setsockopt(SOCKET, int, int, *ubyte, int) int
+foreign recvfrom(SOCKET, ptr, int, int, *sockaddr, *int) int
+foreign sendto(SOCKET, ptr, int, int, *sockaddr, int) int
+foreign setsockopt(SOCKET, int, int, ptr, socklen_t) int
 foreign shutdown(SOCKET, int) int
 
 foreign gethostbyaddr(*ubyte, int, int) *hostent
@@ -187,9 +234,11 @@ foreign getservbyname(*ubyte, *ubyte) *servent
 foreign getprotobynumber(int) *protoent
 foreign getprotobyname(*ubyte) *protoent
 
+foreign WSAGetLastError() int
+
 import 'machine/endian.adept'
 
-#if little_endian
+#if __little_endian__
     func htonl(x uint) uint = swapEndiannessUInt(x)
     func ntohl(x uint) uint = swapEndiannessUInt(x)
     func htons(x ushort) ushort = swapEndiannessUShort(x)
