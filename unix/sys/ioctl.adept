@@ -1,0 +1,24 @@
+
+#if __macos__
+    foreign ioctl(int, ulong, ...) int
+    FIOCLEX == 536897025
+    FIONCLEX == 536897026
+    FIONREAD == 1074030207
+    FIONBIO == 2147772030
+    FIOASYNC == 2147772029
+    FIOSETOWN == 2147772028
+    FIOGETOWN == 1074030203
+    FIODTYPE == 1074030202
+#else
+    #print "Warning: Unrecognized platform, 'Socket.adept' may not have proper definitions"
+    
+    foreign ioctl(int, ulong, ptr) int
+    FIOCLEX == 536897025
+    FIONCLEX == 536897026
+    FIONREAD == 1074030207
+    FIONBIO == 2147772030
+    FIOASYNC == 2147772029
+    FIOSETOWN == 2147772028
+    FIOGETOWN == 1074030203
+    FIODTYPE == 1074030202
+#end
