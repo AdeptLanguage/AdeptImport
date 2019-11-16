@@ -1,0 +1,42 @@
+
+#if __windows__
+foreign 'OpenAL32.dll'
+#elif __macos__
+foreign 'OpenAL' framework
+#end
+
+alias ALenum = int
+
+foreign alGetError() uint
+foreign alListenerfv(uint, ptr) void
+foreign alSourcePlay(uint) void
+foreign alSourceStop(uint) void
+foreign alDeleteBuffers(int, *uint) void
+foreign alDeleteSources(int, *uint) void
+foreign alGenBuffers(int, *uint) void
+foreign alGenSources(int, *uint) void
+foreign alBufferData(uint, uint, ptr, usize, usize) void
+foreign alSourcei(uint, uint, uint) void
+foreign alSourcef(uint, uint, float) void
+foreign alSourcefv(uint, uint, *float) void
+foreign alGetSourcef(uint, ALenum, *float) void
+foreign alGetSource3f(uint, ALenum, *float, *float, *float) void
+foreign alGetSourcefv(uint, ALenum, *float) void
+foreign alGetSourcei(uint, ALenum, *int) void
+foreign alGetSource3i(uint, ALenum, *int, *int, *int) void
+foreign alGetSourceiv(uint, ALenum, *int) void
+
+AL_NO_ERROR == 0ui
+AL_POSITION == 0x1004ui
+AL_VELOCITY == 0x1006ui
+AL_PITCH == 0x1003ui
+AL_LOOPING == 0x1007ui
+AL_ORIENTATION == 0x100Fui
+AL_BUFFER == 0x1009ui
+AL_GAIN == 0x100Aui
+
+AL_SOURCE_STATE == 0x1010
+AL_INITIAL      == 0x1011
+AL_PLAYING      == 0x1012
+AL_PAUSED       == 0x1013
+AL_STOPPED      == 0x1014

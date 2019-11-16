@@ -1,0 +1,14 @@
+
+import 'openal/openal.adept'
+
+#if __windows__
+foreign 'libalut.dll'
+#elif __macos__
+foreign 'mac_libalut_static.a'
+#end
+
+foreign alutInit(*int, **ubyte) bool
+foreign alutExit() bool
+foreign alutGetError() uint
+foreign alutLoadWAVFile(*ubyte, *uint, *ptr, *usize, *usize, *bool) ptr
+foreign alutUnloadWAV(uint, ptr, usize, usize) void

@@ -77,8 +77,19 @@ func play(this *SoundPlayer) void {
     alSourcePlay(this.source_id)
 }
 
+func play(this *SoundPlayer, sound Sound) void {
+    this.bindSound(sound)
+    alSourcePlay(this.source_id)
+}
+
 func stop(this *SoundPlayer) void {
     alSourceStop(this.source_id)
+}
+
+func isPlaying(this *SoundPlayer) bool {
+    state int = undef
+    alGetSourcei(this.source_id, AL_SOURCE_STATE, &state)
+    return state == AL_PLAYING
 }
 
 func destroy(this *SoundPlayer) void {
@@ -99,6 +110,10 @@ func play(this *PlayableSound) void {
 
 func stop(this *PlayableSound) void {
     alSourceStop(this.player.source_id)
+}
+
+func isPlaying(this *PlayableSound) bool {
+    return this.player.isPlaying()
 }
 
 func destroy(this *PlayableSound) void {
