@@ -144,6 +144,15 @@ SO_SNDLOWAT  == 0x1003
 SO_SNDTIMEO  == 0x1005
 SO_TYPE      == 0x1008
 
+#if __macos__
+SO_NREAD         == 0x1020
+SO_NKE           == 0x1021
+SO_NOSIGPIPE     == 0x1022
+SO_NOADDRERR     == 0x1023
+SO_NWRITE        == 0x1024
+SO_REUSESHAREUID == 0x1025
+#end
+
 SOMAXCONN == 128
 
 MSG_CTRUNC    == 0x20
