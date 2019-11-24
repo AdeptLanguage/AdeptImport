@@ -4,7 +4,6 @@ pragma compiler_supports '2.2'
 import '2.2/math.adept'
 import '2.2/String.adept'
 import '2.2/Matrix4f.adept'
-import '2.2/Ownership.adept'
 
 import 'glfw/glfw.adept'
 import 'opengl/opengl.adept'
@@ -12,8 +11,6 @@ import 'stb/image.adept'
 import 'sys/ctime.adept'
 import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
-
-#default log_captain_texture_deletion false
 
 _captain_prepared bool
 _captain_window *GLFWwindow
@@ -344,41 +341,15 @@ func captClearColor(in color CaptColor) {
     glClear(GL_COLOR_BUFFER_BIT)
 }
 
-struct CaptTexture (id uint, ownership Ownership) {
+struct CaptTexture (id uint) {
     func isValid bool = this.id != 0
     
     func invalidate {
-        this.__defer__()
         this.id = 0
-        this.ownership = Ownership::REFERENCE
     }
     
-    func __defer__ {
-        if this.ownership != Ownership::OWN || this.id == 0, return
-        #if log_captain_texture_deletion
-        printf('[CaptTexture DELETION] id : %d\n', this.id)
-        #end
+    func destroy {
         glDeleteTextures(1, &this.id)
-    }
-    
-    func commit CaptTexture {
-        other POD CaptTexture = undef
-        other.id = this.id
-        other.ownership = Ownership::GIVEN
-        this.ownership = Ownership::REFERENCE
-        return other
-    }
-    
-    func donate CaptTexture {
-        defer this.id = 0
-        defer this.ownership = Ownership::DONATED
-        return this.commit()
-    }
-    
-    func __assign__(other POD CaptTexture) {
-        this.__defer__()
-        this.id = other.id
-        this.ownership = other.ownership == Ownership::GIVEN ? Ownership::OWN : Ownership::REFERENCE
     }
     
     func load(filename *ubyte) {
@@ -402,11 +373,6 @@ struct CaptTexture (id uint, ownership Ownership) {
     }
 }
 
-func __pass__(texture POD CaptTexture) CaptTexture {
-    texture.ownership = Ownership::REFERENCE
-    return texture
-}
-
 func captTexture(filename *ubyte) CaptTexture = captTexture(filename, true)
 func captTexture(filename String) CaptTexture = captTexture(filename, true)
 
@@ -424,7 +390,6 @@ func captTexture(filename *ubyte, approximate bool) CaptTexture {
         printf('RUNTIME ERROR: Cannot create CaptTexture before captStart() is called\n')
         printf('NOTE: Use captOnSetup() to load assets after captStart()\n')
         texture.id = 0
-        texture.ownership = Ownership::REFERENCE
         return texture
     }
     
@@ -433,7 +398,6 @@ func captTexture(filename *ubyte, approximate bool) CaptTexture {
 
     if image == null {
         texture.id = 0
-        texture.ownership = Ownership::REFERENCE
         return texture
     }
     
@@ -447,7 +411,6 @@ func captTexture(filename *ubyte, approximate bool) CaptTexture {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
     glBindTexture(GL_TEXTURE_2D, 0ui)
     stbi_image_free(image)
-    texture.ownership = Ownership::GIVEN
     return texture
 }
 
