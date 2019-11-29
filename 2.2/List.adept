@@ -201,7 +201,6 @@ func __defer__(this *<$T> List) {
 }
 
 func __pass__(list POD <$T> List) <$T> List {
-    list.ownership.pass()
     if      list.ownership == Ownership::OWN,   list.ownership = Ownership::REFERENCE
     else if list.ownership == Ownership::GIVEN, list.ownership = Ownership::OWN    
     return list
@@ -226,6 +225,14 @@ func reverse(this *<$T> List) void {
         this.items[idx] = this.items[this.length - idx - 1]
         this.items[this.length - idx - 1] = POD preserved
     }
+}
+
+func reduce(this *<$T> List) void {
+    if this.length > 0, this.remove(this.length - 1)
+}
+
+func reduce(this *<$T> List, amount usize) void {
+    repeat amount, if this.length > 0, this.remove(this.length - 1)
 }
 
 /*

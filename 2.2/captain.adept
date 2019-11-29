@@ -124,7 +124,7 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     
     _captain_shader.create('#version 400 core\nlayout(location = 0) in vec3 vp;\nlayout(location = 1) in vec2 texture_coords;\nuniform mat4 projection;\nuniform mat4 transformation;\nout vec2 uvs;\nvoid main() {\nuvs = texture_coords;\ngl_Position = projection * transformation * vec4(vp, 1.0);\n}',
-            '#version 400 core\nin vec2 uvs;\nout vec4 color;\nuniform sampler2D texture_sampler;\nuniform float opacity;\nvoid main(void) {\ncolor = texture(texture_sampler, uvs);\ncolor.a *= opacity;\nif(color.a == 0) discard;\n}')
+            '#version 400 core\nin vec2 uvs;\nout vec4 color;\nuniform sampler2D texture_sampler;\nuniform float opacity;\nvoid main(void) {\ncolor = texture(texture_sampler, uvs);\ncolor.a *= opacity;\n}')
     _captain_shader_transformation_location = _captain_shader.getUniformLocation('transformation')
     _captain_model = captTemporaryModel(1.0f, 1.0f)
     
@@ -147,7 +147,7 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
             previous_time += 1.0 / cast float _captain_step_fps
         }
         
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f)
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
         glfwGetFramebufferSize(_captain_window, &win_width, &win_height)
@@ -164,7 +164,7 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
         _captain_shader.uploadFloat(_captain_shader.getUniformLocation('opacity'), 1.0f)
         
         if _captain_draw as ptr, _captain_draw()
-                
+        
         glfwSwapBuffers(_captain_window)
         glfwPollEvents()
     }
@@ -530,19 +530,8 @@ struct CaptShader (program GLuint, vertex GLuint, fragment GLuint) {
 }
 
 func captDrawTexture(texture POD CaptTexture, in x, y, w, h float) {
-    glDisable(GL_DEPTH_TEST)
     transformation Matrix4f = undef
     transformation.translateFromIdentity(x, y, 0.0f)
-    transformation.scale(w, h, 1.0f)
-    _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
-    captBindTexture(texture)
-    _captain_model.draw()
-}
-
-func captDrawTexture(texture POD CaptTexture, in x, y, z, w, h float) {
-    glEnable(GL_DEPTH_TEST)
-    transformation Matrix4f = undef
-    transformation.translateFromIdentity(x, y, z)
     transformation.scale(w, h, 1.0f)
     _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
     captBindTexture(texture)
