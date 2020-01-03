@@ -34,10 +34,21 @@ func __length__(this *<$T> List) usize {
 }
 
 func add(this *<$T> List, item POD $T) {
+    if this.add(), this.items[this.length - 1] = item
+}
+
+func add(this *<$T> List) successful {
     #if list_preparation_checks
         if this.prepared != 0 {
             printf('<$T> List Error: adding to list that was prepared to expect more data than given\n')
-            return
+            return false
+        }
+    #end
+    
+    #if list_ownership_checks
+        if this.ownership != Ownership::OWN && this.items != null {
+            printf('<$T> List Error: can\'t add to list via reference\n')
+            return false
         }
     #end
     
@@ -54,16 +65,9 @@ func add(this *<$T> List, item POD $T) {
         this.items = new_items
     }
     
-    #if list_ownership_checks
-        if this.ownership != Ownership::OWN {
-            printf('<$T> List Error: can\'t add to list via reference\n')
-            return
-        }
-    #end
-    
     memset(this.items at this.length, 0, sizeof $T)
-    this.items[this.length] = item
     this.length += 1
+    return true
 }
 
 func remove(this *<$T> List, index usize) {
@@ -163,6 +167,36 @@ func remove(this *<$T> List, index usize) {
         this.length += length
     }
 #end
+
+func reserve(this *<$T> List, count usize) {
+    #if list_preparation_checks
+        if this.prepared != 0 {
+            printf('<$T> List Error: reserving space for list that was prepared to expect more data than given\n')
+            return
+        }
+    #end
+    
+    #if list_ownership_checks
+        if this.ownership != Ownership::OWN && this.items != null {
+            printf('<$T> List Error: can\'t reserve space for list via reference\n')
+            return
+        }
+    #end
+    
+    if this.items == null {
+        this.items = new undef $T * count
+        this.length = 0
+        this.capacity = count
+        this.ownership = Ownership::OWN
+    } else if this.capacity < count {
+        this.capacity = count
+        new_items *$T = new undef $T * this.capacity
+        memcpy(new_items, this.items, sizeof $T * this.length)
+        delete this.items
+        this.items = new_items
+        this.ownership = Ownership::OWN
+    }
+}
 
 func get(this *<$T> List, index usize) $T {
     #if list_bounds_checks

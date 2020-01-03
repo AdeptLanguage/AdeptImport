@@ -33,6 +33,7 @@ _captain_custom_view bool
 _captain_custom_view_ratio float
 _captain_view_preserve_ratio bool
 _captain_resizable bool
+_captain_always_on_top bool
 _captain_model CaptModel
 _captain_shader_transformation_location GLint
 
@@ -95,6 +96,10 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     
     unless _captain_resizable {
         glfwWindowHint(GLFW_RESIZABLE, GL_FALSE)
+    }
+    
+    if _captain_always_on_top {
+        glfwWindowHint(GLFW_FLOATING, GL_TRUE)
     }
     
     monitor *GLFWmonitor = null
@@ -261,6 +266,16 @@ func captMouseViewPosition(out x, y *float) {
 func captResizable(resizable bool) {
     captEnsurePrepared()
     _captain_resizable = resizable
+}
+
+func captAlwaysOnTop(always_on_top bool) {
+    captEnsurePrepared()
+    _captain_always_on_top = always_on_top
+}
+
+func captHideCursor(hide bool) {
+    captEnsurePrepared()
+    glfwSetInputMode(_captain_window, GLFW_CURSOR, hide ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL)
 }
 
 func captOnSetup(in on_setup_func func() void) {
@@ -538,11 +553,21 @@ func captDrawTexture(texture POD CaptTexture, in x, y, w, h float) {
     _captain_model.draw()
 }
 
+func captDrawTextureUsingModel(model POD CaptModel, texture POD CaptTexture, in x, y float) {
+    transformation Matrix4f = undef
+    transformation.translateFromIdentity(x, y, 0.0f)
+    _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
+    captBindTexture(texture)
+    model.draw()
+}
+
 func captDrawOpacity(in value float) {
     _captain_shader.uploadFloat(_captain_shader.getUniformLocation('opacity'), value)
 }
 
-func captTemporaryModel(in w, h float) CaptModel {
+func captTemporaryModel(in w, h float) CaptModel = captTemporaryModel(w, h, false, false)
+
+func captTemporaryModel(in w, h float, in x_flip, y_flip bool) CaptModel {
     points_storage 18 float = undef
     uv_data_storage 12 float = undef
 
@@ -558,12 +583,68 @@ func captTemporaryModel(in w, h float) CaptModel {
     points[12] = w;      points[13] = 0.0f;   points[14] = 0.0f
     points[15] = w;      points[16] = h;      points[17] = 0.0f
 
+    // 2 3
+    // 1 6
+    
+    // 1, 2, 3, 1, 3, 4
+    uv_src 8 float = undef
+    uv_src[0]  = 0.0f; uv_src[1]  = 1.0f
+    uv_src[2]  = 0.0f; uv_src[3]  = 0.0f
+    uv_src[4]  = 1.0f; uv_src[5]  = 0.0f
+    uv_src[6]  = 1.0f;  uv_src[7] = 1.0f
+    
+    if x_flip {
+        // Swap 2 with 3 and 1 with 6
+        tmp 2 float = undef
+        tmp[0] = uv_src[2]
+        tmp[1] = uv_src[3]
+        uv_src[2] = uv_src[4]
+        uv_src[3] = uv_src[5]
+        uv_src[4] = tmp[0]
+        uv_src[5] = tmp[1]
+        tmp[0] = uv_src[0]
+        tmp[1] = uv_src[1]
+        uv_src[0] = uv_src[6]
+        uv_src[1] = uv_src[7]
+        uv_src[6] = tmp[0]
+        uv_src[7] = tmp[1]
+    }
+    
+    if y_flip {
+        // Swap 2 with 1 and 3 with 6
+        tmp 2 float = undef
+        
+        tmp[0] = uv_src[2]
+        tmp[1] = uv_src[3]
+        uv_src[2] = uv_src[0]
+        uv_src[3] = uv_src[1]
+        uv_src[0] = tmp[0]
+        uv_src[1] = tmp[1]
+        
+        tmp[0] = uv_src[4]
+        tmp[1] = uv_src[5]
+        uv_src[4] = uv_src[6]
+        uv_src[5] = uv_src[7]
+        uv_src[6] = tmp[0]
+        uv_src[7] = tmp[1]
+    }
+    
+    uv_data[0]  = uv_src[0]; uv_data[1]  = uv_src[1]
+    uv_data[2]  = uv_src[2]; uv_data[3]  = uv_src[3]
+    uv_data[4]  = uv_src[4]; uv_data[5]  = uv_src[5]
+    uv_data[6]  = uv_src[0]; uv_data[7]  = uv_src[1]
+    uv_data[8]  = uv_src[4]; uv_data[9]  = uv_src[5]
+    uv_data[10] = uv_src[6]; uv_data[11] = uv_src[7]
+    
+    /*
+    // LEFT OFF
     uv_data[0]  = 0.0f; uv_data[1]  = 1.0f
     uv_data[2]  = 0.0f; uv_data[3]  = 0.0f
     uv_data[4]  = 1.0f; uv_data[5]  = 0.0f
     uv_data[6]  = 0.0f; uv_data[7]  = 1.0f
     uv_data[8]  = 1.0f; uv_data[9]  = 0.0f
     uv_data[10] = 1.0f; uv_data[11] = 1.0f
+    */
     
     model CaptModel
     model.create(points, points_length, uv_data, uv_data_length)
