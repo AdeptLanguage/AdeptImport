@@ -10,14 +10,18 @@ import
 │
 ├───2.2 (Standard Library for Adept 2.2)
 │       basics.adept        (Basics of Standard Library)
+│
+│       audio.adept         (Experimental Audio IO) [experimental]
 │       Array.adept         (Minimal Array)
+│       captain.adept       (UI Graphics)
 │       List.adept          (Extendable List)
 │       Matrix4f.adept      (4x4 Float Matrix)
+│       math.adept          (Math Definitions)
 │       Ownership.adept     (Standard Ownership)
-│       String.adept        (Standard String)
-│       Vector3f.adept      (3 Float Vector)
 │       random.adept        (Random Numbers)
+│       String.adept        (Standard String)
 │       terminal.adept      (Terminal IO)
+│       Vector3f.adept      (3 Float Vector)
 │
 ├───adept (Legacy Support Library for Adept 1.1)
 │   │   conversion.adept    (Legacy support for data conversion)
@@ -33,8 +37,17 @@ import
 ├───glfw (GLFW 3 Interface)
 │       glfw.adept
 │
+├───machine (Machine Helpers)
+│       endian.adept
+│
+├───openal (OpenAL Interface)
+│       openal.adept
+│
 ├───opengl (OpenGL Interface)
 │       opengl.adept
+│
+├───posix (POSIX Definitions)
+│       pthread.adept
 │
 ├───stb (Sean Barrett's Public Domain Libraries)
 │       image.adept         (Public Domain Image Loader)
@@ -46,8 +59,36 @@ import
 │       cstdlib.adept
 │       cstring.adept
 │       ctime.adept
-│       dlfcn.adept [mac only]
 │
-└───windows (Windows Standard Libraries)
+├───unix (Unix Definitions) [unix only]
+│   │   dlfcn.adept
+│   │   fd_set.adept
+│   │   gid_t.adept
+│   │   in_addr_t.adept
+│   │   in_port_t.adept
+│   │   iovec_t.adept
+│   │   netdb.adept
+│   │   off_t.adept
+│   │   pid_t.adept
+│   │   sa_family_t.adept
+│   │   socklen_t.adept
+│   │   timeval.adept
+│   │   uid_t.adept
+│   │   unistd.adept
+│   │   useconds_t.adept
+│   │
+│   ├───arpa
+│   │       inet.adept
+│   │
+│   ├───netinet
+│   │       in.adept
+│   │       tcp.adept
+│   │
+│   └───sys
+│           ioctl.adept
+│           select.adept
+│           socket.adept
+│
+└───windows (Windows Standard Libraries) [windows only]
         winsock2.adept
 ```

@@ -5,6 +5,7 @@ import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
 
 enum StringOwnership (REFERENCE, OWN, GIVEN, DONATED)
+alias StringView = String
 
 struct String (
     array *ubyte,   length usize,
@@ -247,7 +248,7 @@ func first(this *String, sub String) long {
     if sub.length > this.length, return -1
     times usize = this.length - sub.length + 1
     repeat times,
-        if sub.equals(this.range(idx, sub.length)), return idx as long
+        if sub.equals(this.span(idx, sub.length)), return idx as long
     return -1
 }
 
@@ -262,7 +263,7 @@ func last(this *String, sub String) long {
     if sub.length > this.length, return -1
     times usize = this.length - sub.length + 1
     repeat times,
-        if sub.equals(this.range(this.length - idx - 1, sub.length)), return (this.length - idx - 1) as long
+        if sub.equals(this.span(this.length - idx - 1, sub.length)), return (this.length - idx - 1) as long
     return -1
 }
 
@@ -289,11 +290,16 @@ func reversed(this *String) String {
 }
 
 func sub(this *String, a, n usize) String {
-    range String = this.range(a, n)
-    return range.clone()
+    span String = this.span(a, n)
+    return span.clone()
 }
 
-func range(this *String, a, n usize) String {
+func segment(this *String, a, b usize) String {
+    span String = this.range(a, b)
+    return span.clone()
+}
+
+func span(this *String, a, n usize) StringView {
     substring POD String = undef
     substring.array = this.array at a
     substring.length = n
@@ -302,8 +308,134 @@ func range(this *String, a, n usize) String {
     return substring
 }
 
+func range(this *String, a, b usize) StringView {
+    substring POD String = undef
+    substring.array = this.array at a
+    substring.length = b - a
+    substring.capacity = this.capacity - a
+    substring.ownership = StringOwnership::REFERENCE
+    return substring
+}
+
 func reduce(this *String, amount usize) {
     this.length = cast bool (amount > this.length) ? 0uz : this.length - amount
+}
+
+func reduced(this *String, amount usize) String {
+    unless amount < this.length, return ""
+    reduced POD String = undef
+    reduced.array = new ubyte * (this.length - amount)
+    reduced.length = this.length - amount
+    reduced.capacity = reduced.length
+    reduced.ownership = StringOwnership::GIVEN
+    memcpy(reduced.array, this.array, reduced.length)
+    return reduced
+}
+
+func reducedView(this *String, amount usize) StringView {
+    unless amount < this.length, return ""
+    reduced POD String = undef
+    reduced.array = this.array
+    reduced.length = this.length - amount
+    reduced.capacity = this.capacity
+    reduced.ownership = StringOwnership::REFERENCE
+    return reduced
+}
+
+func decapitate(this *String, amount usize) {
+    if this.ownership == StringOwnership::OWN {
+        memmove(this.array, this.array at amount, this.length - amount)
+        this.length -= amount
+    } else if this.ownership == StringOwnership::REFERENCE {
+        *this = this.clone()
+        memmove(this.array, this.array at amount, this.length - amount)
+        this.length -= amount
+    }
+}
+
+func decapitated(this *String, amount usize) String {
+    unless amount < this.length, return ""
+    decapitated POD String = undef
+    decapitated.array = new ubyte * (this.length - amount)
+    decapitated.length = this.length - amount
+    decapitated.capacity = decapitated.length
+    decapitated.ownership = StringOwnership::GIVEN
+    memcpy(decapitated.array, this.array at amount, decapitated.length)
+    return decapitated
+}
+
+func decapitatedView(this *String, amount usize) StringView {
+    unless amount < this.length, return ""
+    decapitated POD String = undef
+    decapitated.array = this.array at amount
+    decapitated.length = this.length - amount
+    decapitated.capacity = this.capacity
+    decapitated.ownership = StringOwnership::REFERENCE
+    return decapitated
+}
+
+func remove(this *String, a, n usize) {
+    if this.ownership == StringOwnership::REFERENCE {
+        *this = this.clone()
+    }
+
+    if a > this.length, return // Don't do anything if index is out of bounds
+
+    if a + n >= this.length {
+        // Remove everything after index 'a'
+        this.reduce(this.length - a)
+        return
+    }
+
+    if a == 0 {
+        // Remove everything before 'n'
+        this.decapitate(n)
+        return
+    }
+
+    // Join two non-removed sections together
+    *this = this.range(0, a) + this.range(a + n, this.length)
+}
+
+func removed(this *String, a, n usize) String {
+    return this.range(0, a) + this.range(a + n, this.length)
+}
+
+func omit(this *String, a, b usize) {
+    this.remove(a, b - a)
+}
+
+func omitted(this *String, a, b usize) String {
+    return this.removed(a, b - a)
+}
+
+func append(this *String, other String) {
+    if this.ownership != StringOwnership::OWN {
+        new_array *ubyte = new undef ubyte * (this.length + other.length)
+        new_length usize = this.length + other.length
+        memcpy(new_array, this.array, this.length)
+        memcpy(new_array at this.length, other.array, other.length)
+        this.array = new_array
+        this.length = new_length
+        this.capacity = new_length
+        this.ownership = StringOwnership::OWN
+        return
+    }
+
+    if this.length + other.length > this.capacity {
+        this.capacity = this.capacity == 0 ? this.length + other.length : this.capacity * 2
+        new_array *ubyte = new undef ubyte
+        memcpy(new_array, this.array, this.length)
+        delete this.array
+        this.array = new_array
+    }
+    
+    memcpy(this.array at this.length, other.array, other.length)
+    this.length += other.length
+}
+
+func appendOnce(this *String, other String) {
+    unless this.endsWith(other), this.append(other)
 }
 
 func clone(this *String) String {
@@ -328,13 +460,13 @@ func reference(this *String) String {
 func replaceOnce(this *String, from ubyte, to String) String {
     pos long = this.first(from)
     if pos < 0, return this.reference()
-    return this.range(0, pos) + to + this.range(pos + 1, this.length - pos - 1)
+    return this.range(0, pos) + to + this.range(pos + 1, this.length)
 }
 
 func replaceOnce(this *String, from, to String) String {
     pos long = this.first(from)
     if pos < 0, return this.reference()
-    return this.range(0, pos) + to + this.range(pos + from.length, this.length - pos - from.length)
+    return this.range(0, pos) + to + this.range(pos + from.length, this.length)
 }
 
 func replace(this *String, from ubyte, to String) String {
@@ -343,7 +475,7 @@ func replace(this *String, from ubyte, to String) String {
     until break {
         pos long = result.first(from)
         if pos < 0, break
-        result = result.range(0, pos) + to + result.range(pos + 1, result.length - pos - 1)
+        result = result.range(0, pos) + to + result.range(pos + 1, result.length)
     }
     
     return result.commit()
@@ -355,7 +487,7 @@ func replace(this *String, from, to String) String {
     until break {
         pos long = result.first(from)
         if pos < 0, break
-        result = result.range(0, pos) + to + result.range(pos + from.length, result.length - pos - from.length)
+        result = result.range(0, pos) + to + result.range(pos + from.length, result.length)
     }
     
     return result.commit()
@@ -392,3 +524,51 @@ func stringConstant(null_terminated *ubyte) String {
     reference.ownership = StringOwnership::REFERENCE
     return reference
 }
+
+func __array__(this *String) *ubyte = this.array
+func __length__(this *String) usize = this.length
+
+// --------------------------------------------------------
+
+func startsWith(this *String, other String) bool {
+    if this.length < other.length, return false
+    repeat other.length, if this.array[idx] != other.array[idx], return false
+    return true
+}
+
+func endsWith(this *String, other String) bool {
+    if this.length < other.length, return false
+    repeat other.length, if this.array[this.length - other.length + idx] != other.array[idx], return false
+    return true
+}
+
+func longestLength(this *String) usize {
+    max, count usize = 0
+
+    each ubyte in *this {
+        if it == '\n'ub {
+            if count > max, max = count
+            count = 0
+            continue
+        }
+        count++
+    }
+    
+    return count > max ? count : max
+}
+
+func count(this *String, character ubyte) usize {
+    count usize = 0
+    each ubyte in *this, if it == character, count++
+    return count
+}
+
+func empty(this *String) bool = this.length == 0
+
+func contains(this *String, needle String) bool = this.first(needle) != -1
+func contains(haystack String, needle String) bool = haystack.first(needle) != -1
+
+func startsWith(string String, other POD String) bool = string.startsWith(other)
+func endsWith(string String, other POD String) bool = string.endsWith(other)
+func longestLength(string String) usize = string.longestLength()
+func count(string String, character ubyte) usize = string.count(character)
