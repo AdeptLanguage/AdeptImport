@@ -1,0 +1,1341 @@
+
+import 'sys/cstdio.adept'
+import 'sys/cerrno.adept'
+import 'sys/cstring.adept'
+
+#if __windows__
+foreign sscanf_s(buffer *ubyte, format *ubyte, ...)
+#end
+
+struct tinyobj_material_t (
+    name *ubyte,
+    ambient 3 float,
+    diffuse 3 float,
+    specular 3 float,
+    transmittance 3 float,
+    emission 3 float,
+    shininess float,
+    ior float, // index of refraction
+    dissolve float, // 1 == opaque, 0 == transparent
+    illum int, // illumination
+    pad0 int,
+    ambient_texname *ubyte,
+    diffuse_texname *ubyte,
+    specular_texname *ubyte,
+    specular_highlight_texname *ubyte,
+    bump_texname *ubyte,
+    displacement_texname *ubyte,
+    alpha_texname *ubyte
+)
+
+struct tinyobj_shape_t (
+    name *ubyte, // group or object name
+    face_offset uint,
+    length uint
+)
+
+struct tinyobj_vertex_index_t (v_idx, vt_idx, vn_idx int)
+
+struct tinyobj_attrib_t (
+    num_vertices uint,
+    num_normals uint,
+    num_texcoords uint,
+    num_faces uint,
+    num_face_num_verts uint,
+    pad0 int,
+    vertices *float,
+    normals *float,
+    texcoords *float,
+    faces *tinyobj_vertex_index_t,
+    face_num_verts *int,
+    material_ids *int
+)
+
+TINYOBJ_FLAG_TRIANGULATE == 1
+TINYOBJ_INVALID_INDEX == 0x80000000
+TINYOBJ_SUCCESS == 0
+TINYOBJ_ERROR_EMPTY == -1
+TINYOBJ_ERROR_INVALID_PARAMETER == -2
+TINYOBJ_ERROR_FILE_OPERATION == -3
+
+TINYOBJ_MAX_FACES_PER_F_LINE == 16
+
+func tinyobj_IS_SPACE(x ubyte) bool = x == ' 'ub || x == '\t'ub
+func tinyobj_IS_DIGIT(x ubyte) bool = cast bool (x - '0'ub < 10ub)
+func tinyobj_IS_NEW_LINE(x ubyte) bool = x == '\r'ub || x == '\n'ub || x == 0x00
+
+func tinyobj_skip_space(token **ubyte) void {
+    while tinyobj_IS_SPACE((*token)[0]), (*token) += sizeof ubyte as ptr
+}
+
+func tinyobj_skip_space_and_cr(token **ubyte) void {
+    while tinyobj_IS_SPACE((*token)[0]) || (*token)[0] == '\r'ub, (*token) += sizeof ubyte as ptr
+}
+
+func tinyobj_until_space(token *ubyte) int {
+    p *ubyte = token
+    until p[0] == 0x00ub || p[0] == ' 'ub || p[0] == '\t'ub || p[0] == '\r'ub {
+        p += sizeof ubyte as ptr
+    }
+    return cast int (p - token)
+}
+
+func tinyobj_length_until_newline(token *ubyte, n usize) usize {
+    len usize = undef
+    
+    // Assume token[n - 1] = 0x00ub
+    len = 0; while len < n - 1 {
+        if token[len] == '\n'ub, break
+        if token[len] == '\r'ub && ((len < (n - 2)) && (token[len + 1] != '\n'ub)), break
+        len++
+    }
+    return len
+}
+
+func tinyobj_length_until_line_feed(token *ubyte, n usize) usize {
+    len usize = undef
+    
+    // Assume token[n - 1] = 0x00ub
+    len = 0; while len < n {
+        if token[len] == '\n'ub || token[len] == '\r'ub, break
+        len++
+    }
+    
+    return len
+}
+
+func tinyobj_my_atoi(c *ubyte) int {
+    value int = 0
+    sign int = 1
+    if *c == '+'ub || *c == '-'ub {
+        if *c == '-'ub, sign = -1
+        c += sizeof ubyte as ptr
+    }
+    while *c >= '0'ub && *c <= '9'ub {
+        value *= 10
+        value += cast int (*c - '0'ub)
+        c += sizeof ubyte as ptr
+    }
+    return value * sign
+}
+
+func tinyobj_fixIndex(index int, n usize) int {
+    if index > 0,  return index - 1
+    if index == 0, return 0
+    return cast int (n + index)
+}
+
+func tinyobj_parseRawTriple(token **ubyte) tinyobj_vertex_index_t {
+    vi tinyobj_vertex_index_t = undef
+    
+    // 0x80000000 = -2147483648 = invalid
+    vi.v_idx  = 0x80000000
+    vi.vn_idx = 0x80000000
+    vi.vt_idx = 0x80000000
+    
+    vi.v_idx = tinyobj_my_atoi(*token)
+    while (*token)[0] != 0x00ub && (*token)[0] != '/'ub && (*token)[0] != ' 'ub && (*token)[0] != '\t'ub && (*token)[0] != '\r'ub {
+        *token += sizeof ubyte as ptr
+    }
+    
+    if (*token)[0] != '/'ub, return vi
+    *token += sizeof ubyte as ptr
+    
+    // i//k
+    if (*token)[0] == '/'ub {
+        *token += sizeof ubyte as ptr
+        vi.vn_idx = tinyobj_my_atoi(*token)
+        while (*token)[0] != 0x00ub && (*token)[0] != '/'ub && (*token)[0] != ' 'ub && (*token)[0] != '\t'ub && (*token)[0] != '\r'ub {
+            *token += sizeof ubyte as ptr
+        }
+        return vi
+    }
+    
+    // i/j/k or i/j
+    vi.vt_idx = tinyobj_my_atoi(*token)
+    while (*token)[0] != 0x00ub && (*token)[0] != '/'ub && (*token)[0] != ' 'ub && (*token)[0] != '\t'ub && (*token)[0] != '\r'ub {
+        *token += sizeof ubyte as ptr
+    }
+    if (*token)[0] != '/'ub {
+        return vi
+    }
+    
+    // i/j/k
+    *token += sizeof ubyte as ptr // skip '/'
+    vi.vn_idx = tinyobj_my_atoi(*token)
+    while (*token)[0] != 0x00ub && (*token)[0] != '/'ub && (*token)[0] != ' 'ub && (*token)[0] != '\t'ub && (*token)[0] != '\r'ub {
+        *token += sizeof ubyte as ptr
+    }
+    return vi
+}
+
+func tinyobj_parseInt(token **ubyte) int {
+    tinyobj_skip_space(token)
+    i int = tinyobj_my_atoi(*token)
+    *token += cast ptr tinyobj_until_space(*token)
+    return i
+}
+
+func tinyobj_tryParseDouble(s *ubyte, s_end *ubyte, result *double) int {
+    mantissa double = 0.0
+    exponent int = 0
+    sign ubyte = '+'ub
+    exp_sign ubyte = '+'ub
+    curr *ubyte = s
+    
+    read int = 0
+    end_not_reached bool = undef
+    
+    if s >= s_end, return 0 // fail
+    
+    // Find out what sign we've got
+    if *curr == '+'ub || *curr == '-'ub {
+        sign = *curr
+        curr += sizeof ubyte as ptr
+    } else unless tinyobj_IS_DIGIT(*curr) {
+        return 0 // fail
+    }
+    
+    // Read the integer part
+    end_not_reached = curr != s_end
+    while end_not_reached && tinyobj_IS_DIGIT(*curr) {
+        mantissa *= 10.0
+        mantissa += cast double (*curr - 0x30)
+        curr += sizeof ubyte as ptr
+        read++
+        end_not_reached = curr != s_end
+    }
+    
+    if read == 0, return 0 // fail
+    
+    unless end_not_reached {
+        tinyobj_tryParseDouble_assemble(exponent, sign, exp_sign, mantissa, result)
+        return 1
+    }
+    
+    // Read the decimal part
+    if *curr == '.'ub {
+        curr += sizeof ubyte as ptr
+        read = 1
+        end_not_reached = curr != s_end
+        while end_not_reached && tinyobj_IS_DIGIT(*curr) {
+            // pow(10.0, -read)
+            frac_value double = 1.0
+            f int = 0; while f < read {
+                frac_value *= 0.1
+                f++
+            }
+            mantissa += cast double (*curr - 0x30) * frac_value
+            read++
+            curr += sizeof ubyte as ptr
+            end_not_reached = curr != s_end
+        }
+    } else unless *curr == 'e'ub || *curr == 'E'ub {
+        tinyobj_tryParseDouble_assemble(exponent, sign, exp_sign, mantissa, result)
+        return 1
+    }
+    
+    unless end_not_reached {
+        tinyobj_tryParseDouble_assemble(exponent, sign, exp_sign, mantissa, result)
+        return 1
+    }
+    
+    // Read the exponent part
+    if *curr == 'e'ub || *curr == 'E'ub {
+        curr += sizeof ubyte as ptr
+        
+        // Figure out if a sign is present and if it is
+        end_not_reached = curr != s_end
+        if end_not_reached && (*curr == '+'ub || *curr == '-'ub) {
+            exp_sign = *curr
+            curr += sizeof ubyte as ptr
+        } else unless tinyobj_IS_DIGIT(*curr) {
+            return 0 // fail
+        }
+        
+        read = 0
+        end_not_reached = curr != s_end
+        while end_not_reached && tinyobj_IS_DIGIT(*curr) {
+            exponent *= 10
+            exponent += cast int (*curr - 0x30)
+            curr += sizeof ubyte as ptr
+            read++
+            end_not_reached = curr != s_end
+        }
+        if read == 0, return 0 // fail
+    }
+    
+    tinyobj_tryParseDouble_assemble(exponent, sign, exp_sign, mantissa, result)
+    return 1
+}
+
+func tinyobj_tryParseDouble_assemble(exponent int, sign ubyte, exp_sign ubyte, mantissa double, out result *double) void {
+    a double = 1.0 // = pow(5.0, exponent)
+    b double = 1.0 // = 2.0^exponent
+    
+    repeat static exponent {
+        a *= 5.0
+        b *= 2.0
+    }
+    
+    if exp_sign == '-'ub {
+        a = 1.0 / a
+        b = 1.0 / b
+    }
+    
+    *result = (sign == '+'ub ? 1.0 : -1.0) * mantissa * a * b
+}
+
+func tinyobj_parseFloat(token **ubyte) float {
+    end *ubyte = undef
+    val double = 0.0
+    f float = 0.0
+    tinyobj_skip_space(token)
+    end = (*token) at tinyobj_until_space(*token)
+    val = 0.0
+    tinyobj_tryParseDouble(*token, end, &val)
+    f = cast float val
+    *token = end
+    return f
+}
+
+func tinyobj_parseFloat2(x *float, y *float, token **ubyte) void {
+    *x = tinyobj_parseFloat(token)
+    *y = tinyobj_parseFloat(token)
+}
+
+func tinyobj_parseFloat3(x *float, y *float, z *float, token **ubyte) void {
+    *x = tinyobj_parseFloat(token)
+    *y = tinyobj_parseFloat(token)
+    *z = tinyobj_parseFloat(token)
+}
+
+func tinyobj_my_strnlen(s *ubyte, n usize) usize {
+    p *ubyte = memchr(s, 0, n)
+    return p ? cast usize (p - s) : n
+}
+
+func tinyobj_my_strdup(s *ubyte, max_length usize) *ubyte {
+    if s == null, return null
+    
+    // Do not consider CRLF line ending(#19)
+    len usize = tinyobj_length_until_line_feed(s, max_length)
+    
+    // trim line ending and append 0x00
+    d *ubyte = cast *ubyte malloc(len + 1)
+    memcpy(d, s, len)
+    d[len] = 0x00ub
+    return d
+}
+
+func tinyobj_my_strndup(s *ubyte, len usize) *ubyte {
+    if s == null || len == 0, return null
+    
+    slen usize = tinyobj_my_strnlen(s, len)
+    d *ubyte = malloc(slen + 1)
+    if d == null, return null
+    memcpy(d, s, slen)
+    d[slen] = 0x00ub
+    return d
+}
+
+func tinyobj_dynamic_fgets(buf **ubyte, size *usize, file *FILE) *ubyte {
+    offset *ubyte = undef
+    ret *ubyte = undef
+    old_size usize = undef
+    
+    ret = fgets(*buf, cast int *size, file)
+    unless ret, return ret
+    
+    if null != strchr(*buf, '\n'ub), return ret
+    
+    while true {
+        old_size = *size
+        *size *= 2
+        *buf = cast *ubyte realloc(*buf, *size)
+        offset = (*buf) at (old_size - 1)
+        ret = fgets(offset, cast int (old_size + 1), file)
+        unless ret && null == strchr(*buf, '\n'ub), break
+    }
+    
+    return ret
+}
+
+func tinyobj_initMaterial(material *tinyobj_material_t) void {
+    material.name = null
+    material.ambient_texname = null
+    material.diffuse_texname = null
+    material.specular_texname = null
+    material.specular_highlight_texname = null
+    material.bump_texname = null
+    material.displacement_texname = null
+    material.alpha_texname = null
+    repeat 3 {
+        material.ambient[idx] = 0.0f
+        material.diffuse[idx] = 0.0f
+        material.specular[idx] = 0.0f
+        material.transmittance[idx] = 0.0f
+        material.emission[idx] = 0.0f
+    }
+    material.illum = 0
+    material.dissolve = 1.0f
+    material.shininess = 1.0f
+    material.ior = 1.0f
+}
+
+// Implementation of string to int hashtable
+
+tinyobj_HASH_TABLE_ERROR == 1
+tinyobj_HASH_TABLE_SUCCESS == 0
+tinyobj_HASH_TABLE_DEFAULT_SIZE == 10
+
+struct tinyobj_hash_table_entry_t (
+    hash ulong,
+    filled int,
+    pad0 int,
+    value long,
+    next ptr
+)
+
+struct tinyobj_hash_table_t (
+    hashes *ulong,
+    entries *tinyobj_hash_table_entry_t,
+    capacity usize,
+    n usize
+)
+
+func tinyobj_hash_djb2(str *ubyte) ulong {
+    hash ulong = 5381
+    c int = undef
+    
+    c = *str
+    str += sizeof ubyte as ptr
+    while c {
+        hash = (hash << 5) + hash + cast ulong c
+        
+        c = *str
+        str += sizeof ubyte as ptr
+    }
+    
+    return hash
+}
+
+func tinyobj_create_hash_table(start_capacity usize, hash_table *tinyobj_hash_table_t) void {
+    if start_capacity < 1, start_capacity = tinyobj_HASH_TABLE_DEFAULT_SIZE
+    hash_table.hashes = malloc(start_capacity * sizeof ulong)
+    hash_table.entries = calloc(start_capacity, sizeof tinyobj_hash_table_entry_t)
+    hash_table.capacity = start_capacity
+    hash_table.n = 0
+}
+
+func tinyobj_destroy_hash_table(hash_table *tinyobj_hash_table_t) void {
+    free(hash_table.entries)
+    free(hash_table.hashes)
+}
+
+// Insert with quadratic probing
+func tinyobj_hash_table_insert_value(hash ulong, value long, hash_table *tinyobj_hash_table_t) int {
+    // Insert value
+    start_index usize = hash % hash_table.capacity
+    index usize = start_index
+    start_entry *tinyobj_hash_table_entry_t = hash_table.entries at start_index
+    i usize = undef
+    entry *tinyobj_hash_table_entry_t = undef
+    
+    i = 1; while hash_table.entries[index].filled {
+        if i >= hash_table.capacity, return tinyobj_HASH_TABLE_ERROR
+        index = (start_index + (i * i)) % hash_table.capacity
+        i++
+    }
+    
+    entry = hash_table.entries at index
+    entry.hash = hash
+    entry.filled = 1
+    entry.value = value
+    
+    if index != start_index {
+        // This is a new entry, but not the start entry, hence we need to add a next pointer to our entry
+        entry.next = start_entry.next
+        start_entry.next = entry
+    }
+    
+    return tinyobj_HASH_TABLE_SUCCESS
+}
+
+func tinyobj_hash_table_insert(hash ulong, value long, hash_table *tinyobj_hash_table_t) int {
+    ret int = tinyobj_hash_table_insert_value(hash, value, hash_table)
+    if ret == tinyobj_HASH_TABLE_SUCCESS {
+        hash_table.hashes[hash_table.n] = hash
+        hash_table.n++
+    }
+    return ret
+}
+
+func tinyobj_hash_table_find(hash ulong, hash_table *tinyobj_hash_table_t) *tinyobj_hash_table_entry_t {
+    entry *tinyobj_hash_table_entry_t = hash_table.entries at (hash % hash_table.capacity)
+    
+    while entry {
+        if entry.hash == hash && entry.filled, return entry
+        entry = cast *tinyobj_hash_table_entry_t (entry.next)
+    }
+    
+    return null
+}
+
+func tinyobj_hash_table_maybe_grow(new_n usize, hash_table *tinyobj_hash_table_t) void {
+    new_capacity usize = undef
+    new_hash_table tinyobj_hash_table_t = undef
+    
+    if new_n <= hash_table.capacity, return
+    
+    new_capacity = 2 * ((2 * hash_table.capacity) > new_n ? hash_table.capacity : new_n)
+    // Create a new hash table. We're not calling create_hash_table because we want to realloc the hash array
+    hash_table.hashes = realloc(hash_table.hashes, new_capacity * sizeof ulong)
+    new_hash_table.hashes = hash_table.hashes
+    new_hash_table.entries = calloc(new_capacity, sizeof tinyobj_hash_table_entry_t)
+    new_hash_table.capacity = new_capacity
+    new_hash_table.n = hash_table.n
+    
+    // Rehash
+    repeat static hash_table.capacity {
+        entry *tinyobj_hash_table_entry_t = tinyobj_hash_table_find(hash_table.hashes[idx], hash_table)
+        tinyobj_hash_table_insert_value(hash_table.hashes[idx], entry.value, &new_hash_table)
+    }
+    
+    free(hash_table.entries)
+    *hash_table = new_hash_table
+}
+
+func tinyobj_hash_table_exists(name *ubyte, hash_table *tinyobj_hash_table_t) bool {
+    return tinyobj_hash_table_find(tinyobj_hash_djb2(name), hash_table) != null
+}
+
+func tinyobj_hash_table_set(name *ubyte, val usize, hash_table *tinyobj_hash_table_t) void {
+    // Hash name
+    hash ulong = tinyobj_hash_djb2(name)
+    
+    entry *tinyobj_hash_table_entry_t = tinyobj_hash_table_find(hash, hash_table)
+    if entry {
+        entry.value = cast long val
+        return
+    }
+    
+    // Expand if necessary
+    // Grow until the element has been added
+    while true {
+        tinyobj_hash_table_maybe_grow(hash_table.n + 1, hash_table)
+        unless tinyobj_hash_table_insert(hash, cast long val, hash_table) != tinyobj_HASH_TABLE_SUCCESS, break
+    }
+}
+
+func tinyobj_hash_table_get(name *ubyte, hash_table *tinyobj_hash_table_t) long {
+    ret *tinyobj_hash_table_entry_t = tinyobj_hash_table_find(tinyobj_hash_djb2(name), hash_table)
+    return ret.value
+}
+
+func tinyobj_material_add(prev *tinyobj_material_t, num_materials usize, new_mat *tinyobj_material_t) *tinyobj_material_t {
+    dst *tinyobj_material_t = realloc(prev, (num_materials + 1) * sizeof tinyobj_material_t)
+    dst[num_materials] = *new_mat // Just copy pointer for *ubyte members
+    return dst
+}
+
+func tinyobj_parse_and_index_mtl_file(materials_out **tinyobj_material_t, num_materials_out *usize, filename *ubyte, material_table *tinyobj_hash_table_t) int {
+    material tinyobj_material_t = undef
+    buffer_size usize = 128
+    linebuf *ubyte = undef
+    fp *FILE = undef
+    num_materials usize = 0
+    materials *tinyobj_material_t = null
+    has_previous_material bool = false
+    line_end *ubyte = null
+    
+    if materials_out == null,     return TINYOBJ_ERROR_INVALID_PARAMETER
+    if num_materials_out == null, return TINYOBJ_ERROR_INVALID_PARAMETER
+    
+    *materials_out = null
+    *num_materials_out = 0
+    
+    fp = fopen(filename, 'r')
+    unless fp {
+        fprintf(stderr, 'TINYOBJ: Error reading file \'%s\': %s (%d)\n', filename, strerror(errno), errno)
+        return TINYOBJ_ERROR_FILE_OPERATION
+    }
+    
+    // Create a default material
+    tinyobj_initMaterial(&material)
+    
+    linebuf = malloc(buffer_size)
+    while null != tinyobj_dynamic_fgets(&linebuf, &buffer_size, fp) {
+        token *ubyte = linebuf
+        line_end = token + strlen(token) as ptr
+        
+        // Skip leading space
+        token += strspn(token, ' \t') as ptr
+        
+        unless token, printf('TINYOBJ ASSERTION FAILED\n'); exit(1)
+        
+        if token[0] == 0x00ub, continue // empty line
+        if token[0] == '#'ub,  continue // comment line
+        
+        // new mtl
+        if 0 == strncmp(token, 'newmtl', 6) && tinyobj_IS_SPACE(token[6]) {
+            namebuf 4096 ubyte = undef
+            
+            // flush previous material
+            if has_previous_material {
+                materials = tinyobj_material_add(materials, num_materials, &material)
+                num_materials++
+            } else {
+                has_previous_material = true
+            }
+            
+            // initial temporary material
+            tinyobj_initMaterial(&material)
+            
+            // set new mtl name
+            token += 7 as ptr
+            
+            #if __windows__
+                sscanf_s(token, '%s', &namebuf as *ubyte, 4096ui)
+            #else
+                sscanf(token, '%s', &namebuf as *ubyte)
+            #end
+            
+            material.name = tinyobj_my_strdup(&namebuf as *ubyte, cast usize (line_end - token))
+            
+            // Add material to material table
+            if material_table {
+                tinyobj_hash_table_set(material.name, num_materials, material_table)
+            }
+            continue
+        }
+        
+        // ambient
+        if token[0] == 'K'ub && token[1] == 'a'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            tinyobj_parseFloat3(material.ambient at 0, material.ambient at 1, material.ambient at 2, &token)
+            continue
+        }
+        
+        // diffuse
+        if token[0] == 'K'ub && token[1] == 'd'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            tinyobj_parseFloat3(material.diffuse at 0, material.diffuse at 1, material.diffuse at 2, &token)
+            continue
+        }
+        
+        // specular
+        if token[0] == 'K'ub && token[1] == 's'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            tinyobj_parseFloat3(material.specular at 0, material.specular at 1, material.specular at 2, &token)
+            continue
+        }
+        
+        // transmittance
+        if token[0] == 'K'ub && token[1] == 't'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            tinyobj_parseFloat3(material.transmittance at 0, material.transmittance at 1, material.transmittance at 2, &token)
+            continue
+        }
+        
+        // ior (index of refraction)
+        if token[0] == 'N'ub && token[1] == 'i'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            material.ior = tinyobj_parseFloat(&token)
+            continue
+        }
+        
+        // emission
+        if token[0] == 'K'ub && token[1] == 'e'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            tinyobj_parseFloat3(material.emission at 0, material.emission at 1, material.emission at 2, &token)
+            continue
+        }
+        
+        // shininess
+        if token[0] == 'N'ub && token[1] == 's'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            material.shininess = tinyobj_parseFloat(&token)
+            continue
+        }
+        
+        // illum model
+        if 0 == strncmp(token, 'illum', 5) && tinyobj_IS_SPACE(token[5]) {
+            token += 6 as ptr
+            material.illum = tinyobj_parseInt(&token)
+            continue
+        }
+        
+        // dissolve
+        if token[0] == 'd'ub && tinyobj_IS_SPACE(token[1]) {
+            token += 1 as ptr
+            material.dissolve = tinyobj_parseFloat(&token)
+            continue
+        }
+        
+        if token[0] == 'T'ub && token[1] == 'r'ub && tinyobj_IS_SPACE(token[2]) {
+            token += 2 as ptr
+            // Invert value of Tr (assume Tr is in range [0, 1]
+            material.dissolve = 1.0f - tinyobj_parseFloat(&token)
+            continue
+        }
+        
+        // ambient texture
+        if 0 == strncmp(token, 'map_Ka', 6) && tinyobj_IS_SPACE(token[6]) {
+            token += 7 as ptr
+            material.ambient_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // diffuse texture
+        if 0 == strncmp(token, 'map_Kd', 6) && tinyobj_IS_SPACE(token[6]) {
+            token += 7 as ptr
+            material.diffuse_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // specular texture
+        if 0 == strncmp(token, 'map_Ks', 6) && tinyobj_IS_SPACE(token[6]) {
+            token += 7 as ptr
+            material.specular_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // specular highlight texture
+        if 0 == strncmp(token, 'map_Ns', 6) && tinyobj_IS_SPACE(token[6]) {
+            token += 7 as ptr
+            material.specular_highlight_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // bump texture
+        if 0 == strncmp(token, 'map_bump', 8) && tinyobj_IS_SPACE(token[8]) {
+            token += 9 as ptr
+            material.bump_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // alpha texture
+        if 0 == strncmp(token, 'map_d', 5) && tinyobj_IS_SPACE(token[5]) {
+            token += 6 as ptr
+            material.alpha_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // bump texture
+        if 0 == strncmp(token, 'bump', 4) && tinyobj_IS_SPACE(token[4]) {
+            token += 5 as ptr
+            material.bump_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // displacement texture
+        if 0 == strncmp(token, 'disp', 4) && tinyobj_IS_SPACE(token[4]) {
+            token += 5 as ptr
+            material.displacement_texname = tinyobj_my_strdup(token, cast usize (line_end - token))
+            continue
+        }
+        
+        // @todo { unknown parameter }
+    }
+    
+    if material.name {
+        // Flush last material element
+        materials = tinyobj_material_add(materials, num_materials, &material)
+        num_materials++
+    }
+    
+    *num_materials_out = num_materials
+    *materials_out = materials
+    
+    if linebuf, free(linebuf)
+    return TINYOBJ_SUCCESS
+}
+
+func tinyobj_parse_mtl_file(materials_out **tinyobj_material_t, num_materials_out *usize, filename *ubyte) int {
+    return tinyobj_parse_and_index_mtl_file(materials_out, num_materials_out, filename, null)
+}
+
+enum tinyobj_CommandType (
+    COMMAND_EMPTY,
+    COMMAND_V,
+    COMMAND_VN,
+    COMMAND_VT,
+    COMMAND_F,
+    COMMAND_G,
+    COMMAND_O,
+    COMMAND_USEMTL,
+    COMMAND_MTLLIB
+)
+
+struct tinyobj_Command (
+    vx, vy, vz float,
+    nx, ny, nz float,
+    tx, ty float,
+    
+    // @todo { Use dynamic array }
+    // 16 == TINYOBJ_MAX_FACES_PER_F_LINE
+    f 16 tinyobj_vertex_index_t,
+    num_f usize,
+    
+    f_num_verts 16 int,
+    num_f_num_verts usize,
+    
+    group_name *ubyte,
+    group_name_len uint,
+    pad0 int,
+    
+    object_name *ubyte,
+    object_name_len uint,
+    pad1 int,
+    
+    material_name *ubyte,
+    material_name_len uint,
+    pad2 int,
+    
+    mtllib_name *ubyte,
+    mtllib_name_len uint,
+    
+    type tinyobj_CommandType
+)
+
+func tinyobj_parseLine(command *tinyobj_Command, p *ubyte, p_len usize, triangulate int) int {
+    linebuf 4096 ubyte = undef
+    token *ubyte = undef
+    unless p_len < 4095, printf('TINYOBJ ASSERTION FAILED\n'); exit(1)
+    
+    memcpy(&linebuf as *ubyte, p, p_len)
+    linebuf[p_len] = 0x00ub
+    
+    token = &linebuf as *ubyte
+    
+    command.type = tinyobj_CommandType::COMMAND_EMPTY
+    
+    // Skip leading space
+    tinyobj_skip_space(&token)
+    
+    unless token, printf('TINYOBJ ASSERTION FAILED\n'); exit(1)
+    if token[0] == 0x00ub, return 0 // empty line
+    if token[0] == '#'ub,  return 0 // comment line
+    
+    // vertex
+    if token[0] == 'v'ub && tinyobj_IS_SPACE(token[1]) {
+        token += 2 as ptr
+        tinyobj_parseFloat3(&command.vx, &command.vy, &command.vz, &token)
+        command.type = tinyobj_CommandType::COMMAND_V
+        return 1
+    }
+    
+    // normal
+    if token[0] == 'v'ub && token[1] == 'n'ub && tinyobj_IS_SPACE(token[2]) {
+        token += 3 as ptr
+        tinyobj_parseFloat3(&command.nx, &command.ny, &command.nz, &token)
+        command.type = tinyobj_CommandType::COMMAND_VN
+        return 1
+    }
+    
+    // texcoord
+    if token[0] == 'v'ub && token[1] == 't'ub && tinyobj_IS_SPACE(token[2]) {
+        token += 3 as ptr
+        tinyobj_parseFloat2(&command.tx, &command.ty, &token)
+        command.type = tinyobj_CommandType::COMMAND_VT
+        return 1
+    }
+    
+    // face
+    if token[0] == 'f'ub && tinyobj_IS_SPACE(token[1]) {
+        num_f usize = 0
+        
+        // 16 == TINYOBJ_MAX_FACES_PER_F_LINE
+        f 16 tinyobj_vertex_index_t = undef
+        token += 2 as ptr
+        tinyobj_skip_space(&token)
+        
+        until tinyobj_IS_NEW_LINE(token[0]) {
+            vi tinyobj_vertex_index_t = tinyobj_parseRawTriple(&token)
+            tinyobj_skip_space_and_cr(&token)
+            f[num_f] = vi
+            num_f++
+        }
+        
+        command.type = tinyobj_CommandType::COMMAND_F
+        
+        if triangulate {
+            k usize = undef
+            n usize = 0
+            
+            i0 tinyobj_vertex_index_t = f[0]
+            i1 tinyobj_vertex_index_t = undef
+            i2 tinyobj_vertex_index_t = f[1]
+            
+            unless 3 * num_f < 16, printf('TINYOBJ ASSERTION FAILED\n'); exit(1)
+            
+            k = 2; while k < num_f {
+                i1 = i2
+                i2 = f[k]
+                command.f[3 * n + 0] = i0
+                command.f[3 * n + 1] = i1
+                command.f[3 * n + 2] = i2
+                
+                command.f_num_verts[n] = 3
+                n++
+                k++
+            }
+            
+            command.num_f = 3 * n
+            command.num_f_num_verts = n
+        } else {
+            k usize = undef
+            unless num_f < 16, printf('TINYOBJ ASSERTION FAILED\n'); exit(1)
+            k = 0; while k < num_f {
+                command.f[k] = f[k]
+                k++
+            }
+            
+            command.num_f = num_f
+            command.f_num_verts[0] = cast int num_f
+            command.num_f_num_verts = 1
+        }
+        
+        return 1
+    }
+    
+    // use mtl
+    if 0 == strncmp(token, 'usemtl', 6) && tinyobj_IS_SPACE(token[6]) {
+        token += 7 as ptr
+        
+        tinyobj_skip_space(&token)
+        command.material_name = p + (token - &linebuf as *ubyte)
+        command.material_name_len = cast uint tinyobj_length_until_newline(token, p_len - cast usize (token - &linebuf as *ubyte) + 1)
+        command.type = tinyobj_CommandType::COMMAND_USEMTL
+        return 1
+    }
+    
+    // load mtl
+    if 0 == strncmp(token, 'mtllib', 6) && tinyobj_IS_SPACE(token[6]) {
+        // By specification, `mtllib` should be appear only once in .obj
+        token += 7 as ptr
+        
+        tinyobj_skip_space(&token)
+        command.mtllib_name = p + (token - &linebuf as *ubyte)
+        command.mtllib_name_len = cast uint tinyobj_length_until_newline(token, p_len - cast usize (token - &linebuf as *ubyte) + 1)
+        command.type = tinyobj_CommandType::COMMAND_MTLLIB
+        return 1
+    }
+    
+    // group name
+    if token[0] == 'g'ub && tinyobj_IS_SPACE(token[1]) {
+        // @todo { multiple group name. }
+        token += 2 as ptr
+        command.group_name = p + (token - &linebuf as *ubyte)
+        command.group_name_len = cast uint tinyobj_length_until_newline(token, p_len - cast usize (token - &linebuf as *ubyte) + 1)
+        command.type = tinyobj_CommandType::COMMAND_G
+        return 1
+    }
+    
+    // object name
+    if token[0] == 'o'ub && tinyobj_IS_SPACE(token[1]) {
+        // @todo { multiple object name? }
+        token += 2 as ptr
+        command.object_name = p + (token - &linebuf as *ubyte)
+        command.object_name_len = cast uint tinyobj_length_until_newline(token, p_len - cast usize (token - &linebuf as *ubyte) + 1)
+        command.type = tinyobj_CommandType::COMMAND_O
+        return 1
+    }
+    
+    return 0
+}
+
+struct tinyobj_LineInfo (pos, len usize)
+
+func tinyobj_is_line_ending(p *ubyte, i usize, end_i usize) bool {
+    if p[i] == 0x00ub, return true
+    if p[i] == '\n'ub, return true // this includes \r\n
+    if p[i] == '\r'ub {
+        if i + 1 < end_i && p[i + 1] != '\n'ub { // detect only \r case
+            return true
+        }
+    }
+    return false
+}
+
+func tinyobj_parse_obj(attrib *tinyobj_attrib_t, shapes **tinyobj_shape_t,
+        num_shapes *usize, materials_out **tinyobj_material_t,
+        num_materials_out *usize, buf *ubyte, len usize, flags uint) int {
+    return tinyobj_parse_obj_ex(attrib, shapes, num_shapes, materials_out, num_materials_out, buf, len, flags, null)
+}
+
+func tinyobj_parse_obj_ex(attrib *tinyobj_attrib_t, shapes **tinyobj_shape_t,
+        num_shapes *usize, materials_out **tinyobj_material_t,
+        num_materials_out *usize, buf *ubyte, len usize, flags uint, material_path *ubyte) int {
+    
+    line_infos *tinyobj_LineInfo = null
+    commands *tinyobj_Command = null
+    num_lines usize = 0
+    
+    num_v usize = 0
+    num_vn usize = 0
+    num_vt usize = 0
+    num_f usize = 0
+    num_faces usize = 0
+    
+    mtllib_line_index int = -1
+    
+    materials *tinyobj_material_t = null
+    num_materials usize = 0
+    
+    material_table POD tinyobj_hash_table_t = undef
+    
+    if len < 1,                   return TINYOBJ_ERROR_INVALID_PARAMETER
+    if attrib == null,            return TINYOBJ_ERROR_INVALID_PARAMETER
+    if shapes == null,            return TINYOBJ_ERROR_INVALID_PARAMETER
+    if num_shapes == null,        return TINYOBJ_ERROR_INVALID_PARAMETER
+    if buf == null,               return TINYOBJ_ERROR_INVALID_PARAMETER
+    if materials_out == null,     return TINYOBJ_ERROR_INVALID_PARAMETER
+    if num_materials_out == null, return TINYOBJ_ERROR_INVALID_PARAMETER
+    
+    tinyobj_attrib_init(attrib)
+    
+    // 1. Find '\n' and create line data
+    if true {
+        i usize = undef
+        end_idx usize = len
+        prev_pos usize = 0
+        line_no usize = 0
+        last_line_ending usize = 0
+        
+        // Count # of lines
+        i = 0; while i < end_idx {
+            if tinyobj_is_line_ending(buf, i, end_idx) {
+                num_lines++
+                last_line_ending = i
+            }
+            i++
+        }
+        
+        // The last char from the input may not be a line
+        // ending character so add an extra line if there
+        // are more characters after the last line ending
+        // that was found.
+        if end_idx - last_line_ending > 0 {
+            num_lines++
+        }
+        
+        if num_lines == 0, return TINYOBJ_ERROR_EMPTY
+        
+        line_infos = malloc(num_lines * sizeof tinyobj_LineInfo)
+        
+        // Fill line infos
+        i = 0; while i < end_idx {
+            if tinyobj_is_line_ending(buf, i, end_idx) {
+                line_infos[line_no].pos = prev_pos
+                line_infos[line_no].len = i - prev_pos
+                prev_pos = i + 1
+                line_no++
+            }
+            i++
+        }
+        if end_idx - last_line_ending > 0 {
+            line_infos[line_no].pos = prev_pos
+            line_infos[line_no].len = end_idx - 1 - last_line_ending
+        }
+    }
+    
+    commands = malloc(num_lines * sizeof tinyobj_Command)
+    
+    tinyobj_create_hash_table(tinyobj_HASH_TABLE_DEFAULT_SIZE, &material_table)
+    
+    // 2. parse each line
+    if true {
+        i usize = undef
+        i = 0; while i < num_lines {
+            ret int = tinyobj_parseLine(&commands[i], &buf[line_infos[i].pos],
+                line_infos[i].len, flags & TINYOBJ_FLAG_TRIANGULATE)
+            if ret {
+                if commands[i].type == tinyobj_CommandType::COMMAND_V {
+                    num_v++
+                } else if commands[i].type == tinyobj_CommandType::COMMAND_VN {
+                    num_vn++
+                } else if commands[i].type == tinyobj_CommandType::COMMAND_VT {
+                    num_vt++
+                } else if commands[i].type == tinyobj_CommandType::COMMAND_F {
+                    num_f += commands[i].num_f
+                    num_faces += commands[i].num_f_num_verts
+                }
+                
+                if commands[i].type == tinyobj_CommandType::COMMAND_MTLLIB {
+                    mtllib_line_index = cast int i
+                }
+            }
+            i++
+        }
+    }
+    
+    // line_infos are not used anymore. Release memory.
+    if line_infos, free(line_infos)
+
+    // Load material (if exists)
+    if mtllib_line_index >= 0 && commands[mtllib_line_index].mtllib_name &&
+            commands[mtllib_line_index].mtllib_name_len > 0 {
+        
+        mtllib_command *tinyobj_Command = commands at mtllib_line_index
+        filename *ubyte = undef
+        
+        if material_path {
+            // Prepend material path
+            material_path_length usize = strlen(material_path)
+            filename = malloc(material_path_length + mtllib_command.mtllib_name_len + 1)
+            memcpy(filename, material_path, material_path_length)
+            memcpy(filename at material_path_length, mtllib_command.mtllib_name, mtllib_command.mtllib_name_len)
+            filename[material_path_length + mtllib_command.mtllib_name_len] = 0x00ub
+        } else {
+            filename = tinyobj_my_strndup(mtllib_command.mtllib_name, mtllib_command.mtllib_name_len)
+        }
+        
+        ret int = tinyobj_parse_and_index_mtl_file(&materials, &num_materials, filename, &material_table)
+        
+        if ret != TINYOBJ_SUCCESS {
+            // warning
+            fprintf(stderr, 'TINYOBJ: Failed to parse material file \'%s\': %d\n', filename, ret)
+        }
+        
+        free(filename)
+    }
+
+    // Construct attributes
+    if true {
+        v_count usize = 0
+        n_count usize = 0
+        t_count usize = 0
+        f_count usize = 0
+        face_count usize = 0
+        material_id int = -1 // -1 = default unknown material
+        i usize = undef
+        
+        attrib.vertices = malloc(num_v * 3 * sizeof float)
+        attrib.num_vertices = cast uint num_v
+        attrib.normals = malloc(num_vn * 3 * sizeof float)
+        attrib.num_normals = cast uint num_vn
+        attrib.texcoords = malloc(num_vt * 2 * sizeof float)
+        attrib.num_texcoords = cast uint num_vt
+        attrib.faces = malloc(num_f * sizeof tinyobj_vertex_index_t)
+        attrib.num_faces = cast uint num_f
+        attrib.face_num_verts = malloc(num_faces * sizeof int)
+        attrib.material_ids = malloc(num_faces * sizeof int)
+        attrib.num_face_num_verts = cast uint num_faces
+        
+        i = 0; while i < num_lines {
+            command_type tinyobj_CommandType = commands[i].type
+            
+            if command_type == tinyobj_CommandType::COMMAND_EMPTY {
+                // do nothing
+            } else if command_type == tinyobj_CommandType::COMMAND_USEMTL {
+                if commands[i].material_name && commands[i].material_name_len > 0 {
+                    // Create a null terminated string
+                    material_name_null_term *ubyte = malloc(commands[i].material_name_len + 1)
+                    memcpy(material_name_null_term, commands[i].material_name, commands[i].material_name_len)
+                    material_name_null_term[commands[i].material_name_len] = 0
+                    
+                    if tinyobj_hash_table_exists(material_name_null_term, &material_table) {
+                        material_id = cast int tinyobj_hash_table_get(material_name_null_term, &material_table)
+                    } else {
+                        material_id = -1
+                    }
+                    
+                    free(material_name_null_term)
+                }
+            } else if command_type == tinyobj_CommandType::COMMAND_V {
+                attrib.vertices[3 * v_count + 0] = commands[i].vx
+                attrib.vertices[3 * v_count + 1] = commands[i].vy
+                attrib.vertices[3 * v_count + 2] = commands[i].vz
+                v_count++
+            } else if command_type == tinyobj_CommandType::COMMAND_VN {
+                attrib.normals[3 * n_count + 0] = commands[i].nx
+                attrib.normals[3 * n_count + 1] = commands[i].ny
+                attrib.normals[3 * n_count + 2] = commands[i].nz
+                n_count++
+            } else if command_type == tinyobj_CommandType::COMMAND_VT {
+                attrib.texcoords[2 * t_count + 0] = commands[i].tx
+                attrib.texcoords[2 * t_count + 1] = commands[i].ty
+                t_count++
+            } else if command_type == tinyobj_CommandType::COMMAND_F {
+                k usize = undef
+                k = 0; while k < commands[i].num_f {
+                    vi tinyobj_vertex_index_t = commands[i].f[k]
+                    v_idx int = tinyobj_fixIndex(vi.v_idx, v_count)
+                    vn_idx int = tinyobj_fixIndex(vi.vn_idx, n_count)
+                    vt_idx int = tinyobj_fixIndex(vi.vt_idx, t_count)
+                    attrib.faces[f_count + k].v_idx = v_idx
+                    attrib.faces[f_count + k].vn_idx = vn_idx
+                    attrib.faces[f_count + k].vt_idx = vt_idx
+                    k++
+                }
+                
+                k = 0; while k < commands[i].num_f_num_verts {
+                    attrib.material_ids[face_count + k] = material_id
+                    attrib.face_num_verts[face_count + k] = commands[i].f_num_verts[k]
+                    k++
+                }
+                
+                f_count += commands[i].num_f
+                face_count += commands[i].num_f_num_verts
+            }
+            
+            i++
+        }
+    }
+    
+    // Construct shape information
+    if true {
+        face_count uint = 0
+        i usize = undef
+        n usize = 0
+        shape_idx usize = 0
+        
+        shape_name *ubyte = null
+        shape_name_len uint = 0
+        prev_shape_name *ubyte = null
+        prev_shape_name_len uint = 0
+        prev_shape_face_offset uint = 0
+        prev_face_offset uint = 0
+        prev_shape tinyobj_shape_t = undef
+        
+        prev_shape.name = null
+        prev_shape.face_offset = 0
+        prev_shape.length = 0
+        
+        // Find the number of shapes in .obj
+        i = 0; while i < num_lines {
+            if commands[i].type == tinyobj_CommandType::COMMAND_O ||
+                commands[i].type == tinyobj_CommandType::COMMAND_G, n++
+            i++
+        }
+        
+        // Allocate array of shapes with maximum possible size
+        // (+1 for unnamed group/object)
+        // Actual # of shapes found in .obj is determined in the later
+        *shapes = malloc((n + 1) * sizeof tinyobj_shape_t)
+        
+        i = 0; while i < num_lines {
+            command_type tinyobj_CommandType = commands[i].type
+            if command_type == tinyobj_CommandType::COMMAND_O || command_type == tinyobj_CommandType::COMMAND_G {
+                if command_type == tinyobj_CommandType::COMMAND_O {
+                    shape_name = commands[i].object_name
+                    shape_name_len = commands[i].object_name_len
+                } else {
+                    shape_name = commands[i].group_name
+                    shape_name_len = commands[i].group_name_len
+                }
+                
+                if face_count == 0 {
+                    // 'o' or 'g' appears before any 'f'
+                    prev_shape_name = shape_name
+                    prev_shape_name_len = shape_name_len
+                    prev_shape_face_offset = face_count
+                    prev_face_offset = face_count
+                } else {
+                    if shape_idx == 0 {
+                        // 'o' or 'g' after some 'v' lines
+                        (*shapes)[shape_idx].name = tinyobj_my_strndup(prev_shape_name, prev_shape_name_len) // may be null
+                        (*shapes)[shape_idx].face_offset = prev_shape.face_offset
+                        (*shapes)[shape_idx].length = face_count - prev_face_offset
+                        shape_idx++
+                        
+                        prev_face_offset = face_count
+                    } else {
+                        if face_count - prev_face_offset > 0 {
+                            (*shapes)[shape_idx].name = tinyobj_my_strndup(prev_shape_name, prev_shape_name_len)
+                            (*shapes)[shape_idx].face_offset = prev_face_offset
+                            (*shapes)[shape_idx].length = face_count - prev_face_offset
+                            shape_idx++
+                            prev_face_offset = face_count
+                        }
+                    }
+                    
+                    // Record shape info for succeeding 'o' or 'g' command
+                    prev_shape_name = shape_name
+                    prev_shape_name_len = shape_name_len
+                    prev_face_offset = face_count
+                }
+            }
+            
+            if command_type == tinyobj_CommandType::COMMAND_F {
+                face_count++
+            }
+            i++
+        }
+        
+        if face_count - prev_face_offset > 0 {
+            length usize = face_count - prev_shape_face_offset
+            if length > 0 {
+                (*shapes)[shape_idx].name = tinyobj_my_strndup(prev_shape_name, prev_shape_name_len)
+                (*shapes)[shape_idx].face_offset = prev_face_offset
+                (*shapes)[shape_idx].length = face_count - prev_face_offset
+                shape_idx++
+            }
+        } else {
+            // Guess no 'v' line occurrence after 'o' or 'g', so discards current
+            // shape information
+        }
+        
+        *num_shapes = shape_idx
+    }
+    
+    if commands, free(commands)
+    
+    tinyobj_destroy_hash_table(&material_table)
+    
+    *materials_out = materials
+    *num_materials_out = num_materials
+    return TINYOBJ_SUCCESS
+}
+
+func tinyobj_attrib_init(attrib *tinyobj_attrib_t) void {
+    attrib.vertices = null
+    attrib.num_vertices = 0
+    attrib.normals = null
+    attrib.num_normals = 0
+    attrib.texcoords = null
+    attrib.num_texcoords = 0
+    attrib.faces = null
+    attrib.num_faces = 0
+    attrib.face_num_verts = null
+    attrib.num_face_num_verts = 0
+    attrib.material_ids = null
+}
+
+func tinyobj_attrib_free(attrib *tinyobj_attrib_t) void {
+    free(attrib.vertices)
+    free(attrib.normals)
+    free(attrib.texcoords)
+    free(attrib.faces)
+    free(attrib.face_num_verts)
+    free(attrib.material_ids)
+}
+
+func tinyobj_shapes_free(shapes *tinyobj_shape_t, num_shapes usize) void {
+    if shapes == null, return
+    
+    each tinyobj_shape_t in static [shapes, num_shapes] {
+        free(it.name)
+    }
+    
+    free(shapes)
+}
+
+func tinyobj_materials_free(materials *tinyobj_material_t, num_materials usize) void {
+    if materials == null, return
+    
+    each tinyobj_material_t in static [materials, num_materials] {
+        free(it.name)
+        free(it.ambient_texname)
+        free(it.diffuse_texname)
+        free(it.specular_texname)
+        free(it.specular_highlight_texname)
+        free(it.bump_texname)
+        free(it.displacement_texname)
+        free(it.alpha_texname)
+    }
+    
+    free(materials)
+}

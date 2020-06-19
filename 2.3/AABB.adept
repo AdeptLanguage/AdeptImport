@@ -1,0 +1,16 @@
+
+struct <$T> AABB (x, y, w, h $T)
+
+func AABB(x, y, w, h $T) <$T> AABB {
+    aabb POD AABB = undef
+    aabb.x = x; aabb.y = y; aabb.w = w; aabb.h = h
+    return aabb
+}
+
+func intersecting(this *<$T> AABB, other POD <$T> AABB) bool {
+    return this.x < other.x + other.w && this.x + this.w > other.x && this.y < other.y + other.h && this.y + this.h > other.y
+}
+
+func intersectingPoint(this *<$T> AABB, point_x, point_y POD $T) bool {
+    return this.x <= point_x && this.x + this.w >= point_x && this.y <= point_y && this.y + this.h >= point_y
+}

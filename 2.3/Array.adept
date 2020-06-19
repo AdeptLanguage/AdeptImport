@@ -1,0 +1,36 @@
+
+#default array_bounds_checks true
+
+struct <$T> Array (items *$T, length usize) {
+    func __array__ *$T    = this.items
+    func __length__ usize = this.length
+}
+
+func array(items *$T, length usize) <$T> Array {
+    result POD <$T> Array = undef
+    result.items = items
+    result.length = length
+    return result
+}
+
+func get(this *<$T> Array, index usize) $T {
+    #if array_bounds_checks
+        if index < 0 || index >= this.length {
+            printf('<$T> Array Error: get() index out of range\n')
+            return this.items[0]
+        }
+    #end
+    
+    return this.items[index]
+}
+
+func getPointer(this *<$T> Array, index usize) *$T {
+    #if array_bounds_checks
+        if index < 0 || index >= this.length {
+            printf('<$T> Array Error: getPointer() index out of range\n')
+            return this.items
+        }
+    #end
+    
+    return this.items at index
+}

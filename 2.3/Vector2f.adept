@@ -1,0 +1,129 @@
+
+import 'sys/cmath.adept'
+import 'sys/cstdio.adept'
+
+struct Vector2f (x, y float) {
+    func zero {
+        this.x = 0.0f
+        this.y = 0.0f
+    }
+    
+    func set(x, y float) {
+        this.x = x
+        this.y = y
+    }
+    
+    func set(other Vector2f) {
+        this.x = other.x
+        this.y = other.y
+    }
+    
+    func add(other Vector2f) {
+        this.x += other.x
+        this.y += other.y
+    }
+    
+    func subtract(other Vector2f) {
+        this.x -= other.x
+        this.y -= other.y
+    }
+    
+    func multiply(other Vector2f) {
+        this.x *= other.x
+        this.y *= other.y
+    }
+    
+    func negate {
+        this.x *= -1.0f
+        this.y *= -1.0f
+    }
+    
+    func negated Vector2f {
+        return vector2f(0.0f - this.x, 0.0f - this.y)
+    }
+    
+    func scale(amount float) {
+        this.x *= amount
+        this.y *= amount
+    }
+    
+    func normalize {
+        x float = this.x
+        y float = this.y
+        len float = sqrtf(x * x + y * y)
+    
+        if len == 0.0f, this.set(0.0f, 0.0f); return
+        else if len == 1.0f, return
+    
+        len = 1.0f / len
+        this.set(x * len, y * len)
+    }
+    
+    func cross(other Vector2f) float {
+        return this.x * other.y - this.y * other.x;
+    }
+    
+    func length float {
+        x float = this.x
+        y float = this.y
+        return sqrtf(x * x + y * y)
+    }
+    
+    func dot(other Vector2f) float {
+        return this.x * other.x + this.y * other.y
+    }
+    
+    func lerp(other Vector2f, lerp float) {
+        this.x += lerp * (other.x - this.x)
+        this.y += lerp * (other.y - this.y)
+    }
+    
+    func lerp(other Vector2f) {
+        this.lerp(other, 0.5f)
+    }
+    
+    func distance(other Vector2f) float {
+        x float = other.x - this.x
+        y float = other.y - this.y
+        return sqrtf(x * x + y * y)
+    }
+    
+    func toString String {
+        return "Vector2f {%, %}" % cast double this.x % cast double this.y
+    }
+    
+    func print {
+        printf('Vector2f {%f, %f}\n', cast double this.x, cast double this.y)
+    }
+}
+
+func vector2f(x, y float) Vector2f {
+    result POD Vector2f = undef
+    result.x = x
+    result.y = y
+    return result
+}
+
+func __add__(a POD Vector2f, b POD Vector2f) Vector2f {
+    a.x += b.x
+    a.y += b.y
+    return a
+}
+
+func __subtract__(a POD Vector2f, b POD Vector2f) Vector2f {
+    a.x -= b.x
+    a.y -= b.y
+    return a
+}
+
+func __multiply__(a POD Vector2f, b POD Vector2f) Vector2f {
+    a.x *= b.x
+    a.y *= b.y
+    return a
+}
+
+func __multiply__(a POD Vector2f, factor float) Vector2f {
+    a.x *= factor
+    a.y *= factor
+    return a
+}

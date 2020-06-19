@@ -1,0 +1,30 @@
+
+E == 2.71828182845904523536028747135266249775724709369995957496696763
+PI == 3.14159265358979323846264338327950288419716939937510582097494459
+PHI == 1.61803398874989484820458683436563811772030917980576286213544862
+SQRT2 == 1.41421356237309504880168872420969807856967187537694807317667974
+
+func max(a, b $T) $T = a < b ? b : a
+func min(a, b $T) $T = b < a ? b : a
+func max(a, b, c $T) $T = max(max(a, b), c)
+func min(a, b, c $T) $T = min(min(a, b), c)
+
+func clamp(value, min, max $T~__primitive__) $T {
+    if value < min, return min
+    if value > max, return max
+    return value
+}
+
+func distance(x1, y1, x2, y2 float) float {
+    dx float = x1 - x2
+    dy float = y1 - y2
+    return sqrtf(dx * dx + dy * dy)
+}
+
+func distance(x1, y1, x2, y2 double) double {
+    dx double = x1 - x2
+    dy double = y1 - y2
+    return sqrt(dx * dx + dy * dy)
+}
+
+import 'sys/cmath.adept'

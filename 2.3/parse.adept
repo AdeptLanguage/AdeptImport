@@ -1,0 +1,566 @@
+
+import '2.3/String.adept'
+import '2.3/List.adept'
+import '2.3/math.adept'
+
+func split(this *String, delimiter String) <String> List {
+    result <String> List
+    prev_idx usize = 0
+    
+    if delimiter.empty() {
+        // Cannot have empty delimitier
+        result.add(this.clone())
+        return result.commit()
+    }
+    
+    repeat static this.length {
+        while idx + delimiter.length <= this.length && this.span(idx, delimiter.length) == delimiter {
+            result.add(this.segment(prev_idx, idx))
+            idx += delimiter.length
+            prev_idx = idx
+        }
+    }
+    
+    result.add(this.segment(prev_idx, this.length))
+    return result.commit()
+}
+
+func splitIntoViews(this *String, delimiter String) <StringView> List {
+    result <StringView> List
+    prev_idx usize = 0
+    
+    if delimiter.empty() {
+        // Cannot have empty delimitier
+        result.add(*this)
+        return result.commit()
+    }
+    
+    repeat static this.length {
+        while idx + delimiter.length <= this.length && this.span(idx, delimiter.length) == delimiter {
+            result.add(this.range(prev_idx, idx))
+            idx += delimiter.length
+            prev_idx = idx
+        }
+    }
+    
+    result.add(this.range(prev_idx, this.length))
+    return result.commit()
+}
+
+func levenshtein(s1, s2 String) usize {
+    x, y, s1len, s2len usize = undef
+    s1a *ubyte = s1.array
+    s2a *ubyte = s2.array
+    s1len = s1.length
+    s2len = s2.length
+    w usize = s2len + 1
+    
+    // Indexed by [x + y * w]
+    matrix *usize = new undef usize * (w * (s1len + 1))
+    defer delete matrix
+    
+    matrix[0] = 0
+    
+    x = 1; while x <= s2len {
+        matrix[x] = matrix[x - 1] + 1
+        x += 1
+    }
+    y = 1; while y < s1len {
+        matrix[y * w] = matrix[(y - 1) * w] + 1
+        y += 1
+    }
+    x = 1; while x <= s2len {
+        y = 1; while y <= s1len {
+            a usize = matrix[x - 1 + y * w] + 1
+            b usize = matrix[x + (y - 1) * w] + 1
+            c usize = matrix[x - 1 + (y - 1) * w] + (s1a[y - 1] == s2a[x - 1] ? 0 : 1)
+            matrix[x + y * w] = a < b ? (a < c ? a : c) : (b < c ? b : c)
+            y += 1
+        }
+        x += 1
+    }
+    return matrix[s2len + s1len * w]
+}
+
+func toBool(this *String) bool {
+    return this.length == 1 ? this.array[0] == '1'ub : *this == "true"
+}
+
+func toBool(this *String, out result *bool) successful {
+    if this.length == 1 {
+        if this.array[0] == '1'ub, *result = true;  return true
+        if this.array[0] == '0'ub, *result = false; return true
+        return false
+    }
+    
+    if *this == "true",  *result = true;  return true
+    if *this == "false", *result = false; return true
+    return false
+}
+
+func toUbyte(this *String)  ubyte  = this.toUlong() as ubyte
+func toUshort(this *String) ushort = this.toUlong() as ushort
+func toUint(this *String)   uint   = this.toUlong() as uint
+
+func toUlong(this *String) ulong {
+    // Check string length
+    if this.length == 0 || this.length > 20, return 0
+    
+    power ulong = 1
+    s *ubyte = this.array
+    i usize = this.length - 1
+    result ulong = 0
+    
+    until break {
+        c ubyte = s[i]
+        if c < '0'ub || c > '9'ub, return 0
+        result += cast ulong (c - '0'ub) * power
+        power *= 10
+        if i == 0, break
+        i -= 1
+    }
+    
+    return result
+}
+
+func toByte(this *String)  byte  = this.toLong() as byte
+func toShort(this *String) short = this.toLong() as short
+func toInt(this *String)   int   = this.toLong() as int
+
+func toLong(this *String) long {
+    // Check string length
+    if this.length == 0 || this.length > 20, return 0
+    
+    power long = 1
+    s *ubyte = this.array
+    i usize = this.length - 1
+    result long = 0
+    sign bool = s[0] == '-'ub
+    
+    until break {
+        c ubyte = s[i]
+        if c < '0'ub || c > '9'ub, return 0
+        result += cast long (c - '0'ub) * power
+        power *= 10
+        if i == sign as usize, break
+        i -= 1
+    }
+    
+    return sign ? 0sl - result : result
+}
+
+func toFloat(this *String) float {
+    // TODO: Do a real implementation
+    return this.toDouble() as float
+}
+
+func toDouble(this *String) double {
+    // Based on atof implementation by University of California
+    
+    /* 
+    * atof.c --
+    *
+    *    Source code for the "atof" library procedure.
+    *
+    * Copyright 1988 Regents of the University of California
+    * Permission to use, copy, modify, and distribute this
+    * software and its documentation for any purpose and without
+    * fee is hereby granted, provided that the above copyright
+    * notice appear in all copies.  The University of California
+    * makes no representations about the suitability of this
+    * software for any purpose.  It is provided "as is" without
+    * express or implied warranty.
+    */
+    
+    max_exponent int = 511
+    powers_of_10 *double = static double {
+        10.0,
+        100.0,
+        1.0e4,
+        1.0e8,
+        1.0e16,
+        1.0e32,
+        1.0e64,
+        1.0e128,
+        1.0e256
+    }
+    
+    sign int = 0
+    exp_sign int = 0
+    
+    fraction double = undef
+    dbl_exp double = undef
+    d *double = undef
+    
+    p *ubyte = undef
+    c ubyte = undef
+    exp int = 0
+    frac_exp int = 0
+    mant_size int = 0
+    dec_pt int = 0
+    pExp *ubyte = undef
+    
+    p = this.array
+    endP *ubyte = this.array + this.length as ptr
+    
+    // String is blank
+    if p == endP, return 0.0
+    
+    // Strip off leading blanks
+    while *p == ' 'ub {
+        p += sizeof ubyte as ptr
+        
+        // String is only spaces
+        if p == endP, return 0.0
+    }
+    
+    // Check for sign
+    if *p == '-'ub {
+        sign = 1
+        p += sizeof ubyte as ptr
+        
+        // String is only negative sign
+        if p == endP, return 0.0
+    } else {
+        sign = 0
+        
+        if *p == '+'ub {
+            p += sizeof ubyte as ptr
+            
+            // String is only positive sign
+            if p == endP, return 0.0
+        }
+    }
+    
+    // Count mantissa length (including dot) and locate decimal point
+    dec_pt = -1
+    until break {
+        c = p == endP ? 0x00ub : *p
+        
+        if c < '0'ub || c > '9'ub {
+            if c != '.'ub || dec_pt >= 0, break
+            dec_pt = mant_size
+        }
+        
+        p += sizeof ubyte as ptr
+        mant_size += 1
+    }
+    
+    // Collect digits in mantissa
+    pExp = p
+    p -= cast ptr (sizeof ubyte * mant_size)
+    if dec_pt < 0 {
+        dec_pt = mant_size
+    } else {
+        mant_size--
+    }
+    if mant_size > 18 {
+        frac_exp = dec_pt - 18
+        mant_size = 18
+    } else {
+        frac_exp = dec_pt - mant_size
+    }
+    if mant_size == 0 {
+        return 0.0
+    } else {
+        frac1, frac2 int = 0
+        while mant_size > 9 {
+            c = *p // (p should be valid)
+            p += sizeof ubyte as ptr
+            if c == '.'ub {
+                c = *p // (p should be valid)
+                p += sizeof ubyte as ptr
+            }
+            frac1 = 10 * frac1 + (c - '0'ub)
+            mant_size--
+        }
+        while mant_size > 0 {
+            c = *p // (p should be valid)
+            p += sizeof ubyte as ptr
+            if c == '.'ub {
+                c = *p // (p should be valid)
+                p += sizeof ubyte as ptr
+            }
+            frac2 = 10 * frac2 + (c - '0'ub)
+            mant_size--
+        }
+        fraction = 1.0e9 * frac1 as double + frac2 as double;
+    }
+    
+    // Skim off exponent
+    p = pExp
+    if p != endP && (*p == 'e'ub || *p == 'E'ub) {
+        p += sizeof ubyte as ptr
+        if p != endP && *p == '-'ub {
+            exp_sign = 1
+            p += sizeof ubyte as ptr
+        } else {
+            exp_sign = 0
+            
+            if p != endP && *p == '+'ub {
+                p += sizeof ubyte as ptr
+            }
+        }
+        while p != endP && *p >= '0'ub && *p <= '9'ub {
+            exp = exp * 10 + (*p - '0'ub)
+            p += sizeof ubyte as ptr
+        }
+    }
+    exp = exp_sign ? frac_exp - exp : frac_exp + exp
+    
+    // Generate double
+    if exp < 0 {
+        exp_sign = 1
+        exp = 0 - exp
+    } else {
+        exp_sign = 0
+    }
+    if exp > max_exponent {
+        exp = max_exponent
+    }
+    dbl_exp = 1.0
+    d = powers_of_10
+    until exp == 0 {
+        if exp & 1 {
+            dbl_exp *= *d
+        }
+        exp >>= 1
+        d += sizeof double as ptr
+    }
+    if exp_sign {
+        fraction /= dbl_exp
+    } else {
+        fraction *= dbl_exp
+    }
+    return sign ? 0.0 - fraction : fraction
+}
+
+func toString(value ptr)   String  = toHexString(value as ulong, 16)
+func toString(value bool)  String  = value ? "true" : "false"
+func toString(value byte)  String  = toString(value as long)
+func toString(value short) String  = toString(value as long)
+func toString(value int)   String  = toString(value as long)
+
+func toString(value long) String {
+    if value == 0, return "0"
+    
+    a *ubyte = new ubyte * 20
+    len usize = 0
+    negative bool = value < 0
+    
+    // Make value positive if negative
+    if negative, value = 0 - value
+    
+    // Layout digits smallest ^10 to largest ^10
+    until value == 0 || len == 19 {
+        a[len++] = '0123456789'[value % 10]
+        value /= 10
+    }
+    
+    // Append minus sign if negative
+    if negative, a[len++] = '-'ub
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 20
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toHexString(value byte)  String = toHexString(value as long, 2)
+func toHexString(value short) String = toHexString(value as long, 4)
+func toHexString(value int)   String = toHexString(value as long, 8)
+func toHexString(value long)  String = toHexString(value, 16)
+
+func toHexString(value long, min_digits usize) String {
+    a *ubyte = new ubyte * 20
+    len usize = 0
+    negative bool = value < 0
+    
+    // Handle zero
+    if value == 0 {
+        if min_digits < 2, min_digits = 2
+        
+        a[len++] = '0'ub
+        a[len++] = 'x'ub
+        
+        while min_digits != 0 {
+            a[len++] = '0'ub
+            min_digits--
+        }
+        
+        result POD String = undef
+        result.array = a
+        result.length = len
+        result.capacity = 20
+        result.ownership = StringOwnership::GIVEN
+        return result
+    }
+    
+    // Make value positive if negative
+    if negative, value = 0 - value
+    
+    // Layout digits smallest ^16 to largest ^16
+    until value == 0 || len == 17 {
+        a[len++] = '0123456789ABCDEF'[value % 16]
+        value /= 16
+    }
+    
+    // Pad with zeros
+    while len < min_digits, a[len++] = '0'ub
+    
+    // Append '0x'
+    a[len++] = 'x'ub
+    a[len++] = '0'ub
+    
+    // Append minus sign if negative
+    if negative, a[len++] = '-'ub
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 20
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toString(value ubyte)  String = toString(value as ulong)
+func toString(value ushort) String = toString(value as ulong)
+func toString(value uint)   String = toString(value as ulong)
+
+func toString(value ulong) String {
+    if value == 0, return "0"
+    
+    a *ubyte = new ubyte * 20
+    len usize = 0
+    
+    // Layout digits smallest ^10 to largest ^10
+    until value == 0 || len == 20 {
+        a[len++] = '0123456789'[value % 10]
+        value /= 10
+    }
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 20
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toHexString(value ptr)    String = toHexString(value as ulong, 16)
+func toHexString(value ubyte)  String = toHexString(value as ulong, 2)
+func toHexString(value ushort) String = toHexString(value as ulong, 4)
+func toHexString(value uint)   String = toHexString(value as ulong, 8)
+func toHexString(value ulong)  String = toHexString(value, 16)
+
+func toHexString(value ulong, min_digits usize) String {
+    a *ubyte = new ubyte * 18
+    len usize = 0
+    
+    // Handle zero
+    if value == 0 {
+        if min_digits < 2, min_digits = 2
+        
+        a[len++] = '0'ub
+        a[len++] = 'x'ub
+        
+        while min_digits != 0 {
+            a[len++] = '0'ub
+            min_digits--
+        }
+        
+        result POD String = undef
+        result.array = a
+        result.length = len
+        result.capacity = 20
+        result.ownership = StringOwnership::GIVEN
+        return result
+    }
+    
+    // Layout digits smallest ^16 to largest ^16
+    until value == 0 || len == 16 {
+        a[len++] = '0123456789ABCDEF'[value % 16]
+        value /= 16
+    }
+    
+    // Pad with zeros
+    while len < min_digits, a[len++] = '0'ub
+    
+    // Append '0x'
+    a[len++] = 'x'ub
+    a[len++] = '0'ub
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 18
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toString(value float) String {
+    // TODO: Do a real implementation
+    return toString(value as double)
+}
+
+func toString(value double) String {
+    // TODO: Do a real implementation
+    result POD String = undef
+    result.array = new ubyte * 324
+    result.capacity = 324
+    sprintf(result.array, '%f', value)
+    result.length = strlen(result.array)
+    result.ownership = StringOwnership::GIVEN
+    return result
+}
+
+func getUntil(this *String, delimiter ubyte) String {
+    return this.sub(0, this.atUntil(delimiter))
+}
+
+func getUntil(this *String, delimiter String) String {
+    return this.sub(0, this.atUntil(delimiter))
+}
+
+func getUntilAsView(this *String, delimiter ubyte) StringView {
+    return this.span(0, this.atUntil(delimiter))
+}
+
+func getUntilAsView(this *String, delimiter String) StringView {
+    return this.span(0, this.atUntil(delimiter))
+}
+
+func atUntil(this *String, delimiter ubyte) usize {
+    if this.length == 0, return 0
+    
+    each ubyte in static *this, if it == delimiter, return idx
+    return this.length
+}
+
+func atUntil(this *String, delimiter String) usize {
+    if delimiter.length > this.length || delimiter.length == 0, return this.length
+    
+    repeat static (this.length - delimiter.length + 1) {
+        if this.span(idx, delimiter.length) == delimiter, return idx
+    }
+    
+    return this.length
+}
+
+func removeUntil(this *String, delimiter String) void {
+    this.decapitate(this.atUntil(delimiter))
+}
+
+func removedUntil(this *String, delimiter String) String {
+    return this.decapitated(this.atUntil(delimiter))
+}

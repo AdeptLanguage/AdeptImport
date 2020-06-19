@@ -1,0 +1,434 @@
+
+import 'sys/cmath.adept'
+import 'sys/cstdio.adept'
+import '2.3/Vector3f.adept'
+
+struct Matrix4f (array 16 float) {
+    func zero {
+        each float in [&this.array as *float, 16], it = 0.0f
+    }
+    
+    func identity {
+        m *float = &this.array as *float
+        m[0]  = 1.0f; m[1]  = 0.0f; m[2]  = 0.0f; m[3]  = 0.0f
+        m[4]  = 0.0f; m[5]  = 1.0f; m[6]  = 0.0f; m[7]  = 0.0f
+        m[8]  = 0.0f; m[9]  = 0.0f; m[10] = 1.0f; m[11] = 0.0f
+        m[12] = 0.0f; m[13] = 0.0f; m[14] = 0.0f; m[15] = 1.0f
+    }
+    
+    func identity(scale float) {
+        m *float = &this.array as *float
+        m[0]  = scale; m[1]  =  0.0f; m[2]  =  0.0f; m[3]  = 0.0f
+        m[4]  =  0.0f; m[5]  = scale; m[6]  =  0.0f; m[7]  = 0.0f
+        m[8]  =  0.0f; m[9]  =  0.0f; m[10] = scale; m[11] = 0.0f
+        m[12] =  0.0f; m[13] =  0.0f; m[14] =  0.0f; m[15] = scale
+    }
+    
+    func transpose {
+        m *float = &this.array as *float
+        a01 float = m[1]; a02 float = m[2]
+        a03 float = m[3]; a12 float = m[6]
+        a13 float = m[7]; a23 float = m[11]
+        m[1]  = m[4];  m[2]  = m[8];  m[3]  = m[12]; m[4]  = a01
+        m[6]  = m[9];  m[7]  = m[13]; m[8]  = a02;   m[9]  = a12
+        m[11] = m[14]; m[12] = a03;   m[13] = a13;   m[14] = a23
+    }
+    
+    func determinant float {
+        m *float = &this.array as *float
+        a00 float = m[0];  a01 float = m[1];  a02 float = m[2];  a03 float = m[3]
+        a10 float = m[4];  a11 float = m[5];  a12 float = m[6];  a13 float = m[7]
+        a20 float = m[8];  a21 float = m[9];  a22 float = m[10]; a23 float = m[11]
+        a30 float = m[12]; a31 float = m[13]; a32 float = m[14]; a33 float = m[15]
+        return a30 * a21 * a12 * a03 - a20 * a31 * a12 * a03 - a30 * a11 * a22 * a03 + a10 * a31 * a22 * a03 +
+            a20 * a11 * a32 * a03 - a10 * a21 * a32 * a03 - a30 * a21 * a02 * a13 + a20 * a31 * a02 * a13 +
+            a30 * a01 * a22 * a13 - a00 * a31 * a22 * a13 - a20 * a01 * a32 * a13 + a00 * a21 * a32 * a13 +
+            a30 * a11 * a02 * a23 - a10 * a31 * a02 * a23 - a30 * a01 * a12 * a23 + a00 * a31 * a12 * a23 +
+            a10 * a01 * a32 * a23 - a00 * a11 * a32 * a23 - a20 * a11 * a02 * a33 + a10 * a21 * a02 * a33 +
+            a20 * a01 * a12 * a33 - a00 * a21 * a12 * a33 - a10 * a01 * a22 * a33 + a00 * a11 * a22 * a33
+    }
+    
+    func inverse {
+        m *float = &this.array as *float
+        a00 float = m[0];  a01 float = m[1];  a02 float = m[2];  a03 float = m[3]
+        a10 float = m[4];  a11 float = m[5];  a12 float = m[6];  a13 float = m[7]
+        a20 float = m[8];  a21 float = m[9];  a22 float = m[10]; a23 float = m[11]
+        a30 float = m[12]; a31 float = m[13]; a32 float = m[14]; a33 float = m[15]
+        
+        b00 float = a00 * a11 - a01 * a10
+        b01 float = a00 * a12 - a02 * a10
+        b02 float = a00 * a13 - a03 * a10
+        b03 float = a01 * a12 - a02 * a11
+        b04 float = a01 * a13 - a03 * a11
+        b05 float = a02 * a13 - a03 * a12
+        b06 float = a20 * a31 - a21 * a30
+        b07 float = a20 * a32 - a22 * a30
+        b08 float = a20 * a33 - a23 * a30
+        b09 float = a21 * a32 - a22 * a31
+        b10 float = a21 * a33 - a23 * a31
+        b11 float = a22 * a33 - a23 * a32
+        
+        d float = (b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06)
+        if d == 0.0f, return
+        
+        inv_det float = 1.0f / d
+        
+        m[0] = (a11 * b11 - a12 * b10 + a13 * b09) * inv_det
+        m[1] = (-1.0f * a01 * b11 + a02 * b10 - a03 * b09) * inv_det
+        m[2] = (a31 * b05 - a32 * b04 + a33 * b03) * inv_det
+        m[3] = (-1.0f * a21 * b05 + a22 * b04 - a23 * b03) * inv_det
+        m[4] = (-1.0f * a10 * b11 + a12 * b08 - a13 * b07) * inv_det
+        m[5] = (a00 * b11 - a02 * b08 + a03 * b07) * inv_det
+        m[6] = (-1.0f * a30 * b05 + a32 * b02 - a33 * b01) * inv_det
+        m[7] = (a20 * b05 - a22 * b02 + a23 * b01) * inv_det
+        m[8] = (a10 * b10 - a11 * b08 + a13 * b06) * inv_det
+        m[9] = (-1.0f * a00 * b10 + a01 * b08 - a03 * b06) * inv_det
+        m[10] = (a30 * b04 - a31 * b02 + a33 * b00) * inv_det
+        m[11] = (-1.0f * a20 * b04 + a21 * b02 - a23 * b00) * inv_det
+        m[12] = (-1.0f * a10 * b09 + a11 * b07 - a12 * b06) * inv_det
+        m[13] = (a00 * b09 - a01 * b07 + a02 * b06) * inv_det
+        m[14] = (-1.0f * a30 * b03 + a31 * b01 - a32 * b00) * inv_det
+        m[15] = (a20 * b03 - a21 * b01 + a22 * b00) * inv_det
+    }
+    
+    func toRotationMatrix {
+        m *float = &this.array as *float
+        m[12] = 0.0f
+        m[13] = 0.0f
+        m[14] = 0.0f
+        m[15] = 1.0f
+    }
+    
+    func multiply(other Matrix4f) {
+        m *float = &this.array as *float
+        o *float = &other.array as *float
+        
+        a00 float = m[0];  a01 float = m[1];  a02 float = m[2];  a03 float = m[3]
+        a10 float = m[4];  a11 float = m[5];  a12 float = m[6];  a13 float = m[7]
+        a20 float = m[8];  a21 float = m[9];  a22 float = m[10]; a23 float = m[11]
+        a30 float = m[12]; a31 float = m[13]; a32 float = m[14]; a33 float = m[15]
+        
+        b00 float = o[0];  b01 float = o[1];  b02 float = o[2];  b03 float = o[3]
+        b10 float = o[4];  b11 float = o[5];  b12 float = o[6];  b13 float = o[7]
+        b20 float = o[8];  b21 float = o[9];  b22 float = o[10]; b23 float = o[11]
+        b30 float = o[12]; b31 float = o[13]; b32 float = o[14]; b33 float = o[15]
+        
+        m[0] = b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30
+        m[1] = b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31
+        m[2] = b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32
+        m[3] = b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33
+        m[4] = b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30
+        m[5] = b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31
+        m[6] = b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32
+        m[7] = b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33
+        m[8] = b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30
+        m[9] = b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31
+        m[10] = b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32
+        m[11] = b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33
+        m[12] = b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30
+        m[13] = b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31
+        m[14] = b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32
+        m[15] = b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33
+    }
+    
+    func translate(x, y, z float) {
+        m *float = &this.array as *float
+        m[12] = m[0] * x + m[4] * y + m[8]  * z + m[12]
+        m[13] = m[1] * x + m[5] * y + m[9]  * z + m[13]
+        m[14] = m[2] * x + m[6] * y + m[10] * z + m[14]
+        m[15] = m[3] * x + m[7] * y + m[11] * z + m[15]
+    }
+    
+    func translate(xyz Vector3f) {
+        x float = xyz.x
+        y float = xyz.y
+        z float = xyz.z
+        m *float = &this.array as *float
+        m[12] = m[0] * x + m[4] * y + m[8]  * z + m[12]
+        m[13] = m[1] * x + m[5] * y + m[9]  * z + m[13]
+        m[14] = m[2] * x + m[6] * y + m[10] * z + m[14]
+        m[15] = m[3] * x + m[7] * y + m[11] * z + m[15]
+    }
+    
+    func translateFromIdentity(x, y, z float) {
+        this.identity()
+        this.translate(x, y, z)
+    }
+    
+    func translateFromIdentity(xyz Vector3f) {
+        this.identity()
+        this.translate(xyz)
+    }
+    
+    func scale(x, y, z float) {
+        m *float = &this.array as *float
+        m[0] *= x; m[1] *= x; m[2]  *= x; m[3]  *= x
+        m[4] *= y; m[5] *= y; m[6]  *= y; m[7]  *= y
+        m[8] *= z; m[9] *= z; m[10] *= z; m[11] *= z
+    }
+    
+    func scale(xyz Vector3f) {
+        x float = xyz.x
+        y float = xyz.y
+        z float = xyz.z
+        m *float = &this.array as *float
+        m[0] *= x; m[1] *= x; m[2]  *= x; m[3]  *= x
+        m[4] *= y; m[5] *= y; m[6]  *= y; m[7]  *= y
+        m[8] *= z; m[9] *= z; m[10] *= z; m[11] *= z
+    }
+    
+    func scaleFromIdentity(x, y, z float) {
+        this.identity()
+        this.scale(x, y, z)
+    }
+    
+    func scaleFromIdentity(xyz Vector3f) {
+        this.identity()
+        this.scale(xyz)
+    }
+    
+    func rotate(angle, x, y, z float) {
+        m *float = &this.array as *float
+        len float = sqrtf(x * x + y * y + z * z)
+        if len == 0.0f, return
+        
+        if len != 1.0f {
+            len = 1.0f / len
+            x *= len
+            y *= len
+            z *= len
+        }
+        
+        s float = sinf(angle)
+        c float = cosf(angle)
+        t float = 1.0f - c
+        
+        a00 float = m[0]; a01 float = m[1]; a02 float = m[2];  a03 float = m[3]
+        a10 float = m[4]; a11 float = m[5]; a12 float = m[6];  a13 float = m[7]
+        a20 float = m[8]; a21 float = m[9]; a22 float = m[10]; a23 float = m[11]
+        
+        b00 float = x * x * t + c
+        b01 float = y * x * t + z * s
+        b02 float = z * x * t - y * s
+        b10 float = x * y * t - z * s
+        b11 float = y * y * t + c
+        b12 float = z * y * t + x * s
+        b20 float = x * z * t + y * s
+        b21 float = y * z * t - x * s
+        b22 float = z * z * t + c
+        
+        m[0]  = a00 * b00 + a10 * b01 + a20 * b02
+        m[1]  = a01 * b00 + a11 * b01 + a21 * b02
+        m[2]  = a02 * b00 + a12 * b01 + a22 * b02
+        m[3]  = a03 * b00 + a13 * b01 + a23 * b02
+        m[4]  = a00 * b10 + a10 * b11 + a20 * b12
+        m[5]  = a01 * b10 + a11 * b11 + a21 * b12
+        m[6]  = a02 * b10 + a12 * b11 + a22 * b12
+        m[7]  = a03 * b10 + a13 * b11 + a23 * b12
+        m[8]  = a00 * b20 + a10 * b21 + a20 * b22
+        m[9]  = a01 * b20 + a11 * b21 + a21 * b22
+        m[10] = a02 * b20 + a12 * b21 + a22 * b22
+        m[11] = a03 * b20 + a13 * b21 + a23 * b22
+    }
+    
+    func rotate(angle float, axis Vector3f) {
+        x float = axis.x
+        y float = axis.y
+        z float = axis.z
+        m *float = &this.array as *float
+        
+        len float = sqrtf(x * x + y * y + z * z)
+        if len == 0.0f, return
+        
+        if len != 1.0f {
+            len = 1.0f / len
+            x *= len
+            y *= len
+            z *= len
+        }
+        
+        s float = sinf(angle)
+        c float = cosf(angle)
+        t float = 1.0f - c
+        
+        a00 float = m[0]; a01 float = m[1]; a02 float = m[2];  a03 float = m[3]
+        a10 float = m[4]; a11 float = m[5]; a12 float = m[6];  a13 float = m[7]
+        a20 float = m[8]; a21 float = m[9]; a22 float = m[10]; a23 float = m[11]
+        
+        b00 float = x * x * t + c
+        b01 float = y * x * t + z * s
+        b02 float = z * x * t - y * s
+        b10 float = x * y * t - z * s
+        b11 float = y * y * t + c
+        b12 float = z * y * t + x * s
+        b20 float = x * z * t + y * s
+        b21 float = y * z * t - x * s
+        b22 float = z * z * t + c
+        
+        m[0]  = a00 * b00 + a10 * b01 + a20 * b02
+        m[1]  = a01 * b00 + a11 * b01 + a21 * b02
+        m[2]  = a02 * b00 + a12 * b01 + a22 * b02
+        m[3]  = a03 * b00 + a13 * b01 + a23 * b02
+        m[4]  = a00 * b10 + a10 * b11 + a20 * b12
+        m[5]  = a01 * b10 + a11 * b11 + a21 * b12
+        m[6]  = a02 * b10 + a12 * b11 + a22 * b12
+        m[7]  = a03 * b10 + a13 * b11 + a23 * b12
+        m[8]  = a00 * b20 + a10 * b21 + a20 * b22
+        m[9]  = a01 * b20 + a11 * b21 + a21 * b22
+        m[10] = a02 * b20 + a12 * b21 + a22 * b22
+        m[11] = a03 * b20 + a13 * b21 + a23 * b22
+    }
+    
+    func rotateFromIdentity(angle, x, y, z float) {
+        this.identity()
+        this.rotate(angle, x, y, z)
+    }
+    
+    func rotateFromIdentity(angle float, axis Vector3f) {
+        this.identity()
+        this.rotate(angle, axis)
+    }
+    
+    func frustum(left, right, bottom, top, near, far float) {
+        m *float = &this.array as *float
+        rl float = right - left
+        tb float = top - bottom
+        fn float = far - near
+        m[0] = near * 2.0f / rl
+        m[1] = 0.0f
+        m[2] = 0.0f
+        m[3] = 0.0f
+        m[4] = 0.0f
+        m[5] = near * 2.0f / tb
+        m[6] = 0.0f
+        m[7] = 0.0f
+        m[8] = (right + left) / rl
+        m[9] = (top + bottom) / tb
+        m[10] = -1.0f * (far + near) / fn
+        m[11] = -1.0f
+        m[12] = 0.0f
+        m[13] = 0.0f
+        m[14] = -1.0f * far * near * 2.0f / fn
+        m[15] = 0.0f
+    }
+    
+    func perspective(fovy, aspect, near, far float) {
+        top float = near * tanf(fovy * 3.14159265358979323846f / 360.0f)
+        right float = top * aspect
+        this.frustum(-1.0f * right, right, -1.0f * top, top, near, far)
+    }
+    
+    func ortho(left, right, bottom, top, near, far float) {
+        m *float = &this.array as *float
+        rl float = right - left
+        tb float = top - bottom
+        fn float = far - near    
+        m[0] = 2.0f / rl
+        m[1] = 0.0f
+        m[2] = 0.0f
+        m[3] = 0.0f
+        m[4] = 0.0f
+        m[5] = 2.0f / tb
+        m[6] = 0.0f
+        m[7] = 0.0f
+        m[8] = 0.0f
+        m[9] = 0.0f
+        m[10] = -2.0f / fn
+        m[11] = 0.0f
+        m[12] = -1.0f * (left + right) / rl
+        m[13] = -1.0f * (top + bottom) / tb
+        m[14] = -1.0f * (far + near) / fn
+        m[15] = 1.0f
+    }
+    
+    func lookAt(eye Vector3f, center Vector3f, up Vector3f) void {
+        m *float = &this.array as *float
+        eyex float = eye.x
+        eyey float = eye.y
+        eyez float = eye.z
+        upx float = up.x
+        upy float = up.y
+        upz float = up.z
+        centerx float = center.x
+        centery float = center.y
+        centerz float = center.z
+    
+        if eyex == centerx and eyey == centery and eyez == centerz,
+            this.identity()
+        
+        z0 float = eyex - centerx
+        z1 float = eyey - centery
+        z2 float = eyez - centerz
+        
+        len float = 1.0f / sqrtf(z0 * z0 + z1 * z1 + z2 * z2)
+        z0 *= len
+        z1 *= len
+        z2 *= len
+        
+        x0 float = upy * z2 - upz * z1
+        x1 float = upz * z0 - upx * z2
+        x2 float = upx * z1 - upy * z0
+        len = sqrtf(x0 * x0 + x1 * x1 + x2 * x2)
+        
+        if len == 0.0f {
+            x0 = 0.0f
+            x1 = 0.0f
+            x2 = 0.0f
+        } else {
+            len = 1.0f / len
+            x0 *= len
+            x1 *= len
+            x2 *= len
+        }
+        
+        y0 float = z1 * x2 - z2 * x1
+        y1 float = z2 * x0 - z0 * x2
+        y2 float = z0 * x1 - z1 * x0
+        len = sqrtf(y0 * y0 + y1 * y1 + y2 * y2)
+        
+        if len == 0.0f {
+            y0 = 0.0f
+            y1 = 0.0f
+            y2 = 0.0f
+        } else {
+            len = 1.0f / len
+            y0 *= len
+            y1 *= len
+            y2 *= len
+        }
+        
+        m[0] = x0
+        m[1] = y0
+        m[2] = z0
+        m[3] = 0.0f
+        m[4] = x1
+        m[5] = y1
+        m[6] = z1
+        m[7] = 0.0f
+        m[8] = x2
+        m[9] = y2
+        m[10] = z2
+        m[11] = 0.0f
+        m[12] = -1.0f * (x0 * eyex + x1 * eyey + x2 * eyez)
+        m[13] = -1.0f * (y0 * eyex + y1 * eyey + y2 * eyez)
+        m[14] = -1.0f * (z0 * eyex + z1 * eyey + z2 * eyez)
+        m[15] = 1.0f
+    }
+    
+    func toString String {
+        m *float = &this.array as *float
+        return "Matrix4f {\n    %f, %f, %f, %f,\n    %f, %f, %f, %f\n    %f, %f, %f, %f\n    %f, %f, %f, %f\n}" %
+            m[0]  as double % m[1]  as double % m[2]  as double % m[3]  as double %
+            m[4]  as double % m[5]  as double % m[6]  as double % m[7]  as double %
+            m[8]  as double % m[9]  as double % m[10] as double % m[11] as double %
+            m[12] as double % m[13] as double % m[14] as double % m[15] as double
+    }
+    
+    func print {
+        m *float = &this.array as *float
+        printf('Matrix4f {\n    %ff, %ff, %ff, %ff,\n    %ff, %ff, %ff, %ff,\n    %ff, %ff, %ff, %ff,\n    %ff, %ff, %ff, %ff\n}\n',
+            cast double m[0], cast double m[1], cast double m[2], cast double m[3], cast double m[4],
+            cast double m[5], cast double m[6], cast double m[7], cast double m[8], cast double m[9],
+            cast double m[10], cast double m[11], cast double m[12], cast double m[13], cast double m[14], cast double m[15])
+    }
+}

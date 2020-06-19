@@ -1,0 +1,60 @@
+
+import '2.3/Array.adept'
+import '2.3/String.adept'
+
+struct DummyStructForGlobalRTTI () {
+    func __array__ **AnyType = __types__
+    func __length__ usize = __types_length__
+}
+__typeinfo__ DummyStructForGlobalRTTI
+
+alias TypeInfo = *AnyType
+alias StructTypeInfo = *AnyStructType
+
+func getName(this *AnyType) String = stringConstant(this.name)
+func isAlias(this *AnyType) bool = this.is_alias
+
+func isStruct(this *AnyType) bool = this.kind == AnyTypeKind::STRUCT
+func asStruct(this *AnyType) *AnyStructType = (this.kind == AnyTypeKind::STRUCT ? this : null as TypeInfo) as *AnyStructType
+
+func getMemberNamesList(this *AnyType) <String> List {
+    if this.isStruct() {
+        return this.asStruct().getMemberNamesList()
+    }
+    
+    names <String> List
+    return names.commit()
+}
+
+func getMemberNamesList(this *AnyStructType) <String> List {
+    names <String> List
+    repeat this.length, names.add(stringConstant(this.member_names[idx]))
+    return names.commit()
+}
+
+func getMemberCount(this *AnyType) usize {
+    if this.isStruct(), return this.asStruct().getMemberCount()
+    return 0
+}
+
+func getMemberCount(this *AnyStructType) usize {
+    return this.length
+}
+
+func getMemberNames(this *AnyType) <*ubyte> Array {
+    unless this.isStruct(), return array(null as **ubyte, 0)
+    return array(this as *AnyStructType.member_names, this as *AnyStructType.length)
+}
+
+func getMemberNames(this *AnyStructType) <*ubyte> Array {
+    return array(this as *AnyStructType.member_names, this as *AnyStructType.length)
+}
+
+func getMemberTypes(this *AnyType) <*AnyType> Array {
+    unless this.isStruct(), return array(null as **AnyType, 0)
+    return array(this as *AnyStructType.members, this as *AnyStructType.length)
+}
+
+func getMemberTypes(this *AnyStructType) <*AnyType> Array {
+    return array(this as *AnyStructType.members, this as *AnyStructType.length)
+}

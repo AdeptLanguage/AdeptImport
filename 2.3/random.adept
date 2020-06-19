@@ -1,0 +1,34 @@
+
+import 'sys/ctime.adept'
+import 'sys/cstdlib.adept'
+
+func randomize {
+    srand(time(null))
+}
+
+func random double {
+    return randReduced() as double / RAND_REDUCED_RANGE as double
+}
+
+func randomInt(exclusive_max int) int {
+    return cast int (random() * exclusive_max as double)
+}
+
+func randomInt(inclusive_min, exclusive_max int) int {
+    return randomInt(exclusive_max - inclusive_min) + inclusive_min
+}
+
+func randomDouble(exclusive_max double) double {
+    return random() * exclusive_max
+}
+
+func randomDouble(inclusive_min, exclusive_max double) double {
+    return randomDouble(exclusive_max - inclusive_min) + inclusive_min
+}
+
+RAND_REDUCED_MAX == 0x7fff
+RAND_REDUCED_RANGE == 0x8000
+
+func randReduced int {
+    return rand() % RAND_REDUCED_RANGE
+}

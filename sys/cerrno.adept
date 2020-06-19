@@ -85,8 +85,15 @@
     ETXTBSY == 139
     EWOULDBLOCK == 140
 #else
-    external errno int
-
+    #if __macos__
+        foreign __error() *int
+        errno == *__error()
+    #else
+        #print_warning "sys/cerrno.adept: WARNING: Using external global variable for errno, thread-local storage may not work for it"
+        #print_warning "sys/cerrno.adept: WARNING: Assuming error codes"
+        external errno int
+    #end
+    
     EPERM           == 1
     ENOENT          == 2
     ESRCH           == 3

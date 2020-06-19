@@ -1,14 +1,17 @@
 
 #default list_bounds_checks true
+#default list_bounds_error_with_type true
 #default list_ownership_checks true
 #default list_disable_safety false
 #default list_preparation_checks false
 #default list_experimental false
+#default list_warn_experimental true
 
 #if list_disable_safety
     #set list_bounds_checks false
     #set list_ownership_checks false
     #set list_preparation_checks false
+    #set list_warn_experimental false
 #end
 
 #if list_preparation_checks && !list_experimental
@@ -34,21 +37,30 @@ func __length__(this *<$T> List) usize {
 }
 
 func add(this *<$T> List, item POD $T) {
-    if this.add(), this.items[this.length - 1] = item
+    new_item *$T = this.add()
+    if new_item, *new_item = item
 }
 
-func add(this *<$T> List) successful {
+func add(this *<$T> List) *$T {
     #if list_preparation_checks
         if this.prepared != 0 {
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: adding to list that was prepared to expect more data than given\n', typeinfo $T.name)
+            #else
             printf('<$T> List Error: adding to list that was prepared to expect more data than given\n')
-            return false
+            #end
+            return null
         }
     #end
     
     #if list_ownership_checks
         if this.ownership != Ownership::OWN && this.items != null {
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: can\'t add to list via reference\n', typeinfo $T.name)
+            #else
             printf('<$T> List Error: can\'t add to list via reference\n')
-            return false
+            #end
+            return null
         }
     #end
     
@@ -65,27 +77,54 @@ func add(this *<$T> List) successful {
         this.items = new_items
     }
     
-    memset(this.items at this.length, 0, sizeof $T)
-    this.length += 1
-    return true
+    new_item *$T = this.items at this.length++
+    memset(new_item, 0, sizeof $T)
+    return new_item
+}
+
+func insert(this *<$T> List, index usize) *$T {
+    if this.add() {
+        inserted_item *$T = this.items at index
+        memmove(this.items at (index + 1), inserted_item, (this.length - index - 1) * sizeof $T)
+        memset(inserted_item, 0, sizeof $T)
+        return inserted_item
+    }
+    return null
+}
+
+func insert(this *<$T> List, index usize, item POD $T) {
+    inserted_item *$T = this.insert(index)
+    if inserted_item, *inserted_item = item
 }
 
 func remove(this *<$T> List, index usize) {
     #if list_bounds_checks
         if this.length == 0 {
-            printf('<$T> List Error: remove() called on empty list')
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: remove() called on empty list\n', typeinfo $T.name)
+            #else
+            printf('<$T> List Error: remove() called on empty list\n')
+            #end
             return
         }
-        
+
         if index < 0 || index >= this.length {
-            printf('<$T> List Error: remove() index out of range')
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: remove() index out of range\n', typeinfo $T.name)
+            #else
+            printf('<$T> List Error: remove() index out of range\n')
+            #end
             return
         }
     #end
     
     #if list_ownership_checks
         if this.ownership != Ownership::OWN {
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: can\'t remove from list via reference\n', typeinfo $T.name)
+            #else
             printf('<$T> List Error: can\'t remove from list via reference\n')
+            #end
             return
         }
     #end
@@ -97,11 +136,21 @@ func remove(this *<$T> List, index usize) {
 
 #if list_experimental
     func prepare(this *<$T> List, amount usize) {
-        printf('<$T> List Warning: prepare(usize) is experimental\n')
-        
+        #if list_warn_experimental
+            #if list_bounds_error_with_type
+            printf('<%s> List Warning: prepare(usize) is experimental\n', typeinfo $T.name)
+            #else
+            printf('<$T> List Warning: prepare(usize) is experimental\n')
+            #end
+        #end
+
         #if list_ownership_checks
             if this.ownership != Ownership::OWN {
+                #if list_bounds_error_with_type
+                printf('<%s> List Error: can\'t prepare to add to list via reference\n', typeinfo $T.name)
+                #else
                 printf('<$T> List Error: can\'t prepare to add to list via reference\n')
+                #end
                 return
             }
         #end
@@ -125,18 +174,32 @@ func remove(this *<$T> List, index usize) {
     }
     
     func ready(this *<$T> List, item POD $T) {
-        printf('<$T> List Warning: ready(POD $T) is experimental\n')
-        
+        #if list_warn_experimental
+            #if list_bounds_error_with_type
+            printf('<%s> List Warning: ready(POD $T) is experimental\n', typeinfo $T.name)
+            #else
+            printf('<$T> List Warning: ready(POD $T) is experimental\n')
+            #end
+        #end
+
         #if list_ownership_checks
             if this.ownership != Ownership::OWN {
+                #if list_bounds_error_with_type
+                printf('<%s> List Error: readying to list via reference\n', typeinfo $T.name)
+                #else
                 printf('<$T> List Error: readying to list via reference\n')
+                #end
                 return
             }
         #end
         
         #if list_preparation_checks
             unless this.prepared >= 1 {
+                #if list_bounds_error_with_type
+                printf('<%s> List Error: readying to list with nothing prepared\n', typeinfo $T.name)
+                #else
                 printf('<$T> List Error: readying to list with nothing prepared\n')
+                #end
                 return
             }
         #end
@@ -147,18 +210,33 @@ func remove(this *<$T> List, index usize) {
     }
     
     func ready(this *<$T> List, items POD *$T, length usize) {
-        printf('<$T> List Warning: ready(*$T, usize) is experimental\n')
+        #if list_warn_experimental
+            #if list_bounds_error_with_type
+            printf('<$T> List Warning: ready(*$T, usize) is experimental\n')
+            #else
+            printf('<%s> List Warning: ready(*$T, usize) is experimental\n', typeinfo $T.name)
+            #end
+        #end
         
         #if list_ownership_checks
             if this.ownership != Ownership::OWN {
+                #if list_bounds_error_with_type
+                printf('<%s> List Error: readying to list via reference\n', typeinfo $T)
+                #else
                 printf('<$T> List Error: readying to list via reference\n')
+                #end
                 return
             }
         #end
         
         #if list_preparation_checks
             unless this.prepared >= length {
+                #if list_bounds_error_with_type
+                printf(this.prepared == 0 ? '<%s> List Error: readying to list with nothing prepared\n' : '<%s> List Error: readying to list with not enough space prepared\n',
+                        typeinfo $T.name)
+                #else
                 printf(this.prepared == 0 ? '<$T> List Error: readying to list with nothing prepared\n' : '<$T> List Error: readying to list with not enough space prepared\n')
+                #end
                 return
             }
         #end
@@ -171,14 +249,22 @@ func remove(this *<$T> List, index usize) {
 func reserve(this *<$T> List, count usize) {
     #if list_preparation_checks
         if this.prepared != 0 {
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: reserving space for list that was prepared to expect more data than given\n', typeinfo $T)
+            #else
             printf('<$T> List Error: reserving space for list that was prepared to expect more data than given\n')
+            #end
             return
         }
     #end
     
     #if list_ownership_checks
         if this.ownership != Ownership::OWN && this.items != null {
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: can\'t reserve space for list via reference\n', typeinfo $T.name)
+            #else
             printf('<$T> List Error: can\'t reserve space for list via reference\n')
+            #end
             return
         }
     #end
@@ -201,7 +287,11 @@ func reserve(this *<$T> List, count usize) {
 func get(this *<$T> List, index usize) $T {
     #if list_bounds_checks
         if index < 0 || index >= this.length {
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: get() index out of range\n', typeinfo $T.name)
+            #else
             printf('<$T> List Error: get() index out of range\n')
+            #end
             return this.items[0]
         }
     #end
@@ -212,7 +302,11 @@ func get(this *<$T> List, index usize) $T {
 func getPointer(this *<$T> List, index usize) *$T {
     #if list_bounds_checks
         if index < 0 || index >= this.length {
+            #if list_bounds_error_with_type
+            printf('<%s> List Error: getPointer() index out of range\n', typeinfo $T.name)
+            #else
             printf('<$T> List Error: getPointer() index out of range\n')
+            #end
             return this.items
         }
     #end
@@ -221,14 +315,19 @@ func getPointer(this *<$T> List, index usize) *$T {
 }
 
 func clear(this *<$T> List) {
-    if this.ownership == Ownership::OWN {
+    if this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
         each $T in [this.items, this.length], it.?__defer__()
         this.length = 0
+    } else {
+        this.items = null
+        this.length = 0
+        this.capacity = 0
+        this.ownership = Ownership::REFERENCE
     }
 }
 
 func __defer__(this *<$T> List) {
-    if this.ownership == Ownership::OWN {
+    if this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
         each $T in [this.items, this.length], it.?__defer__()
         delete this.items
     }
