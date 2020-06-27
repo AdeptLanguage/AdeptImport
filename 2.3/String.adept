@@ -3,6 +3,7 @@
 
 import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
+import 'parse.adept'
 
 enum StringOwnership (REFERENCE, OWN, GIVEN, DONATED)
 alias StringView = String
