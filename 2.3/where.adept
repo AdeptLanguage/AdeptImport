@@ -31,9 +31,9 @@
         if _NSGetExecutablePath(&storage as *ubyte, &size) != 0,
             return ""
         
-        resolved 4096 ubyte = undef
-        realpath(&storage as *ubyte, &resolved as *ubyte)
-        return string(&resolved as *ubyte)
+        resolved ubyte = new undef ubyte * 4096
+        realpath(&storage as *ubyte, resolved)
+        return stringTake(resolved, 4096)
     }
 #else
     #print_error "'2.3/where.adept': Only supported on Windows and MacOS"

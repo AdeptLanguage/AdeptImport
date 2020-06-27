@@ -17,7 +17,7 @@
         #print "Warning: 'posix/pthread.adept' guessing sizes of types"
     #end
     
-    struct pthread_t (_opaque 1024 ulong)
+    struct pthread_t (_opaque ulong)
     struct pthread_mutex_t (_opaque 8 ulong)
     struct pthread_cond_t (_opaque 6 ulong)
     struct pthread_rwlock_t (_opaque 25 ulong)

@@ -3,7 +3,6 @@
 
 import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
-import 'parse.adept'
 
 enum StringOwnership (REFERENCE, OWN, GIVEN, DONATED)
 alias StringView = String
@@ -187,30 +186,6 @@ func __modulus__(lhs POD String, rhs int) String {
     memcpy(formatted.array, lhs.array, percent)
     memcpy(formatted.array at percent, &int_string as *ubyte, int_string_length)
     memcpy(formatted.array at (percent + int_string_length), lhs.array at (percent + 1), lhs.length - percent - 1)
-    lhs = POD __pass__(lhs)
-    lhs.__defer__()
-    return formatted
-}
-
-func __modulus__(lhs POD String, rhs double) String {
-    formatted POD String = undef
-    percent long = lhs.first('%'ub)
-    
-    if percent == -1, return lhs
-    
-    float_string 324 ubyte = undef
-    sprintf(&float_string as *ubyte, '%f', rhs)
-    float_string_length usize = strlen(&float_string as *ubyte)
-    
-    formatted.length = lhs.length + float_string_length - 1
-    formatted.capacity = formatted.length
-    formatted.ownership = StringOwnership::GIVEN
-    
-    formatted.array = new ubyte * formatted.length
-    
-    memcpy(formatted.array, lhs.array, percent)
-    memcpy(formatted.array at percent, &float_string as *ubyte, float_string_length)
-    memcpy(formatted.array at (percent + float_string_length), lhs.array at (percent + 1), lhs.length - percent - 1)
     lhs = POD __pass__(lhs)
     lhs.__defer__()
     return formatted
@@ -558,6 +533,24 @@ func stringConstant(null_terminated *ubyte) String {
     reference.capacity = reference.length
     reference.ownership = StringOwnership::REFERENCE
     return reference
+}
+
+func stringTake(null_terminated *ubyte) String {
+    taken POD String = undef
+    taken.length = strlen(null_terminated)
+    taken.array = null_terminated
+    taken.capacity = taken.length + 1
+    taken.ownership = StringOwnership::GIVEN
+    return taken
+}
+
+func stringTake(null_terminated *ubyte, capacity usize) String {
+    taken POD String = undef
+    taken.length = strlen(null_terminated)
+    taken.array = null_terminated
+    taken.capacity = capacity
+    taken.ownership = StringOwnership::GIVEN
+    return taken
 }
 
 func __array__(this *String) *ubyte = this.array
