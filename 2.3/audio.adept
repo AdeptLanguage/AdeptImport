@@ -3,6 +3,8 @@
 // projects and should not be relied upon
 pragma deprecated 'Audio API is experimental'
 
+#default audio_print_errors true
+
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
 import 'alut/alut.adept'
@@ -22,101 +24,119 @@ func audioTerminate() void {
     alutExit()
 }
 
-struct Sound (buffer_id uint, loop bool, volume float)
-
-func load(this *Sound, filename *ubyte, looping bool, volume float) {
-    this.create()
-
-    if alGetError() != AL_NO_ERROR {
-        puts('Error failed to load sound')
-        return
+struct Sound (buffer_id uint, loop bool, volume float) {
+    func load(filename *ubyte, looping bool, volume float) successful {
+        if this.buffer_id != AL_NONE, return false
+        this.buffer_id = alutCreateBufferFromFile(filename)
+        
+        if alGetError() != AL_NO_ERROR || alutGetError() != ALUT_ERROR_NO_ERROR {
+            #if audio_print_errors
+            printf('Error failed to load sound "%s"\n', filename)
+            #end
+            return false
+        }
+        
+        this.loop = looping
+        this.volume = volume
+        return true
+    }
+    
+    func create {
+        if this.buffer_id != AL_NONE, return
+        alGenBuffers(1, &this.buffer_id)
     }
 
-    alutLoadWAVFile(filename, def format uint, def data ptr, def size usize, def freq usize, null)
-    alBufferData(this.buffer_id, format, data, size, freq)
-    alutUnloadWAV(format, data, size, freq)
-    this.loop = looping
-    this.volume = volume
-}
+    func create(buffer_id uint) {
+        if this.buffer_id != AL_NONE, this.destroy()
+        this.buffer_id = buffer_id
+    }
 
-func create(this *Sound) void {
-    alGenBuffers(1, &this.buffer_id)
-}
-
-func create(this *Sound, buffer_id uint) void {
-    this.buffer_id = buffer_id
-}
-
-func destroy(this *Sound) void {
-    alDeleteBuffers(1, &this.buffer_id)
-}
-
-struct SoundPlayer (source_id uint)
-
-func create(this *SoundPlayer) {
-    zeros 3 float
-
-    alGenSources(1, &this.source_id)
-    alSourcefv(this.source_id, AL_POSITION, &zeros as *float)
-    alSourcefv(this.source_id, AL_VELOCITY, &zeros as *float)
-
-    if alGetError() != AL_NO_ERROR {
-        puts('Failed to create audio source')
-        return
+    func destroy {
+        alDeleteBuffers(1, &this.buffer_id)
     }
 }
 
-func bindSound(this *SoundPlayer, sound Sound) {
-    alSourcei(this.source_id, AL_LOOPING, sound.loop as uint)
-    alSourcei(this.source_id, AL_BUFFER, sound.buffer_id)
-    alSourcef(this.source_id, AL_PITCH, 1.0f)
-    alSourcef(this.source_id, AL_GAIN, sound.volume)
+struct SoundPlayer (source_id uint, volume float) {
+    func create successful {
+        zeros *float = static float {0.0f, 0.0f, 0.0f}
+
+        alGenSources(1, &this.source_id)
+        alSourcefv(this.source_id, AL_POSITION, zeros)
+        alSourcefv(this.source_id, AL_VELOCITY, zeros)
+
+        if alGetError() != AL_NO_ERROR {
+            #if audio_print_errors
+            puts('Failed to create audio source')
+            #end
+            return false
+        }
+
+        return true
+    }
+
+    func bindSound(sound Sound) {
+        alSourcei(this.source_id, AL_LOOPING, sound.loop as uint)
+        alSourcei(this.source_id, AL_BUFFER, sound.buffer_id)
+        alSourcef(this.source_id, AL_PITCH, 1.0f)
+        alSourcef(this.source_id, AL_GAIN, sound.volume)
+        this.volume = sound.volume
+    }
+
+    func play {
+        alSourcePlay(this.source_id)
+    }
+
+    func play(sound Sound) {
+        this.bindSound(sound)
+        alSourcePlay(this.source_id)
+    }
+
+    func stop {
+        alSourceStop(this.source_id)
+    }
+
+    func isPlaying bool {
+        state int = undef
+        alGetSourcei(this.source_id, AL_SOURCE_STATE, &state)
+        return state == AL_PLAYING
+    }
+
+    func setVolume(new_volume_multiplier float) {
+        alSourcef(this.source_id, AL_GAIN, this.volume * new_volume_multiplier)
+    }
+
+    func setVolumeRaw(new_volume float) {
+        alSourcef(this.source_id, AL_GAIN, new_volume)
+    }
+
+    func destroy {
+        alDeleteSources(1, &this.source_id)
+    }
 }
 
-func play(this *SoundPlayer) void {
-    alSourcePlay(this.source_id)
+struct SoundMixer (player SoundPlayer, volume float) {
+
 }
 
-func play(this *SoundPlayer, sound Sound) void {
-    this.bindSound(sound)
-    alSourcePlay(this.source_id)
-}
+struct PlayableSound (sound Sound, player SoundPlayer) {
+    func load(filename *ubyte, looping bool, volume float) {
+        this.sound.load(filename, looping, volume)
+        this.player.create()
+        this.player.bindSound(this.sound)
+    }
 
-func stop(this *SoundPlayer) void {
-    alSourceStop(this.source_id)
-}
+    func play {
+        alSourcePlay(this.player.source_id)
+    }
 
-func isPlaying(this *SoundPlayer) bool {
-    state int = undef
-    alGetSourcei(this.source_id, AL_SOURCE_STATE, &state)
-    return state == AL_PLAYING
-}
+    func stop {
+        alSourceStop(this.player.source_id)
+    }
 
-func destroy(this *SoundPlayer) void {
-    alDeleteSources(1, &this.source_id)
-}
+    func isPlaying bool = this.player.isPlaying()
 
-struct PlayableSound (sound Sound, player SoundPlayer)
-
-func load(this *PlayableSound, filename *ubyte, looping bool, volume float) void {
-    this.sound.load(filename, looping, volume)
-    this.player.create()
-    this.player.bindSound(this.sound)
-}
-
-func play(this *PlayableSound) void {
-    alSourcePlay(this.player.source_id)
-}
-
-func stop(this *PlayableSound) void {
-    alSourceStop(this.player.source_id)
-}
-
-func isPlaying(this *PlayableSound) bool {
-    return this.player.isPlaying()
-}
-
-func destroy(this *PlayableSound) void {
-    this.player.destroy()
-    this.sound.destroy()
+    func destroy {
+        this.player.destroy()
+        this.sound.destroy()
+    }
 }

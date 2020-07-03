@@ -40,3 +40,5 @@ AL_INITIAL      == 0x1011
 AL_PLAYING      == 0x1012
 AL_PAUSED       == 0x1013
 AL_STOPPED      == 0x1014
+
+AL_NONE == 0ui
