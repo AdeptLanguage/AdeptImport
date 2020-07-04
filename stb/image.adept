@@ -1,12 +1,18 @@
 
-// Minimal wrapper for stb_image - 'stb/image.adept'
+#default STB_IMAGE_IMPLEMENTED_FOR_THIS_PLATFORM false
 
 #if __windows__
     foreign 'windows_stb_image.a'
 #elif __macos__
     foreign 'macos_stb_image.a'
-#else
-    #print_error "stb_image not implemented for this platform"
+#elif !STB_IMAGE_IMPLEMENTED_FOR_THIS_PLATFORM
+    #print_error "stb/image.adept: Not implemented for this platform!"
+    #print ""
+    #place "  To fix this, download stb_image.h from https://github.com/nothings/stb/blob/master/stb_image.h, and compile it to a static library with STB_IMAGE_IMPLEMENTATION defined. "
+    #print "After that, add the following code to your project:"
+    #print ""
+    #print "  foreign 'MY_STB_IMAGE_STATIC_LIBRARY.a'"
+    #print "  #set STB_IMAGE_IMPLEMENTED_FOR_THIS_PLATFORM true"
     #halt
 #end
 

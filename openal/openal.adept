@@ -11,6 +11,7 @@ foreign alGetError() uint
 foreign alListenerfv(uint, ptr) void
 foreign alSourcePlay(uint) void
 foreign alSourceStop(uint) void
+foreign alSourcePause(uint) void
 foreign alDeleteBuffers(int, *uint) void
 foreign alDeleteSources(int, *uint) void
 foreign alGenBuffers(int, *uint) void
@@ -42,3 +43,8 @@ AL_PAUSED       == 0x1013
 AL_STOPPED      == 0x1014
 
 AL_NONE == 0ui
+
+AL_FORMAT_MONO8    == 0x1100
+AL_FORMAT_MONO16   == 0x1101
+AL_FORMAT_STEREO8  == 0x1102
+AL_FORMAT_STEREO16 == 0x1103

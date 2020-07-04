@@ -1,0 +1,96 @@
+
+// Minimal wrapper for stb_vorbis - 'stb/vorbis.adept'
+
+#default STB_VORBIS_IMPLEMENTED_FOR_THIS_PLATFORM false
+
+#if __windows__
+    #print_warning "windows_stb_vorbis.a doesn't exist yet"
+    foreign 'windows_stb_vorbis.a'
+#elif __macos__
+    foreign 'macos_stb_vorbis.a'
+#elif !STB_VORBIS_IMPLEMENTED_FOR_THIS_PLATFORM
+    #print_error "stb/vorbis.adept: Not implemented for this platform!"
+    #print ""
+    #place "  To fix this, download stb_vorbis.c from https://github.com/nothings/stb/blob/master/stb_vorbis.c, and compile it to a static library. "
+    #print "After that, add the following code to your project:"
+    #print ""
+    #print "  foreign 'MY_STB_VORBIS_STATIC_LIBRARY.a'"
+    #print "  #set STB_VORBIS_IMPLEMENTED_FOR_THIS_PLATFORM true"
+    #halt
+#end
+
+struct stb_vorbis_alloc (
+    alloc_buffer *ubyte,
+    alloc_buffer_length_in_bytes int
+)
+
+struct stb_vorbis_info (
+    sample_rate uint,
+    channels int,
+    setup_memory_required uint,
+    setup_temp_memory_required uint,
+    temp_memory_required uint,
+    max_frame_size int
+)
+
+struct stb_vorbis_comment (
+    vender *ubyte,
+    comment_list_length int,
+    comment_list **ubyte
+)
+
+struct stb_vorbis (
+    sample_rate int,
+    channels int,
+    setup_memory_required uint,
+    temp_memory_required uint,
+    setup_temp_memory_required uint,
+    vender *ubyte,
+    comment_list_length int,
+    comment_list **ubyte
+    
+    // The rest is opaque
+    // This struct should never be directly created!
+)
+
+// Get general information about the file
+foreign stb_vorbis_get_info(*stb_vorbis) stb_vorbis_info
+
+// Get ogg comments
+foreign stb_vorbis_get_comment(*stb_vorbis) stb_vorbis_comment
+
+// Get the last error detected (clears it, too)
+foreign stb_vorbis_get_error(*stb_vorbis) int
+
+// close an ogg vorbis file and free all memory in use
+foreign stb_vorbis_close(*stb_vorbis) void
+
+// This function returns the offset (in samples) from the beginning of the
+// file that will be returned by the next decode, if it is known, or -1
+// otherwise. After a flush_pushdata() call, this may take a while before
+// it becomes valid again.
+// NOT WORKING YET after a seek with PULLDATA API
+foreign stb_vorbis_get_sample_offset(*stb_vorbis) int
+
+// Returns the current seek point within the file, or offset from the beginning
+// of the memory buffer. In pushdata mode it returns 0.
+foreign stb_vorbis_get_file_offset(*stb_vorbis) uint
+
+foreign stb_vorbis_open_pushdata(*ubyte, int, *int, *int, *stb_vorbis_alloc) *stb_vorbis
+foreign stb_vorbis_flush_pushdata(*stb_vorbis) void
+
+foreign stb_vorbis_decode_filename(*ubyte, *int, *int, **short) int
+foreign stb_vorbis_decode_memory(ptr, int, *int, *int, **short) int
+
+foreign stb_vorbis_open_memory(ptr, int, *int, *stb_vorbis_alloc) *stb_vorbis
+foreign stb_vorbis_open_filename(*ubyte, *int, *stb_vorbis_alloc) *stb_vorbis
+foreign stb_vorbis_open_file(*FILE, int, *int, *stb_vorbis_alloc) *stb_vorbis
+foreign stb_vorbis_open_file_section(*FILE, int, *int, *stb_vorbis_alloc, uint) *stb_vorbis
+
+foreign stb_vorbis_seek_frame(*stb_vorbis, uint) int
+foreign stb_vorbis_seek(*stb_vorbis, uint) int
+foreign stb_vorbis_seek_start(*stb_vorbis) int
+foreign stb_vorbis_stream_length_in_samples(*stb_vorbis) uint
+foreign stb_vorbis_stream_length_in_seconds(*stb_vorbis) float
+
+

@@ -4,13 +4,18 @@
 pragma deprecated 'Audio API is experimental'
 
 #default audio_print_errors true
+#default audio_use_stb_vorbis true
 
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
 import 'alut/alut.adept'
 import 'openal/openal.adept'
 
-func audioInit() void {
+#if audio_use_stb_vorbis
+    import 'stb/vorbis.adept'
+#end
+
+func audioInit {
     zeros *float = static float {0.0f, 0.0f, 0.0f}
     orientation *float = static float {0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f}
     alutInit(null, null)
@@ -20,18 +25,58 @@ func audioInit() void {
     alGetError()
 }
 
-func audioTerminate() void {
+func audioTerminate {
     alutExit()
 }
 
 struct Sound (buffer_id uint, loop bool, volume float) {
     func load(filename *ubyte, looping bool, volume float) successful {
+        return this.load(stringConstant(filename), looping, volume)
+    }
+    
+    func load(filename String, looping bool, volume float) successful {
         if this.buffer_id != AL_NONE, return false
-        this.buffer_id = alutCreateBufferFromFile(filename)
+        
+        filename_cstr *ubyte = filename.cstr()
+        defer delete filename_cstr
+        
+        #if audio_use_stb_vorbis
+        if filename.endsWith(".ogg") {
+            channels, sample_rate int = 0
+            pcm *short = null
+            samples int = stb_vorbis_decode_filename(filename_cstr, &channels, &sample_rate, &pcm)
+            
+            if samples < 0 {
+                #if audio_print_errors
+                printf('Error failed to load ogg sound "%s"\n', filename_cstr)
+                #end
+                return false
+            }
+            
+            defer delete pcm
+            
+            alGenBuffers(1, &this.buffer_id)
+            format ALenum = channels <= 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16
+            alBufferData(this.buffer_id, format, pcm, samples * 2 * sizeof short, sample_rate)
+            
+            if alGetError() != AL_NO_ERROR {
+                #if audio_print_errors
+                printf('Error failed to load sound "%s"\n', filename_cstr)
+                #end
+                return false
+            }
+            
+            this.loop = looping
+            this.volume = volume
+            return true
+        }
+        #end
+        
+        this.buffer_id = alutCreateBufferFromFile(filename_cstr)
         
         if alGetError() != AL_NO_ERROR || alutGetError() != ALUT_ERROR_NO_ERROR {
             #if audio_print_errors
-            printf('Error failed to load sound "%s"\n', filename)
+            printf('Error failed to load sound "%s"\n', filename_cstr)
             #end
             return false
         }
@@ -87,10 +132,16 @@ struct SoundPlayer (source_id uint, volume float) {
     }
 
     func play(sound Sound) {
+        if this.isPlaying(), this.stop()
+        
         this.bindSound(sound)
         alSourcePlay(this.source_id)
     }
-
+    
+    func pause {
+        alSourcePause(this.source_id)
+    }
+    
     func stop {
         alSourceStop(this.source_id)
     }
@@ -114,12 +165,121 @@ struct SoundPlayer (source_id uint, volume float) {
     }
 }
 
-struct SoundMixer (player SoundPlayer, volume float) {
+enum SoundMixerFade (NONE, IN, OUT)
 
+struct SoundMixer (
+    player SoundPlayer,
+    volume_multiplier, target_volume_multiplier float,
+    fade_speed float,
+    fade SoundMixerFade
+) {
+    func create successful {
+        this.volume_multiplier = 1.0f
+        this.target_volume_multiplier = 1.0f
+        this.fade_speed = 1.0f
+        this.fade = SoundMixerFade::NONE
+        return this.player.create()
+    }
+    
+    func destroy {
+        this.player.destroy()
+    }
+    
+    func setFadeSpeed(fade_speed float) {
+        this.fade_speed = fade_speed
+    }
+
+    func bindSound(sound Sound) {
+        this.player.bindSound(sound)
+    }
+
+    func play {
+        this.player.play()
+    }
+    
+    func play(sound Sound) {
+        this.player.play(sound)
+        this.volume_multiplier = 1.0f
+    }
+    
+    func playFadingIn(sound Sound) {
+        this.player.play(sound)
+        this.fadeIn()
+    }
+    
+    func pause {
+        this.player.pause()
+    }
+    
+    func stop {
+        this.player.stop()
+    }
+
+    func isPlaying bool {
+        return this.player.isPlaying()
+    }
+    
+    func update {
+        this.update(0.0166667f)
+    }
+    
+    func update(delta float) {
+        switch this.fade {
+        case SoundMixerFade::IN
+            this.volume_multiplier += this.fade_speed * delta
+            if this.volume_multiplier >= this.target_volume_multiplier {
+                this.volume_multiplier = this.target_volume_multiplier
+                this.fade = SoundMixerFade::NONE
+            }
+            this.player.setVolume(this.volume_multiplier)
+        case SoundMixerFade::OUT
+            this.volume_multiplier -= this.fade_speed * delta
+            if this.volume_multiplier <= this.target_volume_multiplier {
+                this.volume_multiplier = this.target_volume_multiplier
+                this.fade = SoundMixerFade::NONE
+            }
+            this.player.setVolume(this.volume_multiplier)
+        }
+    }
+    
+    func fadeOut {
+        this.fade = SoundMixerFade::OUT
+        this.target_volume_multiplier = 0.0f
+    }
+    
+    func fadeIn {
+        this.fadeIn(true)
+    }
+    
+    func fadeIn(start_from_zero_percent bool) {
+        if start_from_zero_percent {
+            this.setVolume(0.0f)
+        }
+        
+        this.fadeIntoVolume(1.0f)
+    }
+    
+    func fadeIntoVolume(volume_multiplier float) {
+        this.fade = SoundMixerFade::IN
+        this.target_volume_multiplier = volume_multiplier
+    }
+    
+    func setVolume(new_volume_multiplier float) {
+        this.player.setVolume(new_volume_multiplier)
+        this.volume_multiplier = new_volume_multiplier
+    }
+    
+    func isSilent bool {
+        return this.volume_multiplier == 0.0f
+    }
 }
 
 struct PlayableSound (sound Sound, player SoundPlayer) {
     func load(filename *ubyte, looping bool, volume float) {
+        this.load(stringConstant(filename), looping, volume)
+    }
+    
+    func load(filename String, looping bool, volume float) {
         this.sound.load(filename, looping, volume)
         this.player.create()
         this.player.bindSound(this.sound)
