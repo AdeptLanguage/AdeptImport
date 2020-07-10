@@ -25,6 +25,7 @@ _captain_release func(float, float, int) void
 _captain_release_use_view_mouse bool
 _captain_key func(int, int, int, int) void
 _captain_char func(uint) void
+_captain_scroll func(float, float) void
 _captain_shader CaptShader
 _captain_display_ratio float
 _captain_view_width float
@@ -49,6 +50,7 @@ func captPrepare successful {
     _captain_release = null
     _captain_key = null
     _captain_char = null
+    _captain_scroll = null
     _captain_display_ratio = 0.0f
     _captain_view_width = 0.0f
     _captain_view_height = 0.0f
@@ -146,7 +148,8 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     glfwSetMouseButtonCallback(_captain_window, func &_captMouseCallback)
     glfwSetKeyCallback(_captain_window, func &_captKeyCallback)
     glfwSetCharCallback(_captain_window, func &_captCharCallback)
-
+    glfwSetScrollCallback(_captain_window, func &_captScrollCallback)
+    
     unless _captain_custom_view, captDefaultView()    
     if _captain_setup as ptr, _captain_setup()
     
@@ -216,6 +219,10 @@ func _captKeyCallback(window *GLFWwindow, k, s, a, m int) {
 
 func _captCharCallback(window *GLFWwindow, codepoint uint) {
     if _captain_char as ptr, _captain_char(codepoint)
+}
+
+func _captScrollCallback(window *GLFWwindow, x_offset double, y_offset double) {
+    if _captain_scroll as ptr, _captain_scroll(x_offset as float, y_offset as float)
 }
 
 func captViewWidth float {
@@ -337,6 +344,11 @@ func captOnKey(in on_key_func func(int, int, int, int) void) {
 func captOnChar(in on_char_func func(uint) void) {
     captEnsurePrepared()
     _captain_char = on_char_func
+}
+
+func captOnScroll(in on_scroll_func func(float, float) void) {
+    captEnsurePrepared()
+    _captain_scroll = on_scroll_func
 }
 
 struct CaptColor (r, g, b, a float)
