@@ -4,7 +4,6 @@
 #default STB_VORBIS_IMPLEMENTED_FOR_THIS_PLATFORM false
 
 #if __windows__
-    #print_warning "windows_stb_vorbis.a doesn't exist yet"
     foreign 'windows_stb_vorbis.a'
 #elif __macos__
     foreign 'macos_stb_vorbis.a'
