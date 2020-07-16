@@ -31,7 +31,7 @@
         if _NSGetExecutablePath(&storage as *ubyte, &size) != 0,
             return ""
         
-        resolved ubyte = new undef ubyte * 4096
+        resolved *ubyte = new undef ubyte * 4096
         realpath(&storage as *ubyte, resolved)
         return stringTake(resolved, 4096)
     }
