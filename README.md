@@ -23,7 +23,7 @@ import
 │       terminal.adept      (Terminal IO)
 │       Vector3f.adept      (3 Float Vector)
 │
-├───adept (Legacy Support Library for Adept 1.1)
+├───adept (Legacy Support Library for Adept 2.0)
 │   │   conversion.adept    (Legacy support for data conversion)
 │   │   string.adept        (Legacy support for string manipulation)
 │   │
