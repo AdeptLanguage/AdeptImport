@@ -78,7 +78,7 @@ func levenshtein(s1, s2 String) usize {
     return matrix[s2len + s1len * w]
 }
 
-func getUntil(this *String, delimiter ubyte) String {
+func getUntil(this *String, delimiter String) String {
     return this.sub(0, this.atUntil(delimiter))
 }
 

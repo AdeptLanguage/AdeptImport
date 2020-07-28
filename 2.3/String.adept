@@ -17,7 +17,7 @@ func __defer__(this *String) void {
     if this.ownership == StringOwnership::OWN || this.ownership == StringOwnership::GIVEN {
         #if log_string_deletion
             printf('[String Deletion] "')
-            repeat this.length, putchar(this.array[idx])
+            repeat static this.length, putchar(this.array[idx])
             putchar('"'ub)
             putchar(0x0A)
         #end
@@ -124,7 +124,7 @@ func __multiply__(lhs String, times int) String {
         result.length = lhs.length * times
         result.array = new ubyte * result.length
         
-        repeat times,
+        repeat static times,
             memcpy(result.array at (lhs.length * idx), lhs.array, lhs.length)
     } else if times == 0 {
         result.array = null
@@ -139,7 +139,7 @@ func __multiply__(lhs String, times int) String {
         
         reversed String = lhs.reversed()
         
-        repeat times,
+        repeat static times,
             memcpy(result.array at (reversed.length * idx), reversed.array, reversed.length)
     }
     
@@ -233,7 +233,7 @@ func donate(this *String) String {
 }
 
 func first(this *String, character ubyte) long {
-    repeat this.length,
+    repeat static this.length,
         if this.array[idx] == character,
             return idx as long
     return -1
@@ -241,14 +241,13 @@ func first(this *String, character ubyte) long {
 
 func first(this *String, sub String) long {
     if sub.length > this.length, return -1
-    times usize = this.length - sub.length + 1
-    repeat times,
+    repeat static this.length - sub.length + 1,
         if sub.equals(this.span(idx, sub.length)), return idx as long
     return -1
 }
 
 func last(this *String, character ubyte) long {
-    repeat this.length,
+    repeat static this.length,
         if this.array[this.length - idx - 1] == character,
             return (this.length - idx - 1) as long
     return -1
@@ -256,14 +255,13 @@ func last(this *String, character ubyte) long {
 
 func last(this *String, sub String) long {
     if sub.length > this.length, return -1
-    times usize = this.length - sub.length + 1
-    repeat times,
+    repeat static this.length - sub.length + 1,
         if sub.equals(this.span(this.length - idx - 1, sub.length)), return (this.length - idx - 1) as long
     return -1
 }
 
 func reverse(this *String) void {
-    repeat this.length / 2 {
+    repeat static this.length / 2 {
         preserved ubyte = this.array[idx]
         this.array[idx] = this.array[this.length - idx - 1]
         this.array[this.length - idx - 1] = preserved
@@ -277,7 +275,7 @@ func reversed(this *String) String {
     reversed.capacity = this.length
     reversed.ownership = StringOwnership::GIVEN
     
-    repeat this.length {
+    repeat static this.length {
         reversed.array[this.length - idx - 1] = this.array[idx]
     }
     
@@ -441,6 +439,36 @@ func append(this *String, other String) {
 
 func appendOnce(this *String, other String) {
     unless this.endsWith(other), this.append(other)
+}
+
+func prepend(this *String, other String) {
+    unless this.ownership == StringOwnership::OWN || this.ownership == StringOwnership::GIVEN {
+        new_length usize = this.length + other.length
+        new_array *ubyte = new undef ubyte * new_length
+        memcpy(new_array, this.array, this.length)
+        memcpy(new_array at this.length, other.array, other.length)
+        this.array = new_array
+        this.length = new_length
+        this.capacity = new_length
+        this.ownership = StringOwnership::OWN
+        return
+    }
+
+    if this.length + other.length > this.capacity {
+        this.capacity = this.length + other.length
+        new_array *ubyte = new undef ubyte * this.capacity
+        memcpy(new_array, this.array, this.length)
+        delete this.array
+        this.array = new_array
+    }
+    
+    memmove(this.array at other.length, this.array, this.length)
+    memcpy(this.array, other.array, other.length)
+    this.length += other.length
+}
+
+func prependOnce(this *String, other String) {
+    unless this.startsWith(other), this.prepend(other)
 }
 
 func clone(this *String) String {

@@ -1,8 +1,4 @@
 
-// NOTE: This is only an experimental prototype based on earlier
-// projects and should not be relied upon
-pragma deprecated 'Audio API is experimental'
-
 #default audio_print_errors true
 #default audio_use_stb_vorbis true
 
@@ -171,13 +167,15 @@ struct SoundMixer (
     player SoundPlayer,
     volume_multiplier, target_volume_multiplier float,
     fade_speed float,
-    fade SoundMixerFade
+    fade SoundMixerFade,
+    amplifier float
 ) {
     func create successful {
         this.volume_multiplier = 1.0f
         this.target_volume_multiplier = 1.0f
         this.fade_speed = 1.0f
         this.fade = SoundMixerFade::NONE
+        this.amplifier = 1.0f
         return this.player.create()
     }
     
@@ -199,7 +197,7 @@ struct SoundMixer (
     
     func play(sound Sound) {
         this.player.play(sound)
-        this.volume_multiplier = 1.0f
+        this.setVolume(1.0f)
     }
     
     func playFadingIn(sound Sound) {
@@ -231,14 +229,14 @@ struct SoundMixer (
                 this.volume_multiplier = this.target_volume_multiplier
                 this.fade = SoundMixerFade::NONE
             }
-            this.player.setVolume(this.volume_multiplier)
+            this.player.setVolume(this.amplifier * this.volume_multiplier)
         case SoundMixerFade::OUT
             this.volume_multiplier -= this.fade_speed * delta
             if this.volume_multiplier <= this.target_volume_multiplier {
                 this.volume_multiplier = this.target_volume_multiplier
                 this.fade = SoundMixerFade::NONE
             }
-            this.player.setVolume(this.volume_multiplier)
+            this.player.setVolume(this.amplifier * this.volume_multiplier)
         }
     }
     
@@ -265,8 +263,13 @@ struct SoundMixer (
     }
     
     func setVolume(new_volume_multiplier float) {
-        this.player.setVolume(new_volume_multiplier)
+        this.player.setVolume(this.amplifier * new_volume_multiplier)
         this.volume_multiplier = new_volume_multiplier
+    }
+    
+    func setVolumeAmplifier(amplifier float) {
+        this.amplifier = amplifier
+        this.player.setVolume(this.amplifier * this.volume_multiplier)
     }
     
     func isSilent bool {

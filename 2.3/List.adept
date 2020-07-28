@@ -1,6 +1,6 @@
 
 #default list_bounds_checks true
-#default list_error_with_type true
+#default list_error_with_type !__no_typeinfo__
 #default list_ownership_checks true
 #default list_disable_safety false
 #default list_preparation_checks false
@@ -95,6 +95,17 @@ func insert(this *<$T> List, index usize) *$T {
 func insert(this *<$T> List, index usize, item POD $T) {
     inserted_item *$T = this.insert(index)
     if inserted_item, *inserted_item = item
+}
+
+func append(this *<$T> List, item POD $T) {
+    this.add(item)
+}
+
+func prepend(this *<$T> List, item POD $T) {
+    this.add()
+    memmove(this.items at 1, this.items, sizeof $T * (this.length - 1))
+    memset(this.items, 0, sizeof $T)
+    *this.items = item
 }
 
 func remove(this *<$T> List, index usize) {
@@ -206,7 +217,6 @@ func remove(this *<$T> List, index usize) {
         
         this.items[this.length] = item
         this.length += 1
-        
     }
     
     func ready(this *<$T> List, items POD *$T, length usize) {
@@ -366,6 +376,16 @@ func reduce(this *<$T> List) void {
 
 func reduce(this *<$T> List, amount usize) void {
     repeat amount, if this.length > 0, this.remove(this.length - 1)
+}
+
+func first(this *<$T> List) *$T {
+    if this.length == 0, return null
+    return this.items
+}
+
+func last(this *<$T> List) *$T {
+    if this.length == 0, return null
+    return this.items at (this.length - 1)
 }
 
 func __assign__(this *<$T> List, other POD <$T> List) {
