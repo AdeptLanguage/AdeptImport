@@ -1,4 +1,8 @@
 
+#if __linux__
+    pragma libm
+#end
+
 foreign acos(in double) double
 foreign acosf(in float) float
 foreign asin(in double) double

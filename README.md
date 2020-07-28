@@ -23,17 +23,6 @@ import
 │       terminal.adept      (Terminal IO)
 │       Vector3f.adept      (3 Float Vector)
 │
-├───adept (Legacy Support Library for Adept 1.1)
-│   │   conversion.adept    (Legacy support for data conversion)
-│   │   string.adept        (Legacy support for string manipulation)
-│   │
-│   ├───filetypes
-│   │       bitmap.adept    (Legacy support for loading basic bitmaps)
-│   │
-│   └───math
-│           matrix4f.adept  (Legacy support for 4x4 float Matrix)
-│           vector3f.adept  (Legacy support for 3-float Vector)
-│
 ├───glfw (GLFW 3 Interface)
 │       glfw.adept
 │

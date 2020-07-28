@@ -1,11 +1,25 @@
 
+#default sys_cstdlib_rand_max 0
+#default sys_cstdlib_show_rand_max_warning true
+
 #if __windows__
     RAND_MAX == 0x7fff
 #elif __macos__
     RAND_MAX == 0x7fffffff
 #else
-    #print "STDLIB WARNING - Assuming RAND_MAX for Unrecognized Platform"
-    RAND_MAX == 0x7fffffff
+    #if sys_cstdlib_show_rand_max_warning && sys_cstdlib_rand_max == 0
+    	#print ""
+        #print_warning "sys/cstdlib.adept WARNING: Guessing RAND_MAX to be " + __randmax__
+        #print "    (You can manually override this value with '#set sys_cstdlib_rand_max VALUE')"
+        #print "    (You can disable this warning with '#set sys_cstdlib_show_rand_max_warning false')"
+        #print ""
+    #end
+
+    #if sys_cstdlib_rand_max != 0
+        RAND_MAX == #get sys_cstdlib_rand_max
+    #else
+        RAND_MAX == #get __randmax__
+    #end
 #end
 
 foreign system(in *ubyte) void

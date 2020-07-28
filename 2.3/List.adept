@@ -1,6 +1,6 @@
 
 #default list_bounds_checks true
-#default list_error_with_type !__no_typeinfo__
+#default list_error_with_type __typeinfo__
 #default list_ownership_checks true
 #default list_disable_safety false
 #default list_preparation_checks false
