@@ -8,7 +8,7 @@
     RAND_MAX == 0x7fffffff
 #else
     #if sys_cstdlib_show_rand_max_warning && sys_cstdlib_rand_max == 0
-    	#print ""
+        #print ""
         #print_warning "sys/cstdlib.adept WARNING: Guessing RAND_MAX to be " + __randmax__
         #print "    (You can manually override this value with '#set sys_cstdlib_rand_max VALUE')"
         #print "    (You can disable this warning with '#set sys_cstdlib_show_rand_max_warning false')"
