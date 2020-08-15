@@ -137,10 +137,10 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     if _captain_multisample != 0, glEnable(GL_MULTISAMPLE)
     
-    _captain_shader.create('#version 400 core\nlayout(location = 0) in vec3 vp;\nlayout(location = 1) in vec2 texture_coords;\nuniform mat4 projection;\nuniform mat4 transformation;\nout vec2 uvs;\nvoid main() {\nuvs = texture_coords;\ngl_Position = projection * transformation * vec4(vp, 1.0);\n}',
-            '#version 400 core\nin vec2 uvs;\nout vec4 color;\nuniform sampler2D texture_sampler;\nuniform float opacity;\nvoid main(void) {\ncolor = texture(texture_sampler, uvs);\ncolor.a *= opacity;\n}')
+    _captain_shader.create("#version 400 core\nlayout(location = 0) in vec3 vp;\nlayout(location = 1) in vec2 texture_coords;\nuniform mat4 projection;\nuniform mat4 transformation;\nout vec2 uvs;\nvoid main() {\nuvs = texture_coords;\ngl_Position = projection * transformation * vec4(vp, 1.0);\n}",
+            "#version 400 core\nin vec2 uvs;\nout vec4 color;\nuniform sampler2D texture_sampler;\nuniform float opacity;\nvoid main(void) {\ncolor = texture(texture_sampler, uvs);\ncolor.a *= opacity;\n}")
     _captain_shader_transformation_location = _captain_shader.getUniformLocation('transformation')
-    _captain_model = captTemporaryModel(1.0f, 1.0f)
+    _captain_model = captModel(1.0f, 1.0f)
     
     glfwGetFramebufferSize(_captain_window, undef win_width int, undef win_height int)
     _captain_display_ratio = cast float win_width / cast float win_height
@@ -186,8 +186,8 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     
     if _captain_exit as ptr, _captain_exit()
     
-    _captain_model.free()
-    _captain_shader.free()
+    _captain_model.destroy()
+    _captain_shader.destroy()
     
     glfwDestroyWindow(_captain_window)
     glfwTerminate()
@@ -391,37 +391,24 @@ struct CaptTexture (id uint) {
         glDeleteTextures(1, &this.id)
     }
     
-    func load(filename *ubyte) {
+    func load(filename *ubyte, approximate bool = true) {
         *this = captTexture(filename, true)
     }
     
-    func load(filename *ubyte, approximate bool) {
-        *this = captTexture(filename, approximate)
-    }
-    
-    func load(filename String) {
-        cstr *ubyte = filename.cstr()
-        defer delete cstr
-        *this = captTexture(cstr, true)
-    }
-    
-    func load(filename String, approximate bool) {
+    func load(filename String, approximate bool = true) {
         cstr *ubyte = filename.cstr()
         defer delete cstr
         *this = captTexture(cstr, approximate)
     }
 }
 
-func captTexture(filename *ubyte) CaptTexture = captTexture(filename, true)
-func captTexture(filename String) CaptTexture = captTexture(filename, true)
-
-func captTexture(filename String, approximate bool) CaptTexture {
+func captTexture(filename String, approximate bool = true) CaptTexture {
     cstr *ubyte = filename.cstr()
     defer delete cstr
     return captTexture(cstr, approximate)
 }
 
-func captTexture(filename *ubyte, approximate bool) CaptTexture {
+func captTexture(filename *ubyte, approximate bool = true) CaptTexture {
     captEnsurePrepared()
     texture POD CaptTexture = undef
     
@@ -487,11 +474,17 @@ struct CaptModel (vao GLuint, vertices_vbo GLuint, uvs_vbo GLuint, texture_id GL
         glDrawArrays(GL_TRIANGLES, 0, this.triangle_count)
     }
     
-    func free {
+    func destroy {
         glDeleteBuffers(1, &this.vertices_vbo)
         glDeleteBuffers(1, &this.uvs_vbo)
         glDeleteVertexArrays(1, &this.vao)
     }
+}
+
+func captModel(points <float> List, uvs <float> List) CaptModel {
+    model POD CaptModel
+    model.create(points.__array__(), points.__length__(), uvs.__array__(), uvs.__length__())
+    return model
 }
 
 func captBindTexture(texture POD CaptTexture) void {
@@ -500,13 +493,15 @@ func captBindTexture(texture POD CaptTexture) void {
 }
 
 struct CaptShader (program GLuint, vertex GLuint, fragment GLuint) {
-    func create(vertex_code *ubyte, fragment_code *ubyte) {
+    func create(vertex_code, fragment_code String) {
         log_length int
         log_message *ubyte
         status GLint
+        code_length GLint = undef
     
         this.vertex = glCreateShader(GL_VERTEX_SHADER)
-        glShaderSource(this.vertex, 1, &vertex_code, null)
+        code_length = vertex_code.length
+        glShaderSource(this.vertex, 1, &vertex_code.array, &code_length)
         glCompileShader(this.vertex)
         glGetShaderiv(this.vertex, GL_COMPILE_STATUS, &status)
     
@@ -519,10 +514,11 @@ struct CaptShader (program GLuint, vertex GLuint, fragment GLuint) {
         }
     
         this.fragment = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(this.fragment, 1, &fragment_code, null)
+        code_length = fragment_code.length
+        glShaderSource(this.fragment, 1, &fragment_code.array, &code_length)
         glCompileShader(this.fragment)
         glGetShaderiv(this.fragment, GL_COMPILE_STATUS, &status)
-    
+        
         if status == 0 {
             puts('Failed to compile fragment shader')
             log_message = malloc(1024)
@@ -542,7 +538,7 @@ struct CaptShader (program GLuint, vertex GLuint, fragment GLuint) {
         glUseProgram(this.program)
     }
     
-    func free {
+    func destroy {
         glDetachShader(this.program, this.vertex)
         glDetachShader(this.program, this.fragment)
         glDeleteShader(this.vertex)
@@ -553,7 +549,7 @@ struct CaptShader (program GLuint, vertex GLuint, fragment GLuint) {
     func getUniformLocation(name *ubyte) GLint {
         return glGetUniformLocation(this.program, name)
     }
-    
+
     func uploadFloat(location GLint, value float) {
         glUniform1f(location, value)
     }
@@ -566,6 +562,12 @@ struct CaptShader (program GLuint, vertex GLuint, fragment GLuint) {
     func uploadMatrix4f(location GLint, matrix Matrix4f) {
         glUniformMatrix4fv(location, 1, false, &matrix.array as *float)
     }
+}
+
+func captShader(vertex_shader_code, fragment_shader_code String) CaptShader {
+    shader POD CaptShader
+    shader.create(vertex_shader_code, fragment_shader_code)
+    return shader
 }
 
 func captDrawTexture(texture POD CaptTexture, in x, y, w, h float) {
@@ -585,13 +587,17 @@ func captDrawTextureUsingModel(model POD CaptModel, texture POD CaptTexture, in 
     model.draw()
 }
 
+func captDrawTextureUsingModelAndTransformation(model POD CaptModel, texture POD CaptTexture, transformation Matrix4f) {
+    _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
+    captBindTexture(texture)
+    model.draw()
+}
+
 func captDrawOpacity(in value float) {
     _captain_shader.uploadFloat(_captain_shader.getUniformLocation('opacity'), value)
 }
 
-func captTemporaryModel(in w, h float) CaptModel = captTemporaryModel(w, h, false, false)
-
-func captTemporaryModel(in w, h float, in x_flip, y_flip bool) CaptModel {
+func captModel(in w, h float, in x_flip, y_flip bool = false) CaptModel {
     points_storage 18 float = undef
     uv_data_storage 12 float = undef
 
