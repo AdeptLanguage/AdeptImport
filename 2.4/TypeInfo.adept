@@ -1,6 +1,6 @@
 
-import '2.3/Array.adept'
-import '2.3/String.adept'
+import Array
+import String
 
 struct DummyStructForGlobalRTTI () {
     func __array__ **AnyType = __types__

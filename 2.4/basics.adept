@@ -1,5 +1,5 @@
 
-pragma compiler_supports '2.3'
+pragma compiler_supports '2.4'
 
 import 'String.adept'
 import 'terminal.adept'
