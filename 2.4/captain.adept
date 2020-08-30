@@ -1,9 +1,9 @@
 
-pragma compiler_supports '2.3'
+pragma compiler_supports '2.4'
 
-import '2.3/math.adept'
-import '2.3/String.adept'
-import '2.3/Matrix4f.adept'
+import math
+import String
+import Matrix4f
 
 import 'glfw/glfw.adept'
 import 'opengl/opengl.adept'

@@ -1,7 +1,6 @@
 
+import String
 import 'sys/cstdio.adept'
-
-import 'String.adept'
 
 func print(in string String) {
     repeat string.length, putchar(string.array[idx])

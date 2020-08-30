@@ -1,7 +1,7 @@
 
-import '2.3/String.adept'
-import '2.3/List.adept'
-import '2.3/math.adept'
+import String
+import List
+import math
 
 func toBool(this *String) bool {
     return this.length == 1 ? this.array[0] == '1'ub : *this == "true"
