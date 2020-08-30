@@ -23,6 +23,28 @@ import
 │       terminal.adept      (Terminal IO)
 │       Vector3f.adept      (3 Float Vector)
 │
+├───2.3 (Standard Library for Adept 2.3)
+│       basics.adept        (Basics of Standard Library)
+│
+│       AABB.adept          (Generic Axis-Aligned Bounding Box)
+│       Array.adept         (Minimal Array)
+│       audio.adept         (Audio IO)
+│       captain.adept       (UI Graphics)
+│       List.adept          (Extendable List)
+│       Matrix4f.adept      (4x4 Float Matrix)
+│       math.adept          (Math Definitions)
+│       Optional.adept      (Standard Optional Wrapper)
+│       Ownership.adept     (Standard Ownership)
+│       parse.adept         (String Conversion Routines)
+│       random.adept        (Random Numbers)
+│       String.adept        (Standard String)
+│       strings.adept       (String Utilities)
+│       string_manipulation.adept [EXPERIMENTAL]
+│       TypeInfo.adept      (Experimental high-level RTTI) [EXPERIMENTAL]
+│       terminal.adept      (Terminal IO)
+│       Vector2f.adept      (2 Float Vector)
+│       Vector3f.adept      (3 Float Vector)
+│
 ├───glfw (GLFW 3 Interface)
 │       glfw.adept
 │
