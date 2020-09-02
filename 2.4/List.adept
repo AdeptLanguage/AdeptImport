@@ -336,6 +336,8 @@ func clear(this *<$T> List) {
     }
 }
 
+func empty(this *<$T> List) bool = this.length == 0
+
 func __defer__(this *<$T> List) {
     if this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
         each $T in [this.items, this.length], it.?__defer__()
