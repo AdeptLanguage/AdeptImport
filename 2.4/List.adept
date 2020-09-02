@@ -36,6 +36,21 @@ func __length__(this *<$T> List) usize {
     return this.length
 }
 
+func __access__(this *<$T> List, index usize) *$T {
+    #if list_bounds_checks
+        if index < 0 || index >= this.length {
+            #if list_error_with_type
+            printf('<%s> List Error: [] index out of range\n', typeinfo $T.name)
+            #else
+            printf('<$T> List Error: [] index out of range\n')
+            #end
+            return this.items
+        }
+    #end
+    
+    return this.items at index
+}
+
 func add(this *<$T> List, item POD $T) {
     new_item *$T = this.add()
     if new_item, *new_item = item

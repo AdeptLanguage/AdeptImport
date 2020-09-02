@@ -81,6 +81,10 @@ func __assign__(this *String, other POD String) void {
     }
 }
 
+func __access__(this *String, index usize) *ubyte {
+    return this.array at index
+}
+
 func __equals__(lhs String, rhs String) bool {
     if lhs.length != rhs.length, return false
     repeat static lhs.length, if lhs.array[idx] != rhs.array[idx], return false
