@@ -357,6 +357,11 @@ func commit(this *<$T> List) <$T> List {
         given.length = this.length
         given.capacity = this.capacity
         given.ownership = Ownership::GIVEN
+
+        #if list_experimental
+            given.prepared = 0
+        #end
+
         return given
     }
     return *this
@@ -412,6 +417,11 @@ func donate(this *<$T> List) <$T> List {
         given.length = this.length
         given.capacity = this.capacity
         given.ownership = Ownership::GIVEN
+
+        #if list_experimental
+            given.prepared = 0
+        #end
+
         this.ownership = Ownership::DONOR
         return given
     }

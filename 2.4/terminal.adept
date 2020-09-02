@@ -2,13 +2,21 @@
 import String
 import 'sys/cstdio.adept'
 
-func print(in string String) {
+func print(string String) {
     repeat string.length, putchar(string.array[idx])
     putchar(0x0A)
 }
 
-func place(in string String) {
+func print(number $T~__number__) {
+    print(toString(number))
+}
+
+func place(string String) {
     repeat string.length, putchar(string.array[idx])
+}
+
+func place(number $T~__number__) {
+    place(toString(number))
 }
 
 func newline {
@@ -38,20 +46,20 @@ func scan String {
     return result
 }
 
-func scan(in prompt String) String {
+func scan(prompt String) String {
     place(prompt)
     return scan()
 }
 
 func scanInt int = skimInt()
-func scanInt(in prompt String) int = skimInt(prompt)
+func scanInt(prompt String) int = skimInt(prompt)
 func scanIntInto(out result *int) successful = skimIntInto(result)
-func scanIntInto(in prompt String, out result *int) successful = skimIntInto(prompt, result)
+func scanIntInto(prompt String, out result *int) successful = skimIntInto(prompt, result)
 
 func scanDouble double = skimDouble()
-func scanDouble(in prompt String) double = skimDouble(prompt)
+func scanDouble(prompt String) double = skimDouble(prompt)
 func scanDoubleInto(out result *double) successful = skimDoubleInto(result)
-func scanDoubleInto(in prompt String, out result *double) successful = skimDoubleInto(prompt, result)
+func scanDoubleInto(prompt String, out result *double) successful = skimDoubleInto(prompt, result)
 
 func skim String {
     result POD String = undef
@@ -80,7 +88,7 @@ func skim String {
     return result
 }
 
-func skim(in prompt String) String {
+func skim(prompt String) String {
     place(prompt)
     return skim()
 }
@@ -91,7 +99,7 @@ func skimInt int {
     return result
 }
 
-func skimInt(in prompt String) int {
+func skimInt(prompt String) int {
     place(prompt)
     skimIntInto(undef result int)
     return result
@@ -120,7 +128,7 @@ func skimIntInto(out result *int) successful {
     return true
 }
 
-func skimIntInto(in prompt String, out result *int) successful {
+func skimIntInto(prompt String, out result *int) successful {
     place(prompt)
     return skimIntInto(result)
 }
@@ -130,7 +138,7 @@ func skimDouble double {
     return result
 }
 
-func skimDouble(in prompt String) double {
+func skimDouble(prompt String) double {
     place(prompt)
     skimDoubleInto(undef result double)
     return result
@@ -142,7 +150,7 @@ func skimDoubleInto(out result *double) successful {
     return (end == skimmed.array at (skimmed.length - 1))
 }
 
-func skimDoubleInto(in prompt String, out result *double) successful {
+func skimDoubleInto(prompt String, out result *double) successful {
     place(prompt)
     return skimDoubleInto(result)
 }

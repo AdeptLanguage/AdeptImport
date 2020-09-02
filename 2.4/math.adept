@@ -27,4 +27,6 @@ func distance(x1, y1, x2, y2 double) double {
     return sqrt(dx * dx + dy * dy)
 }
 
+func sqrt(number $T~__number__) $T = sqrt(number as double) as $T
+
 import 'sys/cmath.adept'
