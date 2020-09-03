@@ -36,7 +36,7 @@
         return stringTake(resolved, 4096)
     }
 #else
-    #print_error "'2.3/where.adept': Only supported on Windows and MacOS"
+    #print_error "'2.4/where.adept': Only supported on Windows and MacOS"
     #halt
 #end
 
