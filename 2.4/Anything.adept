@@ -1,0 +1,106 @@
+
+#unless __typeinfo__
+    #print_error "Anything requires typeinfo to be enabled!"
+    #halt
+#end
+
+import Ownership
+
+func Anything(primitive $T~__primitive__) Anything {
+    anything POD Anything = undef
+    *cast *$T &anything.placeholder = primitive
+    anything.type = typeinfo $T
+    anything.ownership = Ownership::REFERENCE
+    anything.defer_func = null
+    return anything
+}
+
+func Anything(pointer *$T) Anything {
+    anything POD Anything = undef
+    *cast *$T &anything.placeholder = pointer
+    anything.type = typeinfo *$T
+    anything.ownership = Ownership::REFERENCE
+    anything.defer_func = null
+    return anything
+}
+
+func Anything(thing POD $T) Anything {
+    anything POD Anything = undef
+    *cast *ptr &anything.placeholder = new $T
+    *cast *$T anything.placeholder = thing
+    anything.type = typeinfo *$T
+    anything.ownership = Ownership::GIVEN
+    anything.defer_func = cast func(ptr) void cast ptr func null &__defer__(*$T)
+    return anything
+}
+
+func Anything(any Any) Anything {
+    anything POD Anything = undef
+    *cast *Any &anything = any
+    anything.ownership = Ownership::REFERENCE
+    anything.defer_func = null
+    return anything
+}
+
+func Anything(data ptr, type *AnyType, ownership Ownership, __defer__ func(ptr) void) Anything {
+    anything POD Anything = undef
+    *cast *ptr &anything.placeholder = data as ptr
+    anything.type = type
+    anything.ownership = ownership
+    anything.defer_func = __defer__
+    return anything
+}
+
+struct Anything (struct Any, ownership Ownership, defer_func func(ptr) void) {
+    func __defer__ {
+        unless this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN, return
+        unless this.type && this.type.kind == AnyTypeKind::PTR, return
+        unless this.defer_func, return
+        
+        defer_func func(ptr) void = this.defer_func
+        defer_func(this.placeholder as ptr)
+        delete cast ptr this.placeholder
+    }
+    
+    func set(object *$T, ownership Ownership) {
+        this.set(object, typeinfo $T, ownership, func null &__defer__(*$T) as ptr as func(ptr) void)
+    }
+    
+    func set(data ptr, type *AnyType, ownership Ownership, defer_func func(ptr) void) {
+        this.__defer__()
+        *cast *ptr &this.placeholder = data as ptr
+        this.type = type
+        this.ownership = ownership
+        this.defer_func = defer_func
+    }
+    
+    func commit Anything {
+        committed POD Anything = POD *this
+        committed.ownership = Ownership::GIVEN
+        this.ownership = Ownership::REFERENCE
+        return committed
+    }
+    
+    func donate Anything {
+        donated POD Anything = POD *this
+        donated.ownership = Ownership::GIVEN
+        this.ownership = Ownership::DONOR
+        *cast *ptr &this.placeholder = null
+        return donated
+    }
+    
+    func __assign__(other POD Anything) {
+        this.__defer__()
+        
+        this.placeholder = other.placeholder
+        this.type = other.type
+        this.defer_func = other.defer_func
+        this.ownership = other.ownership == Ownership::GIVEN ? Ownership::OWN : Ownership::REFERENCE
+    }
+}
+
+func __pass__(anything POD Anything) Anything {
+    if      anything.ownership == Ownership::OWN,   anything.ownership = Ownership::REFERENCE
+    else if anything.ownership == Ownership::GIVEN, anything.ownership = Ownership::OWN    
+    return anything
+}

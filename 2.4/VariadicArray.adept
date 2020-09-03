@@ -1,0 +1,146 @@
+
+#default variadic_array_sanity_checks true
+#default variadic_array_use_typeinfo  __typeinfo__
+
+#if variadic_array_use_typeinfo
+    import Anything
+#end
+
+#if !variadic_array_use_typeinfo
+    struct VariadicArray (items ptr, next ptr, bytes usize, length usize, index usize)
+#else
+    struct VariadicArray (items ptr, next ptr, bytes usize, length usize, index usize, types **AnyType)
+#end
+
+func hasNext(this *VariadicArray) {
+    return this.index < this.length
+}
+
+func reset(this *VariadicArray) {
+    this.next = this.items
+    this.length = 0
+}
+
+#if variadic_array_use_typeinfo
+    func read(this *VariadicArray) Anything {
+        // NOTE: It is the callee's responsibility to call __defer__ on the values that need it
+        
+        #if variadic_array_sanity_checks
+        if this.index >= this.length {
+            printf('VariadicArray Error: read() called when no items left\n')
+            return Anything(null)
+        }
+        #end
+        
+        item POD Anything = Anything(this.next, this.types[this.index], Ownership::REFERENCE, null)
+        this.next += this.types[this.index].size as ptr
+        this.index++
+        return item
+    }
+#end
+
+func read(this *VariadicArray, out item *$T) {
+    // NOTE: It is the callee's responsibility to call __defer__ on the values that need it
+    
+    if cast usize (this.next - this.items) + sizeof $T > this.bytes {
+        #if __typeinfo__
+        printf('VariadicArray Error: read(*%s) called when not enough bytes left\n', typeinfo $T.name)
+        #else
+        printf('VariadicArray Error: read(*$T) called when not enough bytes left\n')
+        #end
+        
+        return
+    }
+    
+    *item = POD *cast *$T this.next
+    this.next += sizeof $T as ptr
+    this.index++
+}
+
+func readString(this *VariadicArray) String {
+    value String = undef
+    this.read(&value)
+    return value.commit()
+}
+
+func readCString(this *VariadicArray) *ubyte {
+    value *ubyte = undef
+    this.read(&value)
+    return value
+}
+
+func readPtr(this *VariadicArray) ptr {
+    value ptr = undef
+    this.read(&value)
+    return value
+}
+
+func readBool(this *VariadicArray) bool {
+    value bool = undef
+    this.read(&value)
+    return value
+}
+
+func readByte(this *VariadicArray) byte {
+    value byte = undef
+    this.read(&value)
+    return value
+}
+
+func readUbyte(this *VariadicArray) ubyte {
+    value ubyte = undef
+    this.read(&value)
+    return value
+}
+
+func readShort(this *VariadicArray) short {
+    value short = undef
+    this.read(&value)
+    return value
+}
+
+func readUshort(this *VariadicArray) ushort {
+    value ushort = undef
+    this.read(&value)
+    return value
+}
+
+func readInt(this *VariadicArray) int {
+    value int = undef
+    this.read(&value)
+    return value
+}
+
+func readUint(this *VariadicArray) uint {
+    value uint = undef
+    this.read(&value)
+    return value
+}
+
+func readLong(this *VariadicArray) long {
+    value long = undef
+    this.read(&value)
+    return value
+}
+
+func readUlong(this *VariadicArray) ulong {
+    value ulong = undef
+    this.read(&value)
+    return value
+}
+
+func readUsize(this *VariadicArray) usize {
+    return this.readUlong()
+}
+
+func readFloat(this *VariadicArray) float {
+    value float = undef
+    this.read(&value)
+    return value
+}
+
+func readDouble(this *VariadicArray) double {
+    value double = undef
+    this.read(&value)
+    return value
+}

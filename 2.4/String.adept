@@ -441,6 +441,18 @@ func append(this *String, other String) {
     this.length += other.length
 }
 
+func append(this *String, other ubyte) {
+    this.append(stringView(&other, 1))
+}
+
+func append(this *String, other *ubyte) {
+    this.append(stringConstant(other))
+}
+
+func append(this *String, other $T~__primitive__) {
+    this.append(toString(other))
+}
+
 func appendOnce(this *String, other String) {
     unless this.endsWith(other), this.append(other)
 }
@@ -568,6 +580,15 @@ func stringConstant(null_terminated *ubyte) String {
     return reference
 }
 
+func stringView(start *ubyte, length usize) String {
+    reference POD String = undef
+    reference.array = start
+    reference.length = length
+    reference.capacity = length
+    reference.ownership = StringOwnership::REFERENCE
+    return reference
+}
+
 func stringTake(null_terminated *ubyte) String {
     taken POD String = undef
     taken.length = strlen(null_terminated)
@@ -633,6 +654,15 @@ func count(this *String, substring String) usize {
     }
     
     return count
+}
+
+func clear(this *String) {
+    this.length = 0
+}
+
+func clean(this *String) {
+    this.__defer__()
+    memset(this, 0, sizeof String)
 }
 
 func empty(this *String) bool = this.length == 0

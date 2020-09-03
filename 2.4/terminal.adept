@@ -1,6 +1,8 @@
 
-import String
 import 'sys/cstdio.adept'
+
+import String
+import parse
 
 func print(string String) {
     repeat string.length, putchar(string.array[idx])
@@ -11,6 +13,10 @@ func print(number $T~__number__) {
     print(toString(number))
 }
 
+func print(pointer *$T) {
+    print(toString(pointer))
+}
+
 func place(string String) {
     repeat string.length, putchar(string.array[idx])
 }
@@ -18,6 +24,22 @@ func place(string String) {
 func place(number $T~__number__) {
     place(toString(number))
 }
+
+func place(pointer *$T) {
+    print(toString(pointer))
+}
+
+func printf(format String, ...) int {
+    ap va_list = undef
+    va_start ap
+    defer va_end ap
+    
+    string String
+    res int = vsprintf(&string, format, ap)
+    place(string)
+    return res
+}
+
 
 func newline {
     putchar(0x0A)
