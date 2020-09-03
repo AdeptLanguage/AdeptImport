@@ -3,6 +3,11 @@
 #default variadic_array_use_typeinfo  __typeinfo__
 
 #if variadic_array_use_typeinfo
+    #unless __typeinfo__
+        #print_error "ERROR: VariadicArray requires runtime type information to be enabled when 'variadic_array_use_typeinfo' is true"
+        #halt
+    #end
+    
     import Anything
 #end
 
@@ -11,6 +16,21 @@
 #else
     struct VariadicArray (items ptr, next ptr, bytes usize, length usize, index usize, types **AnyType)
 #end
+
+func __variadic_array__(pointer ptr, bytes usize, length usize, maybe_types ptr) VariadicArray {
+    va POD VariadicArray = undef
+    va.items = pointer
+    va.next = pointer
+    va.bytes = bytes
+    va.length = length
+    va.index = 0
+    
+    #if variadic_array_use_typeinfo
+    va.types = maybe_types as ptr
+    #end
+    
+    return va
+}
 
 func hasNext(this *VariadicArray) {
     return this.index < this.length
