@@ -1,7 +1,7 @@
 
 import 'sys/cmath.adept'
 import 'sys/cstdio.adept'
-import '2.3/Vector3f.adept'
+import Vector3f
 
 struct Matrix4f (array 16 float) {
     func zero {
