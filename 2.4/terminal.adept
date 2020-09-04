@@ -110,80 +110,80 @@ func scan(prompt String) String {
     return scan()
 }
 
-func scanInto(result *$T) successful {
+func scan(result *$T) successful {
     return scanInto("", result)
 }
 
-func scanInto(prompt String, out result *String) successful {
+func scan(prompt String, out result *String) successful {
     *result = scan(prompt)
     return true
 }
 
-func scanInto(prompt String, out result **ubyte) successful {
+func scan(prompt String, out result **ubyte) successful {
     *result = scan(prompt).cstr()
     return true
 }
 
-func scanInto(prompt String, out result *bool) successful {
+func scan(prompt String, out result *bool) successful {
     input String = scan(prompt)
     return input.toBool(result)
 }
 
-func scanInto(prompt String, out result *byte) successful {
+func scan(prompt String, out result *byte) successful {
     input String = scan(prompt)
     *result = toByte(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *ubyte) successful {
+func scan(prompt String, out result *ubyte) successful {
     input String = scan(prompt)
     *result = toUbyte(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *short) successful {
+func scan(prompt String, out result *short) successful {
     input String = scan(prompt)
     *result = toShort(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *ushort) successful {
+func scan(prompt String, out result *ushort) successful {
     input String = scan(prompt)
     *result = toUshort(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *int) successful {
+func scan(prompt String, out result *int) successful {
     input String = scan(prompt)
     *result = toInt(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *uint) successful {
+func scan(prompt String, out result *uint) successful {
     input String = scan(prompt)
     *result = toUint(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *long) successful {
+func scan(prompt String, out result *long) successful {
     input String = scan(prompt)
     *result = toLong(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *ulong) successful {
+func scan(prompt String, out result *ulong) successful {
     input String = scan(prompt)
     *result = toUlong(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *float) successful {
+func scan(prompt String, out result *float) successful {
     input String = scan(prompt)
     *result = toFloat(input.trimmedView())
     return true
 }
 
-func scanInto(prompt String, out result *double) successful {
+func scan(prompt String, out result *double) successful {
     input String = scan(prompt)
     *result = toDouble(input.trimmedView())
     return true
