@@ -35,3 +35,7 @@ func toString(this *<String> Array, separator String = ", ", beginning String = 
 func toString(this *<*ubyte> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
     return toString(*this, separator, beginning, ending, separator_after_last, "\'")
 }
+
+func toString(pointer *$T, length usize) String {
+    return toString(array(pointer, length))
+}

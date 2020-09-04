@@ -9,7 +9,7 @@ import VariadicArray
 func toBool(this *String) bool {
     if this.length == 1 {
         c ubyte = this.array[0]
-        return c == '1' || c == 't' || c == 'y' || c == 'T' || c == 'Y'
+        return c == '1'ub || c == 't'ub || c == 'y'ub || c == 'T'ub || c == 'Y'ub
     }
     
     lowercase String = this.lowercase()
