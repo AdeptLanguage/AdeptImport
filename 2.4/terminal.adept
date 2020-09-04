@@ -9,11 +9,7 @@ func print(string String) {
     putchar(0x0A)
 }
 
-func print(number $T~__number__) {
-    print(toString(number))
-}
-
-func print(pointer *$T) {
+func print(pointer $T) {
     print(toString(pointer))
 }
 
@@ -27,12 +23,8 @@ func place(string String) {
     repeat string.length, putchar(string.array[idx])
 }
 
-func place(number $T~__number__) {
+func place(number $T) {
     place(toString(number))
-}
-
-func place(pointer *$T) {
-    print(toString(pointer))
 }
 
 #if __typeinfo__ && variadic_array_use_typeinfo
@@ -70,6 +62,8 @@ func vplace(values VariadicArray, separator String = "", separator_after_last bo
             place(values.readDouble())
         } else if type == typeinfo successful {
             place(values.readBool())
+        } else if type.kind == AnyTypeKind::PTR {
+            place(values.readPtr())
         } else {
             printf('ERROR: %s(...) got unknown type %s', fname, type.name)
             return
