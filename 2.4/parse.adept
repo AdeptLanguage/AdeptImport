@@ -1,7 +1,8 @@
 
-import String
-import List
 import math
+import List
+import String
+import VariadicArray
 
 func toBool(this *String) bool {
     return this.length == 1 ? this.array[0] == '1'ub : *this == "true"
