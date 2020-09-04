@@ -1,6 +1,7 @@
 
 #default variadic_array_sanity_checks true
 #default variadic_array_use_typeinfo  __typeinfo__
+#default variadic_array_alignment     8
 
 #if variadic_array_use_typeinfo
     #unless __typeinfo__
@@ -10,6 +11,8 @@
     
     import Anything
 #end
+
+import String
 
 #if !variadic_array_use_typeinfo
     struct VariadicArray (items ptr, next ptr, bytes usize, length usize, index usize)
@@ -32,7 +35,7 @@ func __variadic_array__(pointer ptr, bytes usize, length usize, maybe_types ptr)
     return va
 }
 
-func hasNext(this *VariadicArray) {
+func hasNext(this *VariadicArray) bool {
     return this.index < this.length
 }
 
@@ -43,7 +46,7 @@ func reset(this *VariadicArray) {
 
 #if variadic_array_use_typeinfo
     func read(this *VariadicArray) Anything {
-        // NOTE: It is the callee's responsibility to call __defer__ on the values that need it
+        // NOTE: It is the callee's responsibility to ensure __defer__ is called on the values that need it
         
         #if variadic_array_sanity_checks
         if this.index >= this.length {
@@ -52,28 +55,50 @@ func reset(this *VariadicArray) {
         }
         #end
         
+        size usize = this.types[this.index].size
+        
+        #if variadic_array_alignment != 0
+            extra_alignment usize = size % #get variadic_array_alignment
+        #else
+            extra_alignment usize = 0
+        #end
+        
         item POD Anything = Anything(this.next, this.types[this.index], Ownership::REFERENCE, null)
-        this.next += this.types[this.index].size as ptr
+        this.next += cast ptr (size + extra_alignment)
         this.index++
         return item
     }
+    
+    func getNextType(this *VariadicArray) *AnyType {
+        return this.hasNext() ? this.types[this.index] : null as *AnyType
+    }
+#else
+    func getNextType(this *VariadicArray) ptr = null
 #end
 
 func read(this *VariadicArray, out item *$T) {
-    // NOTE: It is the callee's responsibility to call __defer__ on the values that need it
+    // NOTE: It is the callee's responsibility to ensure __defer__ is called on the values that need it
     
-    if cast usize (this.next - this.items) + sizeof $T > this.bytes {
+    if this.index >= this.length {
         #if __typeinfo__
-        printf('VariadicArray Error: read(*%s) called when not enough bytes left\n', typeinfo $T.name)
+        printf('VariadicArray Error: read(*%s) called when no items left\n', typeinfo $T.name)
         #else
-        printf('VariadicArray Error: read(*$T) called when not enough bytes left\n')
+        printf('VariadicArray Error: read(*$T) called when no items left\n')
         #end
         
         return
     }
     
+    size usize = sizeof $T
+    
+    #if variadic_array_alignment != 0
+        extra_alignment usize = size % #get variadic_array_alignment == 0 ? 0 : 8 - (size % #get variadic_array_alignment)
+    #else
+        extra_alignment usize = 0
+    #end
+    
     *item = POD *cast *$T this.next
-    this.next += sizeof $T as ptr
+    this.next += cast ptr (size + extra_alignment)
     this.index++
 }
 

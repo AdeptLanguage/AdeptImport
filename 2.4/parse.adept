@@ -444,3 +444,41 @@ func toString(value double) String {
     result.ownership = StringOwnership::GIVEN
     return result
 }
+
+func sprintf(out result *String, format String, arguments ...) int {
+    return vsprintf(result, format, arguments)
+}
+
+func sprintf(format String, arguments ...) String {
+    result String
+    return vsprintf(&result, format, arguments) >= 0 ? result.commit() : ""
+}
+
+func vsprintf(out result *String, format String, arguments VariadicArray) int {
+    p *ubyte = format.array
+    end *ubyte = format.array at format.length
+    written int = 0
+    
+    until p == end {
+        unless *p == '%'ub {
+            result.append(*p)
+            p += sizeof ubyte as ptr
+            continue
+        }
+        
+        p += sizeof ubyte as ptr
+        if p == end, break
+        
+        switch *p {
+        case '%'ub, result.append("%")
+        case 'S'ub, result.append(arguments.readString())
+        case 'd'ub, result.append(arguments.readInt())
+        case 's'ub, result.append(arguments.readCString())
+        case 'p'ub, result.append(arguments.readPtr())
+        }
+        
+        p += sizeof ubyte as ptr
+    }
+    
+    return written
+}

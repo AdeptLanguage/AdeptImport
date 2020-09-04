@@ -3,6 +3,7 @@ import 'sys/cstdio.adept'
 
 import String
 import parse
+import VariadicArray
 
 func print(string String) {
     repeat string.length, putchar(string.array[idx])
@@ -17,6 +18,12 @@ func print(pointer *$T) {
     print(toString(pointer))
 }
 
+#if __typeinfo__ && variadic_array_use_typeinfo
+func print(values ...) {
+    vplace(values, "\n", true, "", 'print')
+}
+#end
+
 func place(string String) {
     repeat string.length, putchar(string.array[idx])
 }
@@ -29,17 +36,72 @@ func place(pointer *$T) {
     print(toString(pointer))
 }
 
-func printf(format String, ...) int {
-    ap va_list = undef
-    va_start ap
-    defer va_end ap
+#if __typeinfo__ && variadic_array_use_typeinfo
+func vplace(values VariadicArray, separator String = "", separator_after_last bool = true, ending String = "", fname *ubyte = 'vplace') {
+    while values.hasNext() {
+        type *AnyType = values.getNextType()
+        
+        if type == typeinfo String {
+            place(values.readString())
+        } else if type == typeinfo *ubyte {
+            place(stringConstant(values.readCString()))
+        } else if type == typeinfo bool {
+            place(values.readBool())
+        } else if type == typeinfo byte {
+            place(values.readByte())
+        } else if type == typeinfo ubyte {
+            place(values.readUbyte())
+        } else if type == typeinfo short {
+            place(values.readShort())
+        } else if type == typeinfo ushort {
+            place(values.readUshort())
+        } else if type == typeinfo int {
+            place(values.readInt())
+        } else if type == typeinfo uint {
+            place(values.readUint())
+        } else if type == typeinfo long {
+            place(values.readLong())
+        } else if type == typeinfo ulong {
+            place(values.readUlong())
+        } else if type == typeinfo usize {
+            place(values.readUlong()) // ulong == usize
+        } else if type == typeinfo float {
+            place(values.readFloat())
+        } else if type == typeinfo double {
+            place(values.readDouble())
+        } else if type == typeinfo successful {
+            place(values.readBool())
+        } else {
+            printf('ERROR: %s(...) got unknown type %s', fname, type.name)
+            return
+        }
+        
+        // Print separator
+        if !separator.empty() && (values.hasNext() || separator_after_last), place(separator)
+    }
     
+    unless ending.empty(), place(ending)
+}
+
+func placeEx(separator String, separator_after_last bool, ending String, values ...) {
+    vplace(values, separator, separator_after_last, ending, 'placeEx')
+}
+
+func placePlain(values ...) {
+    vplace(values, "", false, "", 'placePlain')
+}
+
+func place(values ...) {
+    vplace(values, ", ", false, "\n", 'place')
+}
+#end
+
+func printf(format String, arguments ...) int {
     string String
-    res int = vsprintf(&string, format, ap)
+    res int = vsprintf(&string, format, arguments)
     place(string)
     return res
 }
-
 
 func newline {
     putchar(0x0A)

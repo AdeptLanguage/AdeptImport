@@ -34,7 +34,7 @@ func Anything(thing POD $T) Anything {
     return anything
 }
 
-func Anything(any Any) Anything {
+func AnythingFromAny(any Any) Anything {
     anything POD Anything = undef
     *cast *Any &anything = any
     anything.ownership = Ownership::REFERENCE
