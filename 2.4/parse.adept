@@ -19,6 +19,8 @@ func toBool(this *String, out result *bool) successful {
     
     if *this == "true",  *result = true;  return true
     if *this == "false", *result = false; return true
+    
+    *result = false
     return false
 }
 
