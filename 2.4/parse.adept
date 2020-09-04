@@ -517,13 +517,39 @@ func vsprintf(out result *String, format String, arguments VariadicArray) int {
                 else if next_type == typeinfo successful, value = arguments.readBool() // successful == bool
                 else {
                     #if vsprintf_type_checks
-                        printf('WARNING: vsprintf(*String, String, VariadicArray) got unknown type for %d\n')
+                        printf('WARNING: vsprintf(*String, String, VariadicArray) got unknown type for %%d\n')
                     #end
                     value = arguments.readInt()
                 }
                 result.append(value)
             #else
                 result.append(arguments.readInt())
+            #end
+        case 'f'ub
+            value double = 0
+            #if variadic_array_use_typeinfo
+                if      next_type == typeinfo double, value = cast double arguments.readDouble()
+                else if next_type == typeinfo float, value = cast double arguments.readFloat()
+                else if next_type == typeinfo int, value = cast double arguments.readInt()
+                else if next_type == typeinfo uint, value = cast double arguments.readUint()
+                else if next_type == typeinfo long, value = cast double arguments.readLong()
+                else if next_type == typeinfo ulong, value = cast double arguments.readUlong()
+                else if next_type == typeinfo usize, value = cast double arguments.readUlong() // usize == ulong
+                else if next_type == typeinfo short, value = cast double arguments.readShort()
+                else if next_type == typeinfo ushort, value = cast double arguments.readUshort()
+                else if next_type == typeinfo byte, value = cast double arguments.readByte()
+                else if next_type == typeinfo ubyte, value = cast double arguments.readUbyte()
+                else if next_type == typeinfo bool, value = cast double arguments.readBool()
+                else if next_type == typeinfo successful, value = cast double arguments.readBool() // successful == bool
+                else {
+                    #if vsprintf_type_checks
+                        printf('WARNING: vsprintf(*String, String, VariadicArray) got unknown type for %%f\n')
+                    #end
+                    value = arguments.readDouble()
+                }
+                result.append(value)
+            #else
+                result.append(arguments.readDouble())
             #end
         case 's'ub,
             #if vsprintf_type_checks
