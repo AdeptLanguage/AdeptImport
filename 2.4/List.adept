@@ -444,3 +444,20 @@ func donate(this *<$T> List) <$T> List {
     }
     return *this
 }
+
+func contains(this *<$T> List, value $T) bool {
+    each $T in static *this, if it == value, return true
+    return false
+}
+
+func map(this *<$T> List, function func($T) $S) <$S> List {
+    result <$S> List
+    each $T in static *this, result.add(function(it))
+    return result.commit()
+}
+
+func map(this *<$T> List, function func(*$T) $S) <$S> List {
+    result <$S> List
+    each $T in static *this, result.add(function(&it))
+    return result.commit()
+}

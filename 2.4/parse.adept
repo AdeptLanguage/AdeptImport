@@ -259,6 +259,21 @@ func toDouble(this *String) double {
     return sign ? 0.0 - fraction : fraction
 }
 
+func toUsize(this *String) usize = this.toUlong()
+
+func toBool(string String) bool = string.toBool()
+func toByte(string String) byte = string.toByte()
+func toUbyte(string String) ubyte = string.toUbyte()
+func toShort(string String) short = string.toShort()
+func toUshort(string String) ushort = string.toUshort()
+func toInt(string String) int = string.toInt()
+func toUint(string String) uint = string.toUint()
+func toLong(string String) long = string.toLong()
+func toUlong(string String) ulong = string.toUlong()
+func toUsize(string String) usize = string.toUlong()
+func toFloat(string String) float = string.toFloat()
+func toDouble(string String) float = string.toDouble()
+
 func toString(value ptr)   String  = toHexString(value as ulong, 16)
 func toString(value bool)  String  = value ? "true" : "false"
 func toString(value byte)  String  = toString(value as long)
