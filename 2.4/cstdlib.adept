@@ -14,6 +14,7 @@ func strtol(string String) long    = string.toLong()
 func strtoll(string String) long   = string.toLong()
 func strtoul(string String) ulong  = string.toUlong()
 func strtoull(string String) ulong = string.toUlong()
+func abs(value $T~__number__) $T   = labs(value) as $T
 
 func getenv(name String) String {
     c *ubyte = name.cstr()

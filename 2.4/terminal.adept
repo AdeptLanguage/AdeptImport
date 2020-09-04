@@ -9,6 +9,10 @@ func print(string String) {
     putchar(0x0A)
 }
 
+func print(string *ubyte) {
+    print(stringConstant(string))
+}
+
 func print(pointer $T) {
     print(toString(pointer))
 }
@@ -21,6 +25,10 @@ func print(values ...) {
 
 func place(string String) {
     repeat string.length, putchar(string.array[idx])
+}
+
+func place(string *ubyte) {
+    place(stringConstant(string))
 }
 
 func place(number $T) {
