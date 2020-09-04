@@ -274,11 +274,12 @@ func toUsize(string String) usize = string.toUlong()
 func toFloat(string String) float = string.toFloat()
 func toDouble(string String) double = string.toDouble()
 
-func toString(value ptr)   String  = toHexString(value as ulong, 16)
-func toString(value bool)  String  = value ? "true" : "false"
-func toString(value byte)  String  = toString(value as long)
-func toString(value short) String  = toString(value as long)
-func toString(value int)   String  = toString(value as long)
+func toString(value *ubyte) String  = value ? stringConstant(value) : ""
+func toString(value ptr)    String  = toHexString(value as ulong, 16)
+func toString(value bool)   String  = value ? "true" : "false"
+func toString(value byte)   String  = toString(value as long)
+func toString(value short)  String  = toString(value as long)
+func toString(value int)    String  = toString(value as long)
 
 func toString(value long) String {
     if value == 0, return "0"

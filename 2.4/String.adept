@@ -3,7 +3,7 @@
 
 import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
-import 'parse.adept'
+import parse
 
 enum StringOwnership (REFERENCE, OWN, GIVEN, DONATED)
 alias StringView = String
@@ -776,4 +776,8 @@ func trimmedView(this *String) StringView {
     while end   > 1   && (a[end - 1] == ' 'ub || a[end - 1] == '\n'ub || a[end - 1] == '\t'ub), end--
     
     return start >= end ? "" : this.range(start, end)
+}
+
+func toString(value POD String) String {
+    return value
 }

@@ -1,0 +1,37 @@
+
+import Array
+import String
+
+func toString(array <$T> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+    result String = beginning
+    result.make()
+    
+    each $T in static array {
+        result.append(surrounding)
+        result.append(toString(it))
+        result.append(surrounding)
+        if idx + 1 < array.length || separator_after_last, result.append(separator)
+    }
+    result.append(ending)
+    return result.commit()
+}
+
+func toString(array <String> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(array, separator, beginning, ending, separator_after_last, "\"")
+}
+
+func toString(array <*ubyte> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(array, separator, beginning, ending, separator_after_last, "'")
+}
+
+func toString(this *<$T> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+    return toString(*this, separator, beginning, ending, separator_after_last, surrounding)
+}
+
+func toString(this *<String> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(*this, separator, beginning, ending, separator_after_last, "\"")
+}
+
+func toString(this *<*ubyte> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(*this, separator, beginning, ending, separator_after_last, "\'")
+}
