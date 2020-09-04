@@ -22,7 +22,7 @@
     #end
 #end
 
-foreign system(in *ubyte) void
+foreign system(in *ubyte) int
 foreign exit(in int) void
 foreign abort() void
 foreign atexit(in func() void) void

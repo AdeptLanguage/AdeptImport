@@ -1,0 +1,37 @@
+
+import 'sys/cstdlib.adept'
+
+import String
+import parse
+
+func atof(string String) double = string.toDouble()
+func atoi(string String) int    = string.toInt()
+func atol(string String) long   = string.toLong()
+func atoll(string String) long  = string.toLong()
+func strtod(string String) double  = string.toDouble()
+func strtof(string String) float   = string.toFloat()
+func strtol(string String) long    = string.toLong()
+func strtoll(string String) long   = string.toLong()
+func strtoul(string String) ulong  = string.toUlong()
+func strtoull(string String) ulong = string.toUlong()
+
+func getenv(name String) String {
+    c *ubyte = name.cstr()
+    defer delete c
+    ret *ubyte = getenv(c)
+    return ret ? string(ret) : ""
+}
+
+func getenv(name String, out result *String) successful {
+    c *ubyte = name.cstr()
+    defer delete c
+    ret *ubyte = getenv(c)
+    *result = ret ? string(ret) : ""
+    return ret != null
+}
+
+func system(command String) int {
+    c *ubyte = command.cstr()
+    defer delete c
+    return system(c)
+}

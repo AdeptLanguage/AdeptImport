@@ -272,7 +272,7 @@ func toLong(string String) long = string.toLong()
 func toUlong(string String) ulong = string.toUlong()
 func toUsize(string String) usize = string.toUlong()
 func toFloat(string String) float = string.toFloat()
-func toDouble(string String) float = string.toDouble()
+func toDouble(string String) double = string.toDouble()
 
 func toString(value ptr)   String  = toHexString(value as ulong, 16)
 func toString(value bool)  String  = value ? "true" : "false"
