@@ -13,8 +13,8 @@ foreign strcmp(in *ubyte, in *ubyte) int
 foreign strcoll(in *ubyte, in *ubyte) int
 foreign strncmp(in *ubyte, in *ubyte, in usize) int
 
-foreign memchr(in ptr, in ubyte, in usize) ptr
-foreign strchr(in *ubyte, in ubyte) *ubyte
+foreign memchr(in ptr, in int, in usize) ptr
+foreign strchr(in *ubyte, in int) *ubyte
 foreign strcspn(in *ubyte, in *ubyte) usize
 foreign strpbrk(in *ubyte, in *ubyte) *ubyte
 foreign strrchr(in *ubyte, in ubyte) *ubyte

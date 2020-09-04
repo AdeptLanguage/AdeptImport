@@ -91,6 +91,10 @@ func __equals__(lhs String, rhs String) bool {
     return true
 }
 
+func __not_equals__(lhs String, rhs String) bool {
+    return !__equals__(lhs, rhs)
+}
+
 func __add__(lhs String, rhs String) String {
     together POD String = undef
     
@@ -207,6 +211,28 @@ func __modulus__(lhs POD String, rhs bool) String {
 func __modulus__(lhs POD String, rhs $T~__primitive__) String {
     // Catch all for lesser used cases
     return lhs % toString(rhs)
+}
+
+func __less_than__(lhs String, rhs String) bool {
+    return lhs.compare(rhs) < 0
+}
+
+func __greater_than__(lhs String, rhs String) bool {
+    return lhs.compare(rhs) > 0
+}
+
+func __less_than_or_equal__(lhs String, rhs String) bool {
+    return lhs.compare(rhs) <= 0
+}
+
+func __greater_than_or_equal__(lhs String, rhs String) bool {
+    return lhs.compare(rhs) >= 0
+}
+
+func compare(this *String, other String) int {
+    if this.length < other.length, return -1
+    if this.length > other.length, return 1
+    return strncmp(this.array, other.array, this.length)
 }
 
 func commit(this *String) String {
@@ -669,6 +695,8 @@ func empty(this *String) bool = this.length == 0
 
 func contains(this *String, needle String) bool = (this.first(needle) != -1sl)
 func contains(haystack String, needle String) bool = (haystack.first(needle) != -1sl)
+func contains(this *String, needle ubyte) bool = (this.first(needle) != -1sl)
+func contains(haystack String, needle ubyte) bool = (haystack.first(needle) != -1sl)
 
 func startsWith(string String, other POD String) bool = string.startsWith(other)
 func endsWith(string String, other POD String) bool = string.endsWith(other)
