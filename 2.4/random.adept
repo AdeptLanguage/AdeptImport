@@ -1,34 +1,86 @@
 
+#default random_use_mt19937 true
+
 import 'sys/ctime.adept'
 import 'sys/cstdlib.adept'
 
+#if random_use_mt19937
+    import mt19937
+    
+    RANDOM_MAX   == MT19937_MAX
+    RANDOM_RANGE == MT19937_RANGE
+#else
+    RANDOM_MAX   == RAND_MAX
+    RANDOM_RANGE == RAND_MAX + 1
+#end
+
+func random uint {
+    #if random_use_mt19937
+        return mt19937Random()
+    #else
+        return rand() as uint
+    #end
+}
+
+func random(upper_exclusive uint) uint {
+    if upper_exclusive == 0, return 0
+    
+    while true {
+        #if random_use_mt19937
+            value uint = mt19937Random()
+            sections uint = MT19937_RANGE / upper_exclusive
+            deserted uint = MT19937_RANGE - upper_exclusive * sections
+            if value <= MT19937_MAX - deserted, return value % upper_exclusive
+        #else
+            value uint = rand() as uint
+            sections uint = (RAND_MAX + 1) / upper_exclusive
+            deserted uint = (RAND_MAX + 1) - upper_exclusive * sections
+            if value <= RAND_MAX - deserted, return value % upper_exclusive
+        #end
+    }
+    
+    return 0
+}
+
+func random(lower_inclusive, upper_exclusive uint) uint {
+    return lower_inclusive + random(upper_exclusive - lower_inclusive)    
+}
+
 func randomize {
-    srand(time(null))
+    randomSetSeed()
 }
 
-func random double {
-    return randReduced() as double / RAND_REDUCED_RANGE as double
+func randomSetSeed {
+    entropy uint = undef
+    randomSetSeed(time(null) + &entropy as uint)
 }
 
-func randomInt(exclusive_max int) int {
-    return cast int (random() * exclusive_max as double)
+func randomSetSeed(seed uint) {
+    #if random_use_mt19937
+        mt19937Seed(seed)
+    #else
+        srand(seed)
+    #end
 }
 
-func randomInt(inclusive_min, exclusive_max int) int {
-    return randomInt(exclusive_max - inclusive_min) + inclusive_min
-}
+func randomInt(upper_exclusive int) int = random(upper_exclusive) as int
+func randomInt(lower_inclusive, upper_exclusive int) int = randomInt(upper_exclusive - lower_inclusive) + lower_inclusive
+func randomDouble(upper_exclusive double) double = random() as double * upper_exclusive
+func randomDouble(lower_inclusive, upper_exclusive double) double = randomDouble(upper_exclusive - lower_inclusive) + lower_inclusive
 
-func randomDouble(exclusive_max double) double {
-    return random() * exclusive_max
-}
-
-func randomDouble(inclusive_min, exclusive_max double) double {
-    return randomDouble(exclusive_max - inclusive_min) + inclusive_min
-}
-
-RAND_REDUCED_MAX == 0x7fff
-RAND_REDUCED_RANGE == 0x8000
-
-func randReduced int {
-    return rand() % RAND_REDUCED_RANGE
-}
+#if random_use_mt19937
+    func normalizedRandom double {
+        return random() as double / MT19937_RANGE as double
+    }
+#else
+    func normalizedRandom double {
+        return randReduced() as double / RAND_REDUCED_RANGE as double
+    }
+    
+    RAND_REDUCED_MAX == 0x7fff
+    RAND_REDUCED_RANGE == 0x8000
+    
+    func randReduced int {
+        return rand() % RAND_REDUCED_RANGE
+    }
+#end
