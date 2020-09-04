@@ -1,4 +1,6 @@
 
+#default vsprintf_type_checks __typeinfo__
+
 import math
 import List
 import String
@@ -470,12 +472,57 @@ func vsprintf(out result *String, format String, arguments VariadicArray) int {
         p += sizeof ubyte as ptr
         if p == end, break
         
+        #if variadic_array_use_typeinfo
+        next_type *AnyType = arguments.getNextType()
+        #end
+        
         switch *p {
         case '%'ub, result.append("%")
-        case 'S'ub, result.append(arguments.readString())
-        case 'd'ub, result.append(arguments.readInt())
-        case 's'ub, result.append(arguments.readCString())
-        case 'p'ub, result.append(arguments.readPtr())
+        case 'S'ub
+            #if vsprintf_type_checks
+            if next_type != typeinfo String,
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected String value for %%S, got \'%s\' instead\n', next_type.name)
+            #end
+            
+            result.append(arguments.readString())
+        case 'd'ub
+            value int = 0
+            #if variadic_array_use_typeinfo
+                if      next_type == typeinfo int, value = arguments.readInt()
+                else if next_type == typeinfo uint, value = arguments.readUint()
+                else if next_type == typeinfo long, value = arguments.readLong()
+                else if next_type == typeinfo ulong, value = arguments.readUlong()
+                else if next_type == typeinfo usize, value = arguments.readUlong() // usize == ulong
+                else if next_type == typeinfo short, value = arguments.readShort()
+                else if next_type == typeinfo ushort, value = arguments.readUshort()
+                else if next_type == typeinfo byte, value = arguments.readByte()
+                else if next_type == typeinfo ubyte, value = arguments.readUbyte()
+                else if next_type == typeinfo bool, value = arguments.readBool()
+                else if next_type == typeinfo successful, value = arguments.readBool() // successful == bool
+                else {
+                    #if vsprintf_type_checks
+                        printf('WARNING: vsprintf(*String, String, VariadicArray) got unknown type for %d\n')
+                    #end
+                    value = arguments.readInt()
+                }
+                result.append(value)
+            #else
+                result.append(arguments.readInt())
+            #end
+        case 's'ub,
+            #if vsprintf_type_checks
+            if next_type != typeinfo *ubyte,
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected *ubyte value for %%s, got \'%s\' instead\n', next_type.name)
+            #end
+            
+            result.append(arguments.readCString())
+        case 'p'ub
+            #if vsprintf_type_checks
+            if next_type.kind != AnyTypeKind::PTR,
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected pointer value for %%p, got \'%s\' instead\n', next_type.name)
+            #end
+            
+            result.append(arguments.readPtr())
         }
         
         p += sizeof ubyte as ptr

@@ -1,7 +1,6 @@
 
 #default variadic_array_sanity_checks true
 #default variadic_array_use_typeinfo  __typeinfo__
-#default variadic_array_alignment     8
 
 #if variadic_array_use_typeinfo
     #unless __typeinfo__
@@ -55,16 +54,8 @@ func reset(this *VariadicArray) {
         }
         #end
         
-        size usize = this.types[this.index].size
-        
-        #if variadic_array_alignment != 0
-            extra_alignment usize = size % #get variadic_array_alignment
-        #else
-            extra_alignment usize = 0
-        #end
-        
         item POD Anything = Anything(this.next, this.types[this.index], Ownership::REFERENCE, null)
-        this.next += cast ptr (size + extra_alignment)
+        this.next += cast ptr this.types[this.index].size
         this.index++
         return item
     }
@@ -89,16 +80,8 @@ func read(this *VariadicArray, out item *$T) {
         return
     }
     
-    size usize = sizeof $T
-    
-    #if variadic_array_alignment != 0
-        extra_alignment usize = size % #get variadic_array_alignment == 0 ? 0 : 8 - (size % #get variadic_array_alignment)
-    #else
-        extra_alignment usize = 0
-    #end
-    
     *item = POD *cast *$T this.next
-    this.next += cast ptr (size + extra_alignment)
+    this.next += cast ptr sizeof $T
     this.index++
 }
 
