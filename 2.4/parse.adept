@@ -7,20 +7,34 @@ import String
 import VariadicArray
 
 func toBool(this *String) bool {
-    return this.length == 1 ? this.array[0] == '1'ub : *this == "true"
+    if this.length == 1 {
+        c ubyte = this.array[0]
+        return c == '1' || c == 't' || c == 'y' || c == 'T' || c == 'Y'
+    }
+    
+    lowercase String = this.lowercase()
+    return lowercase == "true" || lowercase == "yes"
 }
 
 func toBool(this *String, out result *bool) successful {
     if this.length == 1 {
-        if this.array[0] == '1'ub, *result = true;  return true
-        if this.array[0] == '0'ub, *result = false; return true
+        c ubyte = this.array[0]
+        if c == '1'ub, *result = true;  return true
+        if c == '0'ub, *result = false; return true
+        if c == 't'ub, *result = true;  return true
+        if c == 'f'ub, *result = false; return true
+        if c == 'y'ub, *result = true;  return true
+        if c == 'n'ub, *result = false; return true
+        if c == 'Y'ub, *result = true;  return true
+        if c == 'N'ub, *result = false; return true
         return false
     }
     
-    if *this == "true",  *result = true;  return true
-    if *this == "false", *result = false; return true
-    
-    *result = false
+    lowercase String = this.lowercase()
+    if lowercase == "true",  *result = true;  return true
+    if lowercase == "false", *result = false; return true
+    if lowercase == "yes",   *result = true;  return true
+    if lowercase == "no",    *result = false; return true
     return false
 }
 
@@ -503,6 +517,24 @@ func vsprintf(out result *String, format String, arguments VariadicArray) int {
             #end
             
             result.append(arguments.readString())
+        case 'B'ub
+            #if vsprintf_type_checks
+            unless next_type == typeinfo bool || next_type == typeinfo successful,
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%B, got \'%s\' instead\n', next_type.name)
+            #end
+            result.append(toString(arguments.readBool()))
+        case 'y'ub
+            #if vsprintf_type_checks
+            unless next_type == typeinfo bool || next_type == typeinfo successful,
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%B, got \'%s\' instead\n', next_type.name)
+            #end
+            result.append(arguments.readBool() ? "yes" : "no")
+        case 'Y'ub
+            #if vsprintf_type_checks
+            unless next_type == typeinfo bool || next_type == typeinfo successful,
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%B, got \'%s\' instead\n', next_type.name)
+            #end
+            result.append(arguments.readBool() ? "Yes" : "No")
         case 'd'ub
             value int = 0
             #if variadic_array_use_typeinfo
