@@ -12,6 +12,7 @@ TMP_MAX == 32767
 _IOFBF == 0x0000
 _IOLBF == 0x0040
 _IONBF == 0x0004
+L_tmpnam    == 1024
 
 #if __windows__
     foreign __iob_func() *FILE
@@ -90,6 +91,14 @@ foreign perror(in *ubyte) void
 foreign printf(in *ubyte, in ...) int
 foreign fprintf(in *FILE, in *ubyte, in ...) int
 foreign sprintf(out *ubyte, in *ubyte, in ...) int
-foreign scanf (in *ubyte, out ...) int
-foreign fscanf (in *FILE, in *ubyte, out ...) int
-foreign sscanf (in *ubyte, in *ubyte, out ...) int
+foreign snprintf(out *ubyte, in usize, in *ubyte, in ...) int
+foreign scanf(in *ubyte, out ...) int
+foreign fscanf(in *FILE, in *ubyte, out ...) int
+foreign sscanf(in *ubyte, in *ubyte, out ...) int
+foreign vprintf(in *ubyte, inout va_list) int
+foreign vfprintf(in *FILE, in *ubyte, inout va_list) int
+foreign vsprintf(out *ubyte, in *ubyte, inout va_list) int
+foreign vsnprintf(out *ubyte, in usize, in *ubyte, inout va_list) int
+foreign vscanf(in *ubyte, inout va_list) int
+foreign vfscanf(in *FILE, in *ubyte, inout va_list) int
+foreign vsscanf(in *ubyte, in *ubyte, inout va_list) int

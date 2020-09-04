@@ -1,9 +1,8 @@
 
-import 'sys/cstdio.adept'
-
 import String
 import parse
 import VariadicArray
+import cstdio
 
 func print(string String) {
     repeat string.length, putchar(string.array[idx])
@@ -96,38 +95,12 @@ func place(values ...) {
 }
 #end
 
-func printf(format String, arguments ...) int {
-    string String
-    res int = vsprintf(&string, format, arguments)
-    place(string)
-    return res
-}
-
 func newline {
     putchar(0x0A)
 }
 
 func scan String {
-    result POD String = undef
-    result.array = new ubyte * 32
-    result.length = 0
-    result.capacity = 32
-    result.ownership = StringOwnership::GIVEN
-    
-    until break {
-        c int = fgetc(STDIN)
-        if c == 0x0A || c == EOF, break
-        
-        if result.length == result.capacity {
-            result.capacity *= 2
-            result.array = realloc(result.array, result.capacity)
-        }
-        
-        result.array[result.length] = c
-        result.length += 1
-    }
-    
-    return result
+    return gets()
 }
 
 func scan(prompt String) String {

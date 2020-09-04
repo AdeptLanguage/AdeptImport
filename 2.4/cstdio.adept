@@ -1,0 +1,161 @@
+
+import 'sys/cstdio.adept'
+
+import parse
+import String
+import VariadicArray
+
+func printf(format String, arguments ...) int {
+    string String
+    res int = vsprintf(&string, format, arguments)
+    place(string)
+    return res
+}
+
+func fprintf(file *FILE, format String, arguments ...) int {
+    string String
+    res int = vsprintf(&string, format, arguments)
+    fwrite(string.array, sizeof ubyte, string.length, file)
+    return res
+}
+
+func remove(filename String) int {
+    c *ubyte = filename.cstr()
+    defer delete c
+    return remove(c)
+}
+
+func rename(old_name String, new_name String) int {
+    c1 *ubyte = old_name.cstr()
+    c2 *ubyte = new_name.cstr()
+    defer delete c1
+    defer delete c2
+    return rename(c1, c2)
+}
+
+func tmpnam String {
+    return string(tmpnam(null))
+}
+
+func fopen(filename String, mode String) *FILE {
+    storage 8 ubyte = undef
+    heap_allocate_c2 bool = mode.length > 7
+    
+    c1 *ubyte = filename.cstr()
+    c2 *ubyte = undef
+    defer delete c1
+    
+    if heap_allocate_c2 {
+        c2 = mode.cstr()
+    } else {
+        c2 = &storage as *ubyte
+        memcpy(&storage as *ubyte, mode.array, mode.length)
+        storage[mode.length] = 0x00
+    }
+    
+    file *FILE = fopen(c1, c2)
+    if heap_allocate_c2, delete c2
+    
+    return file
+}
+
+func freopen(filename String, mode String, stream *FILE) *FILE {
+    storage 8 ubyte = undef
+    heap_allocate_c2 bool = mode.length > 7
+    
+    c1 *ubyte = filename.cstr()
+    c2 *ubyte = undef
+    defer delete c1
+    
+    if heap_allocate_c2 {
+        c2 = mode.cstr()
+    } else {
+        c2 = &storage as *ubyte
+        memcpy(&storage as *ubyte, mode.array, mode.length)
+        storage[mode.length] = 0x00
+    }
+    
+    file *FILE = freopen(c1, c2, stream)
+    if heap_allocate_c2, delete c2
+    
+    return file
+}
+
+func scanf(format String, ...) int {
+    c *ubyte = format.cstr()
+    defer delete c
+    
+    ap va_list
+    va_start ap
+    defer va_end ap
+    return vscanf(c, ap)
+}
+
+func fscanf(file *FILE, format String, ...) int {
+    c *ubyte = format.cstr()
+    defer delete c
+    
+    ap va_list
+    va_start ap
+    defer va_end ap
+    return vfscanf(file, c, ap)
+}
+
+func sscanf(string String, format String, ...) int {
+    c1 *ubyte = string.cstr()
+    c2 *ubyte = format.cstr()
+    defer delete c1
+    defer delete c2
+    
+    ap va_list
+    va_start ap
+    defer va_end ap
+    return vsscanf(c1, c2, ap)
+}
+
+func fgets(max_line int, file *FILE) String {
+    array *ubyte = new undef ubyte * (max_line + 1)
+    
+    ret *ubyte = fgets(array, max_line + 1, file)
+    if ret == null, delete array
+    
+    return ret ? stringTake(array, max_line + 1) : ""
+}
+
+func fgets(max_line int, file *FILE, out result *String) successful {
+    array *ubyte = new undef ubyte * (max_line + 1)
+    
+    ret *ubyte = fgets(array, max_line + 1, file)
+    if ret == null, delete array
+    
+    *result = ret ? stringTake(array, max_line + 1) : ""
+    return ret != null
+}
+
+func fputs(string String, file *FILE) int {
+    written int = fwrite(string.array, sizeof ubyte, string.length, file)
+    return written == string.length as int ? written : -1
+}
+
+func gets String {
+    result POD String = undef
+    result.array = new ubyte * 32
+    result.length = 0
+    result.capacity = 32
+    result.ownership = StringOwnership::GIVEN
+    
+    until break {
+        c int = fgetc(STDIN)
+        if c == 0x0A || c == EOF, break
+        
+        if result.length == result.capacity {
+            result.capacity *= 2
+            result.array = realloc(result.array, result.capacity)
+        }
+        
+        result.array[result.length] = c
+        result.length += 1
+    }
+    
+    return result
+}
