@@ -5,6 +5,7 @@ import parse
 import String
 import VariadicArray
 
+pragma __builtin_warn_bad_printf_format
 func printf(format String, arguments ...) int {
     string String
     res int = vsprintf(&string, format, arguments)
@@ -12,6 +13,7 @@ func printf(format String, arguments ...) int {
     return res
 }
 
+pragma __builtin_warn_bad_printf_format
 func fprintf(file *FILE, format String, arguments ...) int {
     string String
     res int = vsprintf(&string, format, arguments)

@@ -290,7 +290,7 @@ func toUsize(string String) usize = string.toUlong()
 func toFloat(string String) float = string.toFloat()
 func toDouble(string String) double = string.toDouble()
 
-func toString(value *ubyte) String  = value ? stringConstant(value) : ""
+func toString(value *ubyte) String  = value ? stringConstant(value) : "(null)"
 func toString(value ptr)    String  = toHexString(value as ulong, 16)
 func toString(value bool)   String  = value ? "true" : "false"
 func toString(value byte)   String  = toString(value as long)
@@ -480,10 +480,12 @@ func toString(value double) String {
     return result
 }
 
+pragma __builtin_warn_bad_printf_format
 func sprintf(out result *String, format String, arguments ...) int {
     return vsprintf(result, format, arguments)
 }
 
+pragma __builtin_warn_bad_printf_format
 func sprintf(format String, arguments ...) String {
     result String
     return vsprintf(&result, format, arguments) >= 0 ? result.commit() : ""
@@ -526,13 +528,13 @@ func vsprintf(out result *String, format String, arguments VariadicArray) int {
         case 'y'ub
             #if vsprintf_type_checks
             unless next_type == typeinfo bool || next_type == typeinfo successful,
-                printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%B, got \'%s\' instead\n', next_type.name)
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%y, got \'%s\' instead\n', next_type.name)
             #end
             result.append(arguments.readBool() ? "yes" : "no")
         case 'Y'ub
             #if vsprintf_type_checks
             unless next_type == typeinfo bool || next_type == typeinfo successful,
-                printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%B, got \'%s\' instead\n', next_type.name)
+                printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%Y, got \'%s\' instead\n', next_type.name)
             #end
             result.append(arguments.readBool() ? "Yes" : "No")
         case 'd'ub
@@ -598,7 +600,7 @@ func vsprintf(out result *String, format String, arguments VariadicArray) int {
                 printf('WARNING: vsprintf(*String, String, VariadicArray) expected pointer value for %%p, got \'%s\' instead\n', next_type.name)
             #end
             
-            result.append(arguments.readPtr())
+            result.append(toString(arguments.readPtr()))
         }
         
         p += sizeof ubyte as ptr
