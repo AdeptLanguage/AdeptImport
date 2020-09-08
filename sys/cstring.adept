@@ -25,3 +25,14 @@ foreign strtok(inout *ubyte, in *ubyte) *ubyte
 foreign memset(out ptr, in ubyte, in usize) ptr
 foreign strlen(in *ubyte) usize
 foreign strerror(in int) *ubyte
+
+#if !__windows__
+    foreign strdup(*ubyte) *ubyte
+#else
+    func strdup(string *ubyte) *ubyte {
+        capacity usize = strlen(string) + 1
+        result *ubyte = new undef ubyte * capacity
+        memcpy(result, string, capacity)
+        return result
+    }
+#end

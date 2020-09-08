@@ -197,7 +197,7 @@ func captDefaultView {
     captCustomViewBasedOnHeight(480.0f)
 }
 
-func _captMouseCallback(window *GLFWwindow, button int, action int, mods int) {
+func _captMouseCallback(_window *GLFWwindow, button int, action int, _mods int) {
     if action == GLFW_PRESS && _captain_click as ptr {
         mouse_x, mouse_y float = undef
         if _captain_click_use_view_mouse, captMouseViewPosition(&mouse_x, &mouse_y)
@@ -213,15 +213,15 @@ func _captMouseCallback(window *GLFWwindow, button int, action int, mods int) {
     }
 }
 
-func _captKeyCallback(window *GLFWwindow, k, s, a, m int) {
+func _captKeyCallback(_window *GLFWwindow, k, s, a, m int) {
     if _captain_key as ptr, _captain_key(k, s, a, m)
 }
 
-func _captCharCallback(window *GLFWwindow, codepoint uint) {
+func _captCharCallback(_window *GLFWwindow, codepoint uint) {
     if _captain_char as ptr, _captain_char(codepoint)
 }
 
-func _captScrollCallback(window *GLFWwindow, x_offset double, y_offset double) {
+func _captScrollCallback(_window *GLFWwindow, x_offset double, y_offset double) {
     if _captain_scroll as ptr, _captain_scroll(x_offset as float, y_offset as float)
 }
 
@@ -392,7 +392,7 @@ struct CaptTexture (id uint) {
     }
     
     func load(filename *ubyte, approximate bool = true) {
-        *this = captTexture(filename, true)
+        *this = captTexture(filename, approximate)
     }
     
     func load(filename String, approximate bool = true) {

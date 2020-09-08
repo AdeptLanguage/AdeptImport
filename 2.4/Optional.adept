@@ -15,14 +15,22 @@ func set(this *<$T> Optional, value POD $T) {
 
 func get(this *<$T> Optional) $T {
     #if optional_warn_no_value
-    unless this.has, printf('ERROR: <$T> Optional.get() called when no value exists\n')
+        #if __typeinfo__
+        unless this.has, printf('ERROR: <%s> Optional.get() called when no value exists\n', typeinfo $T.name)
+        #else
+        unless this.has, printf('ERROR: <$T> Optional.get() called when no value exists\n')
+        #end
     #end
     return this.value
 }
 
 func getPointer(this *<$T> Optional) *$T {
     #if optional_warn_no_value
-    unless this.has, printf('ERROR: <$T> Optional.getPointer() called when no value exists\n')
+        #if __typeinfo__
+        unless this.has, printf('ERROR: <$T> Optional.getPointer() called when no value exists\n')
+        #else
+        unless this.has, printf('ERROR: <%s> Optional.getPointer() called when no value exists\n', typeinfo $T.name)
+        #end
     #end
     return &this.value
 }

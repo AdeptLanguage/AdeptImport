@@ -477,6 +477,13 @@ func toString(value double) String {
     sprintf(result.array, '%f', value)
     result.length = strlen(result.array)
     result.ownership = StringOwnership::GIVEN
+    
+    // Remove redundant zeros
+    while result.length > 1 {
+        c ubyte = result.array[result.length - 1]
+        unless c == '0'ub, break
+        result.length--
+    }
     return result
 }
 
