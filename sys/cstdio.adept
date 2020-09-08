@@ -1,4 +1,6 @@
 
+#default sys_cstdio_define_tmpnam false
+
 import "cstdlib.adept"
 
 SEEK_SET == 0
@@ -59,7 +61,11 @@ L_tmpnam    == 1024
 foreign remove(in *ubyte) int
 foreign rename(in *ubyte, in *ubyte) int
 foreign tmpfile() *FILE
-foreign tmpnam(out *ubyte) *ubyte
+
+#if sys_cstdio_define_tmpnam
+    foreign tmpnam(out *ubyte) *ubyte
+#end
+
 foreign fclose(in *FILE) int
 foreign fflush(in *FILE) int
 foreign fopen(in *ubyte, in *ubyte) *FILE
