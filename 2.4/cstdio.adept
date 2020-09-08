@@ -35,10 +35,6 @@ func rename(old_name String, new_name String) int {
     return rename(c1, c2)
 }
 
-func tmpnam String {
-    return string(tmpnam(null))
-}
-
 func fopen(filename String, mode String) *FILE {
     storage 8 ubyte = undef
     heap_allocate_c2 bool = mode.length > 7
