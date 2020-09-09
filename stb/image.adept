@@ -5,6 +5,9 @@
     foreign 'windows_stb_image.a'
 #elif __macos__
     foreign 'macos_stb_image.a'
+#elif __linux__
+    pragma libm
+    foreign 'linux_elf_x86_64_stb_image.a'
 #elif !STB_IMAGE_IMPLEMENTED_FOR_THIS_PLATFORM
     #print_error "stb/image.adept: Not implemented for this platform!"
     #print ""
