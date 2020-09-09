@@ -62,3 +62,7 @@ func strerrorConstant(errnum int) String {
 func strlen(string String) usize {
     return string.length
 }
+
+func strdup(string String) String {
+    return string.clone()
+}
