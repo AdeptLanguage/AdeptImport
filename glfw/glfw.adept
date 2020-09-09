@@ -3,7 +3,10 @@
     import 'windows_glfw.adept'
 #elif __macos__
     import 'macos_glfw.adept'
+#elif __linux__
+    import 'linux_glfw.adept'
 #else
     #print_error "GLFW is currently not supported on this platform"
     #halt
 #end
+

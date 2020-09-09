@@ -3,6 +3,8 @@
     import 'windows_opengl.adept'
 #elif __macos__
     import 'macos_opengl.adept'
+#elif __linux__
+    import 'linux_opengl.adept'
 #else
     #print_error "OpenGL is currently not supported on this platform"
     #halt

@@ -1,0 +1,18 @@
+
+// NOTE: Depends on GLFW for function resolution
+// TODO: Don't use glfwGetProcAddress
+
+pragma linux_only
+foreign 'GL' library
+
+import 'glfw/glfw.adept'
+import 'other_opengl.adept'
+
+func openglGetProcAddress(name *ubyte) ptr {
+    return glfwGetProcAddress(name) as ptr
+}
+
+func openglInit() void {
+    _openglInitFunctionAddresses()
+}
+
