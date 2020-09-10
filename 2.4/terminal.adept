@@ -13,8 +13,8 @@ func print(string *ubyte) {
     print(stringConstant(string))
 }
 
-func print(pointer $T) {
-    print(toString(pointer))
+func print(thing $T) {
+    print(toString(thing))
 }
 
 #if __typeinfo__ && variadic_array_use_typeinfo
@@ -31,8 +31,8 @@ func place(string *ubyte) {
     place(stringConstant(string))
 }
 
-func place(number $T) {
-    place(toString(number))
+func place(thing $T) {
+    place(toString(thing))
 }
 
 #if __typeinfo__ && variadic_array_use_typeinfo

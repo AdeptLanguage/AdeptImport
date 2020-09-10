@@ -305,7 +305,7 @@ func toString(value long) String {
     negative bool = value < 0
     
     // Make value positive if negative
-    if negative, value = 0 - value
+    if negative, value = 0sl - value
     
     // Layout digits smallest ^10 to largest ^10
     until value == 0 || len == 19 {
@@ -479,9 +479,9 @@ func toString(value double) String {
     result.ownership = StringOwnership::GIVEN
     
     // Remove redundant zeros
-    while result.length > 1 {
+    while result.length > 2 {
         c ubyte = result.array[result.length - 1]
-        unless c == '0'ub, break
+        if c != '0'ub || result.array[result.length - 2] == '.'ub, break
         result.length--
     }
     return result
