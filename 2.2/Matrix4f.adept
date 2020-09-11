@@ -342,7 +342,7 @@ struct Matrix4f (array 16 float) {
         m[15] = 1.0f
     }
     
-    func lookAt(this *Matrix4f, eye Vector3f, center Vector3f, up Vector3f) void {
+    func lookAt(eye Vector3f, center Vector3f, up Vector3f) void {
         m *float = &this.array as *float
         eyex float = eye.x
         eyey float = eye.y
