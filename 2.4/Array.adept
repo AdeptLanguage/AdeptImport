@@ -34,3 +34,8 @@ func getPointer(this *<$T> Array, index usize) *$T {
     
     return this.items at index
 }
+
+func contains(this *<$T> Array, value $~T) bool {
+    each $T in static *this, if it == value, return true
+    return false
+}

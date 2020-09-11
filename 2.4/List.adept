@@ -28,6 +28,24 @@ import 'sys/cstring.adept'
     struct <$T> List (items *$T, length, capacity, prepared usize, ownership Ownership)
 #end
 
+func list(items *$T, length usize, ownership Ownership = Ownership::REFERENCE) <$T> List {
+    list POD <$T> List
+    list.items = items
+    list.length = length
+    list.capacity = length
+    list.ownership = ownership
+    return list
+}
+
+func list(items *$T, length, capacity usize, ownership Ownership = Ownership::REFERENCE) <$T> List {
+    list POD <$T> List
+    list.items = items
+    list.length = length
+    list.capacity = capacity
+    list.ownership = ownership
+    return list
+}
+
 func __array__(this *<$T> List) *$T {
     return this.items
 }
