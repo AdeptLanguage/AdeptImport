@@ -545,7 +545,7 @@ func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_
     case 'B'ub
         #if vsprintf_type_checks
         unless next_type == typeinfo bool || next_type == typeinfo successful,
-            printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%%c, got \'%s\' instead\n', *p, next_type.name)
+            printf('WARNING: vsprintf(*String, String, VariadicArray) expected bool value for %%%c, got \'%s\' instead\n', **pptr, next_type.name)
         #end
         result.append(toString(arguments.readBool()))
     case 'y'ub
