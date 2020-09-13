@@ -42,5 +42,5 @@ func toString(pointer *$T, length usize) String {
 }
 
 func asList(this *<$T> Array) <$T> List {
-    return list(this.array, this.length, Ownership::REFERENCE)
+    return list(this.items, this.length, Ownership::REFERENCE)
 }
