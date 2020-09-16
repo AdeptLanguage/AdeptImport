@@ -470,12 +470,14 @@ func contains(this *<$T> List, value $~T) bool {
 
 func map(this *<$T> List, function func($~T) $S) <$S> List {
     result <$S> List
+    result.reserve(this.length)
     each $T in static *this, result.add(function(it))
     return result.commit()
 }
 
 func map(this *<$T> List, function func(*$T) $S) <$S> List {
     result <$S> List
+    result.reserve(this.length)
     each $T in static *this, result.add(function(&it))
     return result.commit()
 }
