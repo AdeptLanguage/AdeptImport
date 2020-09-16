@@ -1,5 +1,6 @@
 
 import String
+import Array
 
 func toString(list <$T> List, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
     result String = beginning
@@ -33,4 +34,8 @@ func toString(this *<*ubyte> List, separator String = ", ", beginning String = "
 
 func toString(pointer *$T, length usize) String {
     return toString(array(pointer, length))
+}
+
+func asArray(this *<$T> Array) <$T> Array {
+    return array(this.items, this.length)
 }
