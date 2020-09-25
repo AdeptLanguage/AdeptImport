@@ -9,7 +9,7 @@ func min(a, b $T) $T = b < a ? b : a
 func max(a, b, c $T) $T = max(max(a, b), c)
 func min(a, b, c $T) $T = min(min(a, b), c)
 
-func clamp(value, min, max $T~__primitive__) $T {
+func clamp(value $T, min, max $~T) $T {
     if value < min, return min
     if value > max, return max
     return value

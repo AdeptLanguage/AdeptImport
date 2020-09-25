@@ -19,7 +19,7 @@ import String
     struct VariadicArray (items ptr, next ptr, bytes usize, length usize, index usize, types **AnyType)
 #end
 
-func __variadic_array__(pointer ptr, bytes usize, length usize, maybe_types ptr) VariadicArray {
+func __variadic_array__(pointer ptr, bytes usize, length usize, _maybe_types ptr) VariadicArray {
     va POD VariadicArray = undef
     va.items = pointer
     va.next = pointer
@@ -28,7 +28,7 @@ func __variadic_array__(pointer ptr, bytes usize, length usize, maybe_types ptr)
     va.index = 0
     
     #if variadic_array_use_typeinfo
-    va.types = maybe_types as ptr
+    va.types = _maybe_types as ptr
     #end
     
     return va

@@ -28,6 +28,24 @@ import 'sys/cstring.adept'
     struct <$T> List (items *$T, length, capacity, prepared usize, ownership Ownership)
 #end
 
+func list(items *$T, length usize, ownership Ownership = Ownership::REFERENCE) <$T> List {
+    list POD <$T> List
+    list.items = items
+    list.length = length
+    list.capacity = length
+    list.ownership = ownership
+    return list
+}
+
+func list(items *$T, length, capacity usize, ownership Ownership = Ownership::REFERENCE) <$T> List {
+    list POD <$T> List
+    list.items = items
+    list.length = length
+    list.capacity = capacity
+    list.ownership = ownership
+    return list
+}
+
 func __array__(this *<$T> List) *$T {
     return this.items
 }
@@ -51,7 +69,7 @@ func __access__(this *<$T> List, index usize) *$T {
     return this.items at index
 }
 
-func add(this *<$T> List, item POD $T) {
+func add(this *<$T> List, item POD $~T) {
     new_item *$T = this.add()
     if new_item, *new_item = item
 }
@@ -107,16 +125,16 @@ func insert(this *<$T> List, index usize) *$T {
     return null
 }
 
-func insert(this *<$T> List, index usize, item POD $T) {
+func insert(this *<$T> List, index usize, item POD $~T) {
     inserted_item *$T = this.insert(index)
     if inserted_item, *inserted_item = item
 }
 
-func append(this *<$T> List, item POD $T) {
+func append(this *<$T> List, item POD $~T) {
     this.add(item)
 }
 
-func prepend(this *<$T> List, item POD $T) {
+func prepend(this *<$T> List, item POD $~T) {
     this.add()
     memmove(this.items at 1, this.items, sizeof $T * (this.length - 1))
     memset(this.items, 0, sizeof $T)
@@ -234,7 +252,7 @@ func remove(this *<$T> List, index usize) {
         this.length += 1
     }
     
-    func ready(this *<$T> List, items POD *$T, length usize) {
+    func ready(this *<$T> List, items POD *$~T, length usize) {
         #if list_warn_experimental
             #if list_error_with_type
             printf('<$T> List Warning: ready(*$T, usize) is experimental\n')
@@ -445,19 +463,21 @@ func donate(this *<$T> List) <$T> List {
     return *this
 }
 
-func contains(this *<$T> List, value $T) bool {
+func contains(this *<$T> List, value $~T) bool {
     each $T in static *this, if it == value, return true
     return false
 }
 
-func map(this *<$T> List, function func($T) $S) <$S> List {
+func map(this *<$T> List, function func($~T) $S) <$S> List {
     result <$S> List
+    result.reserve(this.length)
     each $T in static *this, result.add(function(it))
     return result.commit()
 }
 
 func map(this *<$T> List, function func(*$T) $S) <$S> List {
     result <$S> List
+    result.reserve(this.length)
     each $T in static *this, result.add(function(&it))
     return result.commit()
 }
