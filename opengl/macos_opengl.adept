@@ -19,4 +19,3 @@ func openglInit() void {
     _openglInitFunctionAddresses()
     dlclose(_opengl_shared_object)
 }
-

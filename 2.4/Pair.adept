@@ -1,0 +1,35 @@
+
+struct <$T> Pair (first, second $T)
+struct <$T, $S> AsymmetricPair (first $T, second $S)
+
+func pair(first, second $T) <$T> Pair {
+    pair POD <$T> Pair
+    pair.first = first
+    pair.second = second
+    return pair
+}
+
+func asymmetricPair(first $T, second $S) <$T, $S> AsymmetricPair {
+    asym_pair POD <$T, $S> AsymmetricPair
+    asym_pair.first = first
+    asym_pair.second = second
+    return asym_pair
+}
+
+// ----------- future possible expansion -----------
+// Once struct aliases are added in, we can more
+// easily represent both symmetric and asymmetric pairs
+// using a single 'Pair' type
+// - Isaac Sep 25 2020
+
+/*
+struct alias <$T> Pair => <$T, $T> Pair
+struct <$First, $Second> Pair (first $First, second $Second)
+
+func pair(first $First, second $Second) <$First, $Second> Pair {
+    pair POD <$First, $Second> Pair
+    pair.first = first
+    pair.second = second
+    return pair
+}
+*/
