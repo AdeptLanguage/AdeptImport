@@ -1,0 +1,55 @@
+
+// NOTE: Official specification of '2.4/InitializerList' only
+// allows using it to initialize no more than a single value.
+
+// After it is used to initialize a value, it is considered invalid
+// and should not be used anymore!
+
+struct <$T> InitializerList (array *$T, length usize) {
+    func __array__ *$T    = this.array
+    func __length__ usize = this.length
+    func __access__(index usize) *$T = this.array at index
+}
+
+func __initializer_list__(array *$T, length usize) <$T> InitializerList {
+    list POD <$T> InitializerList
+    list.array = array
+    list.length = length
+    return list
+}
+
+implicit func __as__(initializer <long> InitializerList) <int> InitializerList {
+    // Allow using <long> InitializerList as <int> InitializerList
+
+    // DANGEROUS: Invalidates memory of initial initializer list
+    // This is usually not a problem, since initializer lists are only used
+    // to initialize one thing, however, if the InitializerList is stored
+    // in a variable and given incorrectly to multiple receivers,
+    // then then values will not be the same.
+    // Because of this, the standard InitializerList will only
+    // officially be used to initialize a single value
+
+    repeat initializer.length {
+        (initializer.array as *int)[idx] = initializer.array[idx]
+    }
+
+    return *cast *<int> InitializerList (&initializer)
+}
+
+implicit func __as__(initializer <double> InitializerList) <float> InitializerList {
+    // Allow using <double> InitializerList as <float> InitializerList
+
+    // DANGEROUS: Invalidates memory of initial initializer list
+    // This is usually not a problem, since initializer lists are only used
+    // to initialize one thing, however, if the InitializerList is stored
+    // in a variable and given incorrectly to multiple receivers,
+    // then then values will not be the same.
+    // Because of this, the standard InitializerList will only
+    // officially be used to initialize a single value
+
+    repeat initializer.length {
+        (initializer.array as *float)[idx] = initializer.array[idx]
+    }
+
+    return *cast *<float> InitializerList (&initializer)
+}

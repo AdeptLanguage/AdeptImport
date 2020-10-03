@@ -1,6 +1,8 @@
 
 #default array_bounds_checks true
 
+import InitializerList
+
 struct <$T> Array (items *$T, length usize) {
     func __array__ *$T    = this.items
     func __length__ usize = this.length
@@ -39,3 +41,13 @@ func contains(this *<$T> Array, value $~T) bool {
     each $T in static *this, if it == value, return true
     return false
 }
+
+implicit func __as__(initializer <$T> InitializerList) <$T> Array {
+    return array(initializer.array, initializer.length)
+}
+
+// Allow <long> InitializerList for <int> List
+implicit func __as__(initializer <long> InitializerList) <int> Array     = initializer as <int> InitializerList as <int> Array
+
+// Allow <double> InitializerList for <float> List
+implicit func __as__(initializer <double> InitializerList) <float> Array = initializer as <float> InitializerList as <float> Array

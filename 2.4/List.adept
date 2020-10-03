@@ -22,6 +22,8 @@
 import 'sys/cstdio.adept'
 import 'sys/cstring.adept'
 
+import InitializerList
+
 #if !list_preparation_checks
     struct <$T> List (items *$T, length, capacity usize, ownership Ownership)
 #else
@@ -481,3 +483,13 @@ func map(this *<$T> List, function func(*$T) $S) <$S> List {
     each $T in static *this, result.add(function(&it))
     return result.commit()
 }
+
+implicit func __as__(initializer <$T> InitializerList) <$T> List {
+    return list(initializer.array, initializer.length, Ownership::REFERENCE)
+}
+
+// Allow <long> InitializerList for <int> List
+implicit func __as__(initializer <long> InitializerList) <int> List     = initializer as <int> InitializerList as <int> List
+
+// Allow <double> InitializerList for <float> List
+implicit func __as__(initializer <double> InitializerList) <float> List = initializer as <float> InitializerList as <float> List
