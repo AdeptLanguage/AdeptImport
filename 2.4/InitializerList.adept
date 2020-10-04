@@ -53,3 +53,48 @@ implicit func __as__(initializer <double> InitializerList) <float> InitializerLi
 
     return *cast *<float> InitializerList (&initializer)
 }
+
+func __as__(initializer_list <$T> InitializerList) $#N $T {
+    arr POD $#N $T = undef
+    count usize = undef
+    
+    if initializer_list.length < $#N {
+        count = initializer_list.length
+        memset(arr at initializer_list.length, 0, sizeof $T * ($#N - initializer_list.length))
+    } else {
+        count = $#N
+    }
+
+    memcpy(&arr, initializer_list.array, sizeof $T * count)
+    return arr
+}
+
+implicit func __as__(initializer_list <long> InitializerList) $#N int {
+    arr POD $#N int = undef
+    count usize = undef
+    
+    if initializer_list.length < $#N {
+        count = initializer_list.length
+        memset(arr at initializer_list.length, 0, sizeof int * ($#N - initializer_list.length))
+    } else {
+        count = $#N
+    }
+
+    repeat count, arr[idx] = initializer_list.array[idx] as int
+    return arr
+}
+
+implicit func __as__(initializer_list <double> InitializerList) $#N float {
+    arr POD $#N float = undef
+    count usize = undef
+    
+    if initializer_list.length < $#N {
+        count = initializer_list.length
+        memset(arr at initializer_list.length, 0, sizeof int * ($#N - initializer_list.length))
+    } else {
+        count = $#N
+    }
+
+    repeat count, arr[idx] = initializer_list.array[idx] as float
+    return arr
+}
