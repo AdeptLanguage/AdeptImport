@@ -54,7 +54,7 @@ implicit func __as__(initializer <double> InitializerList) <float> InitializerLi
     return *cast *<float> InitializerList (&initializer)
 }
 
-func __as__(initializer_list <$T> InitializerList) $#N $T {
+implicit func __as__(initializer_list <$T> InitializerList) $#N $T {
     arr POD $#N $T = undef
     count usize = undef
     
@@ -97,4 +97,8 @@ implicit func __as__(initializer_list <double> InitializerList) $#N float {
 
     repeat count, arr[idx] = initializer_list.array[idx] as float
     return arr
+}
+
+func toString(fixed_array $#N $T) String {
+    return toString(&fixed_array as *$T, $#N)
 }
