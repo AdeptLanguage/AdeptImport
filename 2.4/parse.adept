@@ -528,7 +528,7 @@ func vsprintf(out result *String, format String, arguments VariadicArray) int {
 func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_modifier *int, arguments *VariadicArray) bool {
     // Returns whether this format specifier stacks
     
-    const WARNING_STUB = 'WARNING: vsprintf(*String, String, VariadicArray)'
+    define WARNING_STUB = 'WARNING: vsprintf(*String, String, VariadicArray)'
     
     #if variadic_array_use_typeinfo
     next_type *AnyType = arguments.getNextType()

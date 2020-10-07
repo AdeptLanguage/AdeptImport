@@ -86,74 +86,62 @@ func read(this *VariadicArray, out item *$T) {
 }
 
 func readString(this *VariadicArray) String {
-    value String = undef
-    this.read(&value)
+    this.read(undef value String)
     return value.commit()
 }
 
 func readCString(this *VariadicArray) *ubyte {
-    value *ubyte = undef
-    this.read(&value)
+    this.read(undef value *ubyte)
     return value
 }
 
 func readPtr(this *VariadicArray) ptr {
-    value ptr = undef
-    this.read(&value)
+    this.read(undef value ptr)
     return value
 }
 
 func readBool(this *VariadicArray) bool {
-    value bool = undef
-    this.read(&value)
+    this.read(undef value bool)
     return value
 }
 
 func readByte(this *VariadicArray) byte {
-    value byte = undef
-    this.read(&value)
+    this.read(undef value byte)
     return value
 }
 
 func readUbyte(this *VariadicArray) ubyte {
-    value ubyte = undef
-    this.read(&value)
+    this.read(undef value ubyte)
     return value
 }
 
 func readShort(this *VariadicArray) short {
-    value short = undef
-    this.read(&value)
+    this.read(undef value short)
     return value
 }
 
 func readUshort(this *VariadicArray) ushort {
-    value ushort = undef
-    this.read(&value)
+    this.read(undef value ushort)
     return value
 }
 
 func readInt(this *VariadicArray) int {
-    value int = undef
-    this.read(&value)
+    this.read(undef value int)
     return value
 }
 
 func readUint(this *VariadicArray) uint {
-    value uint = undef
-    this.read(&value)
+    this.read(undef value uint)
     return value
 }
 
 func readLong(this *VariadicArray) long {
-    value long = undef
-    this.read(&value)
+    this.read(undef value long)
     return value
 }
 
 func readUlong(this *VariadicArray) ulong {
-    value ulong = undef
-    this.read(&value)
+    this.read(undef value ulong)
     return value
 }
 
@@ -162,13 +150,11 @@ func readUsize(this *VariadicArray) usize {
 }
 
 func readFloat(this *VariadicArray) float {
-    value float = undef
-    this.read(&value)
+    this.read(undef value float)
     return value
 }
 
 func readDouble(this *VariadicArray) double {
-    value double = undef
-    this.read(&value)
+    this.read(undef value double)
     return value
 }
