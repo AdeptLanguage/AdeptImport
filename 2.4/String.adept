@@ -588,13 +588,13 @@ func cstr(this *String) *ubyte {
 }
 
 func string(null_terminated *ubyte) String {
-	view POD String = POD stringView(null_terminated)
+    view POD String = POD stringView(null_terminated)
     return view.clone()
 }
 
 func string(array *ubyte, length usize) String {
-	view POD String = POD stringView(array, length)
-	return view.clone()
+    view POD String = POD stringView(array, length)
+    return view.clone()
 }
 
 func stringView(array *ubyte, length usize) String {
@@ -607,7 +607,7 @@ func stringView(array *ubyte, length usize) String {
 }
 
 func stringView(null_terminated *ubyte) String {
-	return stringView(null_terminated, strlen(null_terminated))
+    return stringView(null_terminated, strlen(null_terminated))
 }
 
 func alias stringConstant(*ubyte) => stringView
