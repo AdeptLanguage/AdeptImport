@@ -9,4 +9,3 @@
     #print_error "GLFW is currently not supported on this platform"
     #halt
 #end
-

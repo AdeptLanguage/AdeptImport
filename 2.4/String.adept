@@ -588,32 +588,29 @@ func cstr(this *String) *ubyte {
 }
 
 func string(null_terminated *ubyte) String {
-    created POD String = undef
-    created.length = strlen(null_terminated)
-    created.array = new ubyte * created.length
-    memcpy(created.array, null_terminated, created.length)
-    created.capacity = created.length
-    created.ownership = StringOwnership::GIVEN
-    return created
+	view POD String = POD stringView(null_terminated)
+    return view.clone()
 }
 
-func stringConstant(null_terminated *ubyte) String {
-    reference POD String = undef
-    reference.length = strlen(null_terminated)
-    reference.array = null_terminated
-    reference.capacity = reference.length
-    reference.ownership = StringOwnership::REFERENCE
-    return reference
+func string(array *ubyte, length usize) String {
+	view POD String = POD stringView(array, length)
+	return view.clone()
 }
 
-func stringView(start *ubyte, length usize) String {
+func stringView(array *ubyte, length usize) String {
     reference POD String = undef
-    reference.array = start
+    reference.array = array
     reference.length = length
     reference.capacity = length
     reference.ownership = StringOwnership::REFERENCE
     return reference
 }
+
+func stringView(null_terminated *ubyte) String {
+	return stringView(null_terminated, strlen(null_terminated))
+}
+
+func alias stringConstant(*ubyte) => stringView
 
 func stringTake(null_terminated *ubyte) String {
     taken POD String = undef

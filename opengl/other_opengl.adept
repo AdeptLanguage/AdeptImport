@@ -5532,6 +5532,8 @@ foreign glVertex4sv(*GLshort) void
 foreign glVertexPointer(GLint, GLenum, GLsizei, ptr) void
 foreign glViewport(GLint, GLint, GLsizei, GLsizei) void
 
+
+
 glActiveProgramEXT func(GLuint) void
 glActiveShaderProgram func(GLuint, GLuint) void
 glActiveStencilFaceEXT func(GLenum) void
