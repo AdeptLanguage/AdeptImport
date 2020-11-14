@@ -4,8 +4,9 @@
 import InitializerList
 
 struct <$T> Array (items *$T, length usize) {
-    func __array__ *$T    = this.items
-    func __length__ usize = this.length
+    func __array__ *$T               = this.items
+    func __length__ usize            = this.length
+    func __access__(index usize) *$T = this.items at index
 }
 
 func array(items *$T, length usize) <$T> Array {
