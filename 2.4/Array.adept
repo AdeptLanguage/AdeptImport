@@ -1,12 +1,26 @@
 
 #default array_bounds_checks true
+#default array_error_with_type __typeinfo__
 
 import InitializerList
 
 struct <$T> Array (items *$T, length usize) {
     func __array__ *$T               = this.items
     func __length__ usize            = this.length
-    func __access__(index usize) *$T = this.items at index
+    func __access__(index usize) *$T {
+        #if array_bounds_checks
+            if index < 0 || index >= this.length {
+                #if array_error_with_type
+                printf('<%s> Array Error: [] index out of range\n', typeinfo $T.name)
+                #else
+                printf('<$T> Array Error: [] index out of range\n')
+                #end
+                return this.items
+            }
+        #end
+        
+        return this.items at index
+    }
 }
 
 func array(items *$T, length usize) <$T> Array {
@@ -19,8 +33,12 @@ func array(items *$T, length usize) <$T> Array {
 func get(this *<$T> Array, index usize) $T {
     #if array_bounds_checks
         if index < 0 || index >= this.length {
-            printf('<$T> Array Error: get() index out of range\n')
-            return this.items[0]
+            #if array_error_with_type
+            printf('<%s> Array Error: [] index out of range\n', typeinfo $T.name)
+            #else
+            printf('<$T> Array Error: [] index out of range\n')
+            #end
+            return *this.items
         }
     #end
     
@@ -30,11 +48,15 @@ func get(this *<$T> Array, index usize) $T {
 func getPointer(this *<$T> Array, index usize) *$T {
     #if array_bounds_checks
         if index < 0 || index >= this.length {
-            printf('<$T> Array Error: getPointer() index out of range\n')
+            #if array_error_with_type
+            printf('<%s> Array Error: [] index out of range\n', typeinfo $T.name)
+            #else
+            printf('<$T> Array Error: [] index out of range\n')
+            #end
             return this.items
         }
     #end
-    
+
     return this.items at index
 }
 
