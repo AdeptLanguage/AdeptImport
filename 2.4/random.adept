@@ -65,7 +65,9 @@ func randomSetSeed(seed uint) {
 
 func randomInt(upper_exclusive int) int = random(upper_exclusive) as int
 func randomInt(lower_inclusive, upper_exclusive int) int = randomInt(upper_exclusive - lower_inclusive) + lower_inclusive
-func randomDouble(upper_exclusive double) double = random() as double * upper_exclusive
+
+func alias randomDouble() => normalizedRandom
+func randomDouble(upper_exclusive double) double = normalizedRandom() * upper_exclusive
 func randomDouble(lower_inclusive, upper_exclusive double) double = randomDouble(upper_exclusive - lower_inclusive) + lower_inclusive
 
 #if random_use_mt19937
