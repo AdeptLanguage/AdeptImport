@@ -75,7 +75,7 @@ struct Anything (struct Any, ownership Ownership, defer_func func(ptr) void) {
     }
     
     func commit Anything {
-        if this.ownership == StringOwnership::OWN {
+        if this.ownership == Ownership::OWN {
             committed POD Anything = POD *this
             committed.ownership = Ownership::GIVEN
             this.ownership = Ownership::REFERENCE
@@ -85,7 +85,7 @@ struct Anything (struct Any, ownership Ownership, defer_func func(ptr) void) {
     }
     
     func donate Anything {
-        if this.ownership == StringOwnership::OWN {
+        if this.ownership == Ownership::OWN {
             donated POD Anything = POD *this
             donated.ownership = Ownership::GIVEN
             this.ownership = Ownership::DONOR
