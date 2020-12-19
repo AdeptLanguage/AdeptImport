@@ -75,18 +75,24 @@ struct Anything (struct Any, ownership Ownership, defer_func func(ptr) void) {
     }
     
     func commit Anything {
-        committed POD Anything = POD *this
-        committed.ownership = Ownership::GIVEN
-        this.ownership = Ownership::REFERENCE
-        return committed
+        if this.ownership == StringOwnership::OWN {
+            committed POD Anything = POD *this
+            committed.ownership = Ownership::GIVEN
+            this.ownership = Ownership::REFERENCE
+            return committed
+        }
+        return *this
     }
     
     func donate Anything {
-        donated POD Anything = POD *this
-        donated.ownership = Ownership::GIVEN
-        this.ownership = Ownership::DONOR
-        *cast *ptr &this.placeholder = null
-        return donated
+        if this.ownership == StringOwnership::OWN {
+            donated POD Anything = POD *this
+            donated.ownership = Ownership::GIVEN
+            this.ownership = Ownership::DONOR
+            *cast *ptr &this.placeholder = null
+            return donated
+        }
+        return *this
     }
     
     func __assign__(other POD Anything) {
