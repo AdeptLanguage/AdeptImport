@@ -353,8 +353,10 @@ struct Matrix4f (array 16 float) {
         centery float = center.y
         centerz float = center.z
     
-        if eyex == centerx and eyey == centery and eyez == centerz,
+        if eyex == centerx and eyey == centery and eyez == centerz {
             this.identity()
+            return
+        }
         
         z0 float = eyex - centerx
         z1 float = eyey - centery
