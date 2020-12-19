@@ -40,3 +40,16 @@ func rid(this *<$T> Optional) {
     this.__defer__()
     this.has = false
 }
+
+func none() <$T> Optional {
+    o POD <$T> Optional = undef
+    o.has = false
+    return o
+}
+
+func some(contained POD $T) <$T> Optional {
+    o POD <String> Optional = undef
+    o.value = POD contained
+    o.has = true
+    return o
+}
