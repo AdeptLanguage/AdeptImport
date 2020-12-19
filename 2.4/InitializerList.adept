@@ -5,6 +5,8 @@
 // After it is used to initialize a value, it is considered invalid
 // and should not be used anymore!
 
+import array_util
+
 struct <$T> InitializerList (array *$T, length usize) {
     func __array__ *$T    = this.array
     func __length__ usize = this.length
@@ -97,8 +99,4 @@ implicit func __as__(initializer_list <double> InitializerList) $#N float {
 
     repeat count, arr[idx] = initializer_list.array[idx] as float
     return arr
-}
-
-func toString(fixed_array $#N $T) String {
-    return toString(&fixed_array as *$T, $#N)
 }
