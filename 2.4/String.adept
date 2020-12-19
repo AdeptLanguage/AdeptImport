@@ -61,7 +61,7 @@ func __assign__(this *String, other POD String) void {
         return
     case StringOwnership::REFERENCE
         if (this.ownership == StringOwnership::OWN) && (other.array >= this.array) && (other.array < this.array + this.capacity as ptr) {
-            array *ubyte = new ubyte * other.length
+            array *ubyte = new undef ubyte * other.length
             memcpy(array, other.array, other.length)
             
             delete this.array
@@ -99,7 +99,7 @@ func __add__(lhs String, rhs String) String {
     together POD String = undef
     
     together.length = lhs.length + rhs.length
-    together.array = new ubyte * together.length
+    together.array = new undef ubyte * together.length
     memcpy(together.array, lhs.array, lhs.length)
     memcpy(together.array at lhs.length, rhs.array, rhs.length)
     
@@ -112,7 +112,7 @@ func __add__(lhs String, rhs ubyte) String {
     together POD String = undef
     
     together.length = lhs.length + 1
-    together.array = new ubyte * together.length
+    together.array = new undef ubyte * together.length
     memcpy(together.array, lhs.array, lhs.length)
     together.array[lhs.length] = rhs
     
@@ -130,7 +130,7 @@ func __multiply__(lhs String, times int) String {
     
     if times > 0 {
         result.length = lhs.length * times
-        result.array = new ubyte * result.length
+        result.array = new undef ubyte * result.length
         
         repeat static times,
             memcpy(result.array at (lhs.length * idx), lhs.array, lhs.length)
@@ -143,7 +143,7 @@ func __multiply__(lhs String, times int) String {
     } else {
         times = 0 - times
         result.length = lhs.length * times
-        result.array = new ubyte * result.length
+        result.array = new undef ubyte * result.length
         
         reversed String = lhs.reversed()
         
@@ -166,7 +166,7 @@ func __modulus__(lhs POD String, rhs String) String {
     formatted.capacity = formatted.length
     formatted.ownership = StringOwnership::GIVEN
     
-    formatted.array = new ubyte * formatted.length
+    formatted.array = new undef ubyte * formatted.length
     
     memcpy(formatted.array, lhs.array, percent)
     memcpy(formatted.array at percent, rhs.array, rhs.length)
@@ -190,7 +190,7 @@ func __modulus__(lhs POD String, rhs int) String {
     formatted.capacity = formatted.length
     formatted.ownership = StringOwnership::GIVEN
     
-    formatted.array = new ubyte * formatted.length
+    formatted.array = new undef ubyte * formatted.length
     
     memcpy(formatted.array, lhs.array, percent)
     memcpy(formatted.array at percent, &int_string as *ubyte, int_string_length)
@@ -300,7 +300,7 @@ func reverse(this *String) void {
 
 func reversed(this *String) String {
     reversed POD String = undef
-    reversed.array = new ubyte * this.length
+    reversed.array = new undef ubyte * this.length
     reversed.length = this.length
     reversed.capacity = this.length
     reversed.ownership = StringOwnership::GIVEN
@@ -347,7 +347,7 @@ func reduce(this *String, amount usize) {
 func reduced(this *String, amount usize) String {
     unless amount < this.length, return ""
     reduced POD String = undef
-    reduced.array = new ubyte * (this.length - amount)
+    reduced.array = new undef ubyte * (this.length - amount)
     reduced.length = this.length - amount
     reduced.capacity = reduced.length
     reduced.ownership = StringOwnership::GIVEN
@@ -381,7 +381,7 @@ func decapitate(this *String, amount usize) {
 func decapitated(this *String, amount usize) String {
     unless amount < this.length, return ""
     decapitated POD String = undef
-    decapitated.array = new ubyte * (this.length - amount)
+    decapitated.array = new undef ubyte * (this.length - amount)
     decapitated.length = this.length - amount
     decapitated.capacity = decapitated.length
     decapitated.ownership = StringOwnership::GIVEN
@@ -515,7 +515,7 @@ func prependOnce(this *String, other String) {
 
 func clone(this *String) String {
     cloned POD String = undef
-    cloned.array = new ubyte * this.capacity
+    cloned.array = new undef ubyte * this.capacity
     cloned.length = this.length
     cloned.capacity = this.capacity
     cloned.ownership = StringOwnership::GIVEN
@@ -581,7 +581,7 @@ func equals(this *String, other POD String) bool {
 }
 
 func cstr(this *String) *ubyte {
-    str *ubyte = new ubyte * (this.length + 1)
+    str *ubyte = new undef ubyte * (this.length + 1)
     memcpy(str, this.array, this.length)
     str[this.length] = 0x00
     return str
@@ -706,7 +706,7 @@ func trim(string String) String = string.trimmed()
 
 func uppercase(this *String) String {
     result POD String
-    result.array = new ubyte * this.length
+    result.array = new undef ubyte * this.length
     result.length = this.length
     result.capacity = this.capacity
     result.ownership = StringOwnership::GIVEN
@@ -720,7 +720,7 @@ func uppercase(this *String) String {
 
 func lowercase(this *String) String {
     result POD String
-    result.array = new ubyte * this.length
+    result.array = new undef ubyte * this.length
     result.length = this.length
     result.capacity = this.capacity
     result.ownership = StringOwnership::GIVEN
