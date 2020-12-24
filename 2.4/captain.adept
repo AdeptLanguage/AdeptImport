@@ -2,6 +2,7 @@
 pragma compiler_supports '2.4'
 
 import math
+import random
 import String
 import Matrix4f
 
@@ -64,20 +65,12 @@ func captPrepare successful {
     return glfwInit() != 0
 }
 
-func captStart {
-    captStart('', 640, 480, false)
-}
-
-func captStart(in title *ubyte) {
-    captStart(title, 640, 480, false)
-}
-
 func captStart(in fullscreen bool) {
     if fullscreen, captStart('', 0, 0, true)
     else           captStart('', 640, 480, false)
 }
 
-func captStart(in title *ubyte, in fullscreen bool) {
+func captStart(in title *ubyte = '', in fullscreen bool = false) {
     if fullscreen, captStart(title, 0, 0, true)
     else           captStart(title, 640, 480, false)
 }
@@ -353,25 +346,21 @@ func captOnScroll(in on_scroll_func func(float, float) void) {
 
 struct CaptColor (r, g, b, a float)
 
-func captColor(in r, g, b float) CaptColor {
-    return captColor(r, g, b, 1.0f)
-}
-
-func captColor(in r, g, b, a float) CaptColor {
+func captColor(r, g, b float, a float = 1.0f) CaptColor {
     color CaptColor = undef
-    color.r = r; color.g = g
-    color.b = b; color.a = a
+    color.r = r
+    color.g = g
+    color.b = b
+    color.a = a
     return color
 }
 
-func captColor(in r, g, b int) CaptColor {
-    return captColor(r, g, b, 255)
-}
-
-func captColor(in r, g, b, a int) CaptColor {
+func captColor(r, g, b int, a int = 255) CaptColor {
     color CaptColor = undef
-    color.r = cast float r / 255.0f; color.g = cast float g / 255.0f
-    color.b = cast float b / 255.0f; color.a = cast float a / 255.0f
+    color.r = cast float r / 255.0f
+    color.g = cast float g / 255.0f
+    color.b = cast float b / 255.0f
+    color.a = cast float a / 255.0f
     return color
 }
 
@@ -440,7 +429,7 @@ func captTexture(filename *ubyte, approximate bool = true) CaptTexture {
     return texture
 }
 
-struct CaptModel (vao GLuint, vertices_vbo GLuint, uvs_vbo GLuint, texture_id GLuint, triangle_count int) {
+struct CaptModel (vao, vertices_vbo, uvs_vbo, texture_id GLuint, triangle_count int) {
     func create(points *float, points_length usize, uvs *float, uvs_length usize) {
         this.triangle_count = cast int(points_length / 3ui)
         
@@ -492,7 +481,7 @@ func captBindTexture(texture POD CaptTexture) void {
     glBindTexture(GL_TEXTURE_2D, texture.id)
 }
 
-struct CaptShader (program GLuint, vertex GLuint, fragment GLuint) {
+struct CaptShader (program, vertex, fragment GLuint) {
     func create(vertex_code, fragment_code String) {
         log_length int
         log_message *ubyte
@@ -665,29 +654,14 @@ func captModel(in w, h float, in x_flip, y_flip bool = false) CaptModel {
     uv_data[6]  = uv_src[0]; uv_data[7]  = uv_src[1]
     uv_data[8]  = uv_src[4]; uv_data[9]  = uv_src[5]
     uv_data[10] = uv_src[6]; uv_data[11] = uv_src[7]
-    
-    /*
-    // LEFT OFF
-    uv_data[0]  = 0.0f; uv_data[1]  = 1.0f
-    uv_data[2]  = 0.0f; uv_data[3]  = 0.0f
-    uv_data[4]  = 1.0f; uv_data[5]  = 0.0f
-    uv_data[6]  = 0.0f; uv_data[7]  = 1.0f
-    uv_data[8]  = 1.0f; uv_data[9]  = 0.0f
-    uv_data[10] = 1.0f; uv_data[11] = 1.0f
-    */
-    
+
     model CaptModel
     model.create(points, points_length, uv_data, uv_data_length)
     return model
 }
 
-func captRandomize {
-    srand(time(null))
-}
-
-func captRandom double {
-    return rand() as double / RAND_MAX as double
-}
+func alias captRandomize() => randomize
+func alias captRandom() => normalizedRandom
 
 func captKeyHeld(key int) bool {
     return glfwGetKey(_captain_window, key) == GLFW_PRESS
