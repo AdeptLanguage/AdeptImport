@@ -3,7 +3,7 @@ import Array
 import List
 import String
 
-func toString(array <$T> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+func toString(array <$T> Array, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
     result String = beginning
     result.make()
     
@@ -17,23 +17,23 @@ func toString(array <$T> Array, separator String = ", ", beginning String = "[",
     return result.commit()
 }
 
-func toString(array <String> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+func toString(array <String> Array, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
     return toString(array, separator, beginning, ending, separator_after_last, "\"")
 }
 
-func toString(array <*ubyte> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+func toString(array <*ubyte> Array, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
     return toString(array, separator, beginning, ending, separator_after_last, "'")
 }
 
-func toString(this *<$T> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+func toString(this *<$T> Array, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
     return toString(*this, separator, beginning, ending, separator_after_last, surrounding)
 }
 
-func toString(this *<String> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+func toString(this *<String> Array, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
     return toString(*this, separator, beginning, ending, separator_after_last, "\"")
 }
 
-func toString(this *<*ubyte> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
+func toString(this *<*ubyte> Array, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
     return toString(*this, separator, beginning, ending, separator_after_last, "\'")
 }
 
@@ -47,4 +47,12 @@ func toString(fixed_array $#N $T) String {
 
 func asList(this *<$T> Array) <$T> List {
     return list(this.items, this.length, Ownership::REFERENCE)
+}
+
+func map(this *<$T> Array, function func($~T) $S) <$S> List {
+    return this.asList().map(function)
+}
+
+func map(this *<$T> Array, function func(*$T) $S) <$S> List {
+    return this.asList().map(function)
 }

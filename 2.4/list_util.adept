@@ -1,38 +1,30 @@
 
 import String
+import Array
+import array_util
 
-func toString(list <$T> List, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
-    result String = beginning
-    result.make()
-    
-    each $T in static list {
-        result.append(surrounding)
-        result.append(toString(it))
-        result.append(surrounding)
-        if idx + 1 < list.length || separator_after_last, result.append(separator)
-    }
-    result.append(ending)
-    return result.commit()
+func toString(list <$T> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+    return toString(list.asArray(), separator, beginning, ending, separator_after_last, surrounding)
 }
 
-func toString(list <String> List, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
-    return toString(list, separator, beginning, ending, separator_after_last, "\"")
+func toString(list <String> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(list.asArray(), separator, beginning, ending, separator_after_last, "\"")
 }
 
-func toString(list <*ubyte> Array, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
-    return toString(list, separator, beginning, ending, separator_after_last, "'")
+func toString(list <*ubyte> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(list.asArray(), separator, beginning, ending, separator_after_last, "'")
 }
 
-func toString(this *<String> List, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
-    return toString(*this, separator, beginning, ending, separator_after_last, "\"")
+func toString(this *<$T> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+    return toString(this.asArray(), separator, beginning, ending, separator_after_last, surrounding)
 }
 
-func toString(this *<*ubyte> List, separator String = ", ", beginning String = "[", ending String = "]", separator_after_last bool = false) String {
-    return toString(*this, separator, beginning, ending, separator_after_last, "\'")
+func toString(this *<String> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(this.asArray(), separator, beginning, ending, separator_after_last, "\"")
 }
 
-func toString(pointer *$T, length usize) String {
-    return toString(array(pointer, length))
+func toString(this *<*ubyte> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(this.asArray(), separator, beginning, ending, separator_after_last, "'")
 }
 
 func asArray(this *<$T> List) <$T> Array {
