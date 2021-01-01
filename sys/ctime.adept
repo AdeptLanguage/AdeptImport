@@ -10,7 +10,7 @@ CLOCKS_PER_SEC == 1000
 
 foreign clock() clock_t
 foreign difftime(in time_t, in time_t) double
-foreign mkdir(in *tm) time_t
+foreign mktime(in *tm) time_t
 foreign time(in *time_t) time_t
 foreign asctime(in *tm) *ubyte
 foreign ctime(in *time_t) *ubyte
