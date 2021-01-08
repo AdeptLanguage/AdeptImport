@@ -1,4 +1,6 @@
 
+#default unix_sys_ioctl_ignore_warning false
+
 #if __macos__
     foreign ioctl(int, ulong, ...) int
     FIOCLEX == 536897025
@@ -10,7 +12,9 @@
     FIOGETOWN == 1074030203
     FIODTYPE == 1074030202
 #else
-    #print "Warning: Unrecognized platform, 'Socket.adept' may not have proper definitions"
+    #unless unix_sys_ioctl_ignore_warning
+        #warning "Unrecognized platform, 'unix/sys/ioctl.adept' may not have proper definitions"
+    #end
     
     foreign ioctl(int, ulong, ptr) int
     FIOCLEX == 536897025
