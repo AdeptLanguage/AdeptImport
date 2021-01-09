@@ -66,13 +66,13 @@ import
 │       audio.adept           (Cross-Platform Audio for .wav/.ogg)
 │       basics.adept          (Bundle of commonly-used files)
 │       captain.adept         (Easy to use 2D Graphics)
-│       cerrno.adept          (Superset of sys/cerrno.adept with friendlier functions)
-│       cmath.adept           (Superset of sys/cmath.adept with friendlier functions)
-│       csignal.adept         (Superset of sys/csignal.adept with friendlier functions)
-│       cstdio.adept          (Superset of sys/cstdio.adept with friendlier functions)
-│       cstdlib.adept         (Superset of sys/cstdlib.adept with friendlier functions)
-│       cstring.adept         (Superset of sys/cstring.adept with friendlier functions)
-│       ctime.adept           (Superset of sys/ctime.adept with friendlier functions)
+│       cerrno.adept          (Superset of `sys/cerrno.adept` with friendlier functions)
+│       cmath.adept           (Superset of `sys/cmath.adept` with friendlier functions)
+│       csignal.adept         (Superset of `sys/csignal.adept` with friendlier functions)
+│       cstdio.adept          (Superset of `sys/cstdio.adept` with friendlier functions)
+│       cstdlib.adept         (Superset of `sys/cstdlib.adept` with friendlier functions)
+│       cstring.adept         (Superset of `sys/cstring.adept` with friendlier functions)
+│       ctime.adept           (Superset of `sys/ctime.adept` with friendlier functions)
 │       list_util.adept       (List Utilities)
 │       math.adept            (Common Math Definitions (Superset of 2.4/cmath.adept)
 │       mt19937.adept         (MT19937 Pseudo Random Number Generator)
@@ -81,6 +81,9 @@ import
 │       string_util.adept     (String Utilities)
 │       terminal.adept        (Terminal IO)
 │       where.adept           (Cross-platform way of getting Executable's Location)
+│
+├───alut (ALUT Interface)
+│       alut.adept
 │
 ├───glfw (GLFW 3 Interface)
 │       glfw.adept
@@ -99,10 +102,13 @@ import
 │
 ├───stb (Sean Barrett's Public Domain Libraries)
 │       image.adept         (Public Domain Image Loader)
+│       vorbis.adept        (Public Domain `.ogg` Loader)
 │
 ├───sys (Native Interface via libc)
 │       cerrno.adept
+│       cfloat.adept
 │       cmath.adept
+│       csignal.adept
 │       cstdio.adept
 │       cstdlib.adept
 │       cstring.adept
@@ -137,6 +143,9 @@ import
 │           select.adept
 │           socket.adept
 │
+├───tinyobj (TinyOBJLoader-C Port)
+│       tinyobj.adept
+│
 └───windows (Windows Standard Libraries) [windows only]
-        winsock2.adept
+        winsock.adept
 ```
