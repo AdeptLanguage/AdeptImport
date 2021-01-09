@@ -1,1 +1,2 @@
+alias iovec_t = iovec
 struct iovec (iov_base ptr, iov_len usize)
