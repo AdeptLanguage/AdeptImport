@@ -1,1 +1,8 @@
+
 import '2.4/Vector3f.adept'
+
+func normalized(this *Vector3f) Vector3f {
+    copy Vector3f = *this
+    copy.normalize()
+    return copy
+}

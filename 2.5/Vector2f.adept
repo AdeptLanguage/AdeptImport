@@ -1,1 +1,8 @@
+
 import '2.4/Vector2f.adept'
+
+func normalized(this *Vector2f) Vector2f {
+    copy Vector2f = *this
+    copy.normalize()
+    return copy
+}

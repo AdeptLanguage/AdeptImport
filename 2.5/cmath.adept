@@ -1,1 +1,24 @@
+
 import '2.4/cmath.adept'
+
+define HUGE_VAL  = 1.0e500
+define HUGE_VALF = 1.0e50f
+
+func isinf(x float) bool     = fabsf(x) == HUGE_VALF
+func isinf(x double) bool    = fabs(x) == HUGE_VAL
+func isfinite(x float) bool  = x == x && fabsf(x) != HUGE_VALF
+func isfinite(x double) bool = x == x && fabs(x) != HUGE_VAL
+func isnan(x float) bool     = x != x
+func isnan(x double) bool    = x != x
+
+func signbit(x float) bool {
+    u union (f float, u uint) = undef
+    u.f = x
+    return cast bool (u.u >> 31)
+}
+
+func signbit(x double) bool {
+    u union (f double, u ulong) = undef
+    u.f = x
+    return cast bool (u.u >> 63)
+}
