@@ -1,5 +1,6 @@
 
-#default optional_warn_no_value true
+#default optional_warn_no_value   true
+#default optional_error_with_type true
 
 struct <$T> Optional (value $T, has bool)
 
@@ -15,7 +16,7 @@ func set(this *<$T> Optional, value POD $T) {
 
 func get(this *<$T> Optional) $T {
     #if optional_warn_no_value
-        #if __typeinfo__
+        #if optional_error_with_type
         unless this.has, printf('ERROR: <%s> Optional.get() called when no value exists\n', typenameof $T)
         #else
         unless this.has, printf('ERROR: <$T> Optional.get() called when no value exists\n')
@@ -26,7 +27,7 @@ func get(this *<$T> Optional) $T {
 
 func getPointer(this *<$T> Optional) *$T {
     #if optional_warn_no_value
-        #if __typeinfo__
+        #if optional_error_with_type
         unless this.has, printf('ERROR: <$T> Optional.getPointer() called when no value exists\n')
         #else
         unless this.has, printf('ERROR: <%s> Optional.getPointer() called when no value exists\n', typenameof $T)
