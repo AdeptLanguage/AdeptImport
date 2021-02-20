@@ -1,1 +1,55 @@
-import '2.4/Optional.adept'
+
+#default optional_warn_no_value true
+
+struct <$T> Optional (value $T, has bool)
+
+verbatim func __defer__(this *<$T> Optional) {
+    if this.has, this.value.?__defer__()
+}
+
+func set(this *<$T> Optional, value POD $T) {
+    this.rid()
+    this.value = POD value
+    this.has = true
+}
+
+func get(this *<$T> Optional) $T {
+    #if optional_warn_no_value
+        #if __typeinfo__
+        unless this.has, printf('ERROR: <%s> Optional.get() called when no value exists\n', typenameof $T)
+        #else
+        unless this.has, printf('ERROR: <$T> Optional.get() called when no value exists\n')
+        #end
+    #end
+    return this.value
+}
+
+func getPointer(this *<$T> Optional) *$T {
+    #if optional_warn_no_value
+        #if __typeinfo__
+        unless this.has, printf('ERROR: <$T> Optional.getPointer() called when no value exists\n')
+        #else
+        unless this.has, printf('ERROR: <%s> Optional.getPointer() called when no value exists\n', typenameof $T)
+        #end
+    #end
+    return &this.value
+}
+
+func rid(this *<$T> Optional) {
+    unless this.has, return
+    this.__defer__()
+    this.has = false
+}
+
+func none() <$T> Optional {
+    o POD <$T> Optional = undef
+    o.has = false
+    return o
+}
+
+func some(contained POD $T) <$T> Optional {
+    o POD <String> Optional = undef
+    o.value = POD contained
+    o.has = true
+    return o
+}
