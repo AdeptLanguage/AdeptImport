@@ -1,0 +1,16 @@
+
+import "unix/timeval.adept"
+import "unix/useconds_t.adept"
+import "unix/timeval.adept"
+import "unix/sys/select.adept"
+
+struct itimerval (it_interval timeval, it_value timeval)
+
+define ITIMER_REAL    = 0
+define ITIMER_VIRTUAL = 1
+define ITIMER_PROF    = 2
+
+foreign getitimer(int, *itimerval) int
+foreign gettimeofday(*timeval, ptr) int
+foreign setitimer(int, *itimerval, *itimerval) int
+foreign utimes(*ubyte, *timeval) int
