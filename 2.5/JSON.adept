@@ -1,0 +1,432 @@
+
+import basics
+
+/*
+    NOTE: All JSON values must be on the heap.
+    They are created by the functions JSONxyz() and destroyed with .destroy()
+*/
+
+#if __windows__
+    foreign fseeko64(*FILE, long, int) int
+    foreign ftello64(*FILE) long
+#else
+    import 'unix/off_t.adept'
+    foreign fseeko(*FILE, off_t, int) int
+    foreign ftello(*FILE) off_t
+#end
+
+enum JSONKind (NULL, BOOLEAN, STRING, NUMBER, ARRAY, OBJECT)
+
+struct JSON (kind JSONKind)
+struct JSONField (name String, value *JSON)
+
+struct JSONBoolean (struct JSON, value bool)
+struct JSONString (struct JSON, value String)
+
+struct JSONNumber (struct JSON, value double)
+struct JSONArray (struct JSON, elements <*JSON> List)
+struct JSONObject (struct JSON, fields <JSONField> List)
+
+// Don't automatically handle memory management when JSON values go out of scope
+verbatim func __defer__(this *JSONField)  {}
+verbatim func __defer__(this *JSONString) {}
+verbatim func __defer__(this *JSONArray)  {}
+verbatim func __defer__(this *JSONObject) {}
+
+func isNull(this *JSON)    bool = this.kind == JSONKind::NULL
+func isBoolean(this *JSON) bool = this.kind == JSONKind::BOOLEAN
+func isNumber(this *JSON)  bool = this.kind == JSONKind::NUMBER
+func isString(this *JSON)  bool = this.kind == JSONKind::STRING
+func isArray(this *JSON)   bool = this.kind == JSONKind::ARRAY
+func isObject(this *JSON)  bool = this.kind == JSONKind::OBJECT
+
+func get(this *JSONObject, field String) *JSON {
+    each JSONField in static this.fields, if it.name == field, return it.value
+    return null
+}
+
+func toString(this *JSON) String {
+    exhaustive switch this.kind {
+    case JSONKind::NULL,    return "null"
+    case JSONKind::BOOLEAN, return (this as *JSONBoolean).value ? "true" : "false" 
+    case JSONKind::STRING,  return "\"" + (this as *JSONString).value + "\""
+    case JSONKind::NUMBER,  return toString((this as *JSONNumber).value)
+    case JSONKind::ARRAY,   return (this as *JSONArray).toStringInternals()
+    case JSONKind::OBJECT,  return (this as *JSONObject).toStringInternals()
+    }
+    return "<unknown>"
+}
+
+func toStringInternals(this *JSONArray) String {
+    result String = "["
+
+    each *JSON in static this.elements {
+        result.append(it.toString())
+        if idx + 1 < this.elements.length, result.append(", ")
+    }
+
+    return result + "]"
+}
+
+func toStringInternals(this *JSONObject) String {
+    result String = "{"
+
+    each JSONField in static this.fields {
+        result.append("\"")
+        result.append(it.name)
+        result.append("\": ")
+        result.append(it.value.toString())
+
+        if idx + 1 < this.fields.length, result.append(", ")
+    }
+
+    return result + "}"
+}
+
+func destroyAndFree(this *JSON) {
+    unless this, return
+
+    exhaustive switch this.kind {
+    case JSONKind::NULL,    /*do nothing */
+    case JSONKind::BOOLEAN, /*do nothing */
+    case JSONKind::STRING, (this as *JSONString).freeInternals()
+    case JSONKind::NUMBER, /*do nothing */
+    case JSONKind::ARRAY,  (this as *JSONArray).freeInternals()
+    case JSONKind::OBJECT, (this as *JSONObject).freeInternals()
+    }
+    delete this
+}
+
+func JSONNull() *JSON {
+    n *JSON = new undef JSON
+    n.kind = JSONKind::NULL
+    return n
+}
+
+func JSONBoolean(value bool) *JSON {
+    b *JSONBoolean = new undef JSONBoolean
+    b.kind = JSONKind::BOOLEAN
+    b.value = value
+    return b as *JSON
+}
+
+func JSONString(value String) *JSON {
+    // Force 'value' to have ownership
+    value.make()
+
+    s *JSONString = new JSONString
+    s.kind = JSONKind::STRING
+    s.value = value.commit()
+    return s as *JSON
+}
+
+func JSONNumber(value double) *JSON {
+    n *JSONNumber = new undef JSONNumber
+    n.kind = JSONKind::NUMBER
+    n.value = value
+    return n as *JSON
+}
+
+func JSONArray(values <*JSON> List) *JSON {
+    // Force 'values' list to have ownership
+    unless values.ownership == Ownership::OWN, values = values.clone()
+
+    n *JSONArray = new JSONArray
+    n.kind = JSONKind::ARRAY
+    n.elements = values.commit()
+    return n as *JSON
+}
+
+func JSONObject(names <String> List, values <*JSON> List) *JSON {
+    count usize = min(names.length, values.length)
+
+    o *JSONObject = new JSONObject
+    o.kind = JSONKind::OBJECT
+    
+    repeat count {
+        o.fields.add(JSONField(names[idx], values[idx]))
+    }
+
+    return o as *JSON
+}
+
+func JSONField(name String, value *JSON) JSONField {
+    // Force ownership for field name
+    name.make()
+
+    jf POD JSONField
+    jf.name = name.commit()
+    jf.value = value
+    return jf
+}
+
+func freeInternals(this *JSONString) {
+    this.value.__defer__()
+}
+
+func freeInternals(this *JSONArray) {
+    each *JSON in static this.elements, it.destroyAndFree()
+    this.elements.__defer__()
+}
+
+func freeInternals(this *JSONObject) {
+    each JSONField in static this.fields {
+        it.name.__defer__()
+        it.value.destroyAndFree()
+    }
+}
+
+func JSON(content String, out stride *usize = null) *JSON {
+    content = content.trimmedView()
+
+    first_character ubyte = content[0]
+    result *JSON = null
+
+    switch first_character {
+    case 'n'ub
+        // Null
+        result = JSON\parseNull(content, stride)
+    case 't'ub, fallthrough
+    case 'f'ub
+        // Boolean
+        return JSON\parseBoolean(content, stride)
+    case '0'ub, fallthrough
+    case '1'ub, fallthrough
+    case '2'ub, fallthrough
+    case '3'ub, fallthrough
+    case '4'ub, fallthrough
+    case '5'ub, fallthrough
+    case '6'ub, fallthrough
+    case '7'ub, fallthrough
+    case '8'ub, fallthrough
+    case '9'ub
+        // Number
+        return JSON\parseNumber(content, stride)
+    case '"'ub
+        // String
+        return JSON\parseString(content, stride)
+    case '['ub
+        // Array
+        return JSON\parseArray(content, stride)
+    case '{'ub
+        // Object
+        return JSON\parseObject(content, stride)
+    }
+
+    return result
+}
+
+func JSON\parseNull(content String, out stride *usize = null) *JSON {
+    content = content.trimmedView()
+
+    unless content.startsWith("null"), return null
+    if stride, *stride = 4
+    return JSONNull()
+}
+
+func JSON\parseBoolean(content String, out stride *usize = null) *JSON {
+    content = content.trimmedView()
+
+    if content.startsWith("true") {
+        if stride, *stride = 4
+        return JSONBoolean(true)
+    }
+
+    if content.startsWith("false") {
+        if stride, *stride = 5
+        return JSONBoolean(false)
+    }
+
+    return null
+}
+
+func JSON\parseNumber(content String, out stride *usize = null) *JSON {
+    content = content.trimmedView()
+
+    included usize = 0
+    allowed <ubyte> Array = {
+        '0'ub,
+        '1'ub,
+        '2'ub,
+        '3'ub,
+        '4'ub,
+        '5'ub,
+        '6'ub,
+        '7'ub,
+        '8'ub,
+        '9'ub,
+        '.'ub
+    }
+
+    while included < content.length && allowed.contains(content[included]) {
+        included++
+    }
+
+    potential StringView = content.range(0, included)
+    if stride, *stride = included
+    return JSONNumber(potential.toDouble())
+}
+
+func JSON\parseString(content String, out stride *usize = null) *JSON {
+    i usize = 0
+
+    unless JSON\skipWhitespace(&content, &i), return null
+
+    if i >= content.length || content[i] != '"'ub, return null
+    i++
+
+    string String
+    escape_active bool = false
+
+    until i >= content.length || (content[i] == '"'ub && !escape_active) {
+        if escape_active {
+            switch content[i] {
+            case 'n'ub,  string.append('\n'ub)
+            case 't'ub,  string.append('\t'ub)
+            case '"'ub,  string.append('"'ub)
+            case '\\'ub, string.append('\\'ub)
+            }
+            escape_active = false
+            i++
+            continue
+        }
+
+        if content[i] == '\\'ub {
+            escape_active = true
+            i++
+            continue
+        }
+
+        string.append(content[i])
+        i++
+    }
+
+    unless ++i <= content.length, return null
+    if stride, *stride = i
+    return JSONString(string.commit())
+}
+
+func JSON\parseArray(content String, out stride *usize = null) *JSON {
+    i usize = 0
+    values <*JSON> List
+
+    unless JSON\skipWhitespace(&content, &i), return null
+
+    if i >= content.length || content[i] != '['ub, return null
+    i++
+
+    unless JSON\skipWhitespace(&content, &i), return null
+
+    until i >= content.length || content[i] == ']'ub {
+        element *JSON = JSON(content.range(i, content.length), def element_stride usize)
+        unless element, return null
+
+        i += element_stride
+        values.add(element)
+
+        unless JSON\skipWhitespace(&content, &i), return null
+
+        if content[i] == ','ub, i++
+        unless JSON\skipWhitespace(&content, &i), return null
+    }
+
+    unless ++i <= content.length, return null
+
+    if stride, *stride = i
+    return JSONArray(values.commit())
+}
+
+func JSON\parseObject(content String, out stride *usize = null) *JSON {
+    i usize = 0
+    names <String> List
+    values <*JSON> List
+
+    unless JSON\skipWhitespace(&content, &i), return null
+
+    if i >= content.length || content[i] != '{'ub, return null
+    i++
+
+    unless JSON\skipWhitespace(&content, &i), return null
+
+    until i >= content.length || content[i] == '}'ub {
+        name_data *JSON = JSON\parseString(content.range(i, content.length), undef name_stride usize)
+        unless name_data, return null
+
+        names.add(name_data as *JSONString.value.commit())
+        name_data.destroyAndFree()
+
+        i += name_stride
+
+        unless JSON\skipWhitespace(&content, &i), return null
+
+        if content[i] == ':'ub, i++
+        else return null
+
+        unless JSON\skipWhitespace(&content, &i), return null
+
+        element *JSON = JSON(content.range(i, content.length), undef element_stride usize)
+        unless element, return null
+
+        i += element_stride
+        values.add(element)
+
+        unless JSON\skipWhitespace(&content, &i), return null
+
+        if content[i] == ','ub, i++
+        unless JSON\skipWhitespace(&content, &i), return null
+    }
+
+    unless ++i <= content.length, return null
+
+    if stride, *stride = i
+    return JSONObject(names.commit(), values.commit())
+}
+
+func JSON\skipWhitespace(in content *String, inout i *usize) successful {
+    while *i < content.length && JSON\isWhitespace((*content)[*i]), (*i)++
+    return *i < content.length
+}
+
+func JSON\isWhitespace(c ubyte) bool {
+    return c == ' 'ub || c == '\n'ub || c == '\t'ub
+}
+
+func JSONFromFile(filename String) *JSON {
+    unless JSONFileContents(filename, def content String), return null
+    return JSON(content)
+}
+
+func JSONFileContents(filename String, out contents *String) successful {
+    // NOTE: Only works for files smaller than ~4GB
+    // NOTE: Might work with files larger than ~4GB now, haven't tested yet
+
+    buffer *ubyte = null
+    length long = undef
+    filename_cstr *ubyte = filename.cstr()
+    f *FILE = fopen(filename_cstr, 'r')
+    delete filename_cstr
+    unless f, return false
+    defer fclose(f)
+
+    #if __windows__
+        fseeko64(f, 0, SEEK_END)
+        length = ftello64(f)
+        fseeko64(f, 0, SEEK_SET)
+    #else
+        fseeko(f, 0, SEEK_END)
+        length = ftello(f)
+        fseeko(f, 0, SEEK_SET)
+    #end
+
+    buffer = new undef ubyte * length
+    if buffer {
+        if fread(buffer, 1, length, f) != length, delete buffer; return false
+    }
+    
+    contents.__defer__()
+    contents.array = buffer
+    contents.length = length
+    contents.capacity = length
+    contents.ownership = StringOwnership::OWN
+    return true
+}
