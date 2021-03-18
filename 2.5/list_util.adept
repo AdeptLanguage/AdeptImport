@@ -3,7 +3,7 @@ import '2.4/list_util.adept'
 // ---------------- clone ----------------
 // Clones a list of pointers
 func clone(this *<*$P> List) <*$P> List {
-    new_list <*$P> List = undef
+    new_list POD <*$P> List = undef
     new_list.items = new undef *$P * this.length
     new_list.length = this.length
     new_list.capacity = this.length // on purpose
