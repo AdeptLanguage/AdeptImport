@@ -1,4 +1,5 @@
 
+
 import basics
 
 /*
@@ -236,6 +237,7 @@ func JSON(content String, out stride *usize = null) *JSON {
     case 'f'ub
         // Boolean
         return JSON\parseBoolean(content, stride)
+    case '-'ub, fallthrough
     case '0'ub, fallthrough
     case '1'ub, fallthrough
     case '2'ub, fallthrough
@@ -291,6 +293,7 @@ func JSON\parseNumber(content String, out stride *usize = null) *JSON {
 
     included usize = 0
     allowed <ubyte> Array = {
+        '-'ub,
         '0'ub,
         '1'ub,
         '2'ub,
@@ -446,6 +449,7 @@ func JSONFileContents(filename String, out contents *String) successful {
     // NOTE: Only works for files smaller than ~4GB
     // NOTE: Might work with files larger than ~4GB now, haven't tested yet
 
+
     buffer *ubyte = null
     filename_cstr *ubyte = filename.cstr()
     f *FILE = fopen(filename_cstr, 'r')
@@ -463,9 +467,12 @@ func JSONFileContents(filename String, out contents *String) successful {
         fseeko(f, 0, SEEK_SET)
     #end
 
+    if length <= 0, return false
     buffer = new undef ubyte * length
+    unless buffer, return false
+
     if buffer {
-        if fread(buffer, 1, length, f) != length, delete buffer; return false
+        if fread(buffer, 1, length as usize, f) != length as usize, delete buffer; return false
     }
     
     contents.__defer__()
