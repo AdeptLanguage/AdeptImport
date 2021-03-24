@@ -45,6 +45,32 @@ func get(this *JSONObject, field String) *JSON {
     return null
 }
 
+func getBooleanOtherwise(this *JSONObject, field String, default_value bool) bool {
+    data *JSON = this.get(field)
+    unless data && data.isBoolean(), return default_value
+    return data as *JSONBoolean.value
+}
+
+func getStringOtherwise(this *JSONObject, field String, default_value POD String) String {
+    data *JSON = this.get(field)
+    unless data && data.isString(), return default_value
+
+    (__pass__(default_value)).__defer__()
+    return data as *JSONString.value
+}
+
+func getNumberOtherwise(this *JSONObject, field String, default_value float) float {
+    data *JSON = this.get(field)
+    unless data && data.isNumber(), return default_value
+    return data as *JSONNumber.value as float
+}
+
+func getNumberOtherwise(this *JSONObject, field String, default_value double) double {
+    data *JSON = this.get(field)
+    unless data && data.isNumber(), return default_value
+    return data as *JSONNumber.value
+}
+
 func toString(this *JSON) String {
     exhaustive switch this.kind {
     case JSONKind::NULL,    return "null"
@@ -127,6 +153,12 @@ func JSONNumber(value double) *JSON {
     return n as *JSON
 }
 
+func JSONArray() *JSON {
+    n *JSONArray = new JSONArray
+    n.kind = JSONKind::ARRAY
+    return n as *JSON
+}
+
 func JSONArray(values <*JSON> List) *JSON {
     // Force 'values' list to have ownership
     unless values.ownership == Ownership::OWN, values = values.clone()
@@ -135,6 +167,12 @@ func JSONArray(values <*JSON> List) *JSON {
     n.kind = JSONKind::ARRAY
     n.elements = values.commit()
     return n as *JSON
+}
+
+func JSONObject() *JSON {
+    o *JSONObject = new JSONObject
+    o.kind = JSONKind::OBJECT
+    return o as *JSON
 }
 
 func JSONObject(names <String> List, values <*JSON> List) *JSON {
@@ -158,6 +196,14 @@ func JSONField(name String, value *JSON) JSONField {
     jf.name = name.commit()
     jf.value = value
     return jf
+}
+
+func add(this *JSONObject, name String, value *JSON) {
+    this.fields.add(JSONField(name, value))
+}
+
+func add(this *JSONArray, value *JSON) {
+    this.elements.add(value)
 }
 
 func freeInternals(this *JSONString) {
@@ -401,7 +447,6 @@ func JSONFileContents(filename String, out contents *String) successful {
     // NOTE: Might work with files larger than ~4GB now, haven't tested yet
 
     buffer *ubyte = null
-    length long = undef
     filename_cstr *ubyte = filename.cstr()
     f *FILE = fopen(filename_cstr, 'r')
     delete filename_cstr
@@ -410,11 +455,11 @@ func JSONFileContents(filename String, out contents *String) successful {
 
     #if __windows__
         fseeko64(f, 0, SEEK_END)
-        length = ftello64(f)
+        length long = ftello64(f)
         fseeko64(f, 0, SEEK_SET)
     #else
         fseeko(f, 0, SEEK_END)
-        length = ftello(f)
+        length off_t = ftello(f)
         fseeko(f, 0, SEEK_SET)
     #end
 
