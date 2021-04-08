@@ -292,20 +292,7 @@ func JSON\parseNumber(content String, out stride *usize = null) *JSON {
     content = content.trimmedView()
 
     included usize = 0
-    allowed <ubyte> Array = {
-        '-'ub,
-        '0'ub,
-        '1'ub,
-        '2'ub,
-        '3'ub,
-        '4'ub,
-        '5'ub,
-        '6'ub,
-        '7'ub,
-        '8'ub,
-        '9'ub,
-        '.'ub
-    }
+    allowed String = "-0123456789."
 
     while included < content.length && allowed.contains(content[included]) {
         included++

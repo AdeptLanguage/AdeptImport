@@ -1,0 +1,14 @@
+
+struct Vector2i (x, y int) {
+    func zero {
+        this.x = 0
+        this.y = 0
+    }
+}
+
+func vector2i(x, y int = 0) Vector2i {
+    v POD Vector2i = undef
+    v.x = x
+    v.y = y
+    return v
+}
