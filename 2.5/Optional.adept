@@ -49,7 +49,7 @@ func none() <$T> Optional {
 }
 
 func some(contained POD $T) <$T> Optional {
-    o POD <String> Optional = undef
+    o POD <$T> Optional = undef
     o.value = POD contained
     o.has = true
     return o
