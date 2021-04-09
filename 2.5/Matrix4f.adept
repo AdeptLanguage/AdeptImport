@@ -3,7 +3,7 @@ import '2.4/Matrix4f.adept'
 import 'Vector3f.adept'
 
 func setValue(this *Matrix4f, x, y usize, value float) {
-    xyToIso.array[y * 4 + x] = value
+    this.array[y * 4 + x] = value
 }
 
 func multiply(this *Matrix4f, other POD Vector3f) Vector3f {
