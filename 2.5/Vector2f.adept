@@ -6,3 +6,7 @@ func normalized(this *Vector2f) Vector2f {
     copy.normalize()
     return copy
 }
+
+func __equals__(a POD Vector2f, b POD Vector2f) bool {
+    return a.x == b.x && a.y == b.y
+}

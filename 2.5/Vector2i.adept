@@ -6,6 +6,10 @@ struct Vector2i (x, y int) {
     }
 }
 
+func __equals__(a POD Vector2i, b POD Vector2i) bool {
+    return a.x == b.x && a.y == b.y
+}
+
 func vector2i(x, y int = 0) Vector2i {
     v POD Vector2i = undef
     v.x = x

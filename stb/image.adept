@@ -26,5 +26,6 @@ STBI_rgb        == 3
 STBI_rgb_alpha  == 4
 
 foreign stbi_load(in *ubyte, out *int, out *int, out *int, in int) *ubyte
+foreign stbi_load_from_memory(in *ubyte, in int, out *int, out *int, out *int, in int) *ubyte
 foreign stbi_image_free(in *ubyte) void
 foreign stbi_failure_reason() *ubyte
