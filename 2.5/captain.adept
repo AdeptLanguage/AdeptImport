@@ -926,9 +926,9 @@ func captAppendCharacterUVs(character ubyte, uvs *<float> List) {
 }
 
 func captDrawText(text String, x, y float) {
-    text CaptText = captText(text)
-    text.draw(x, y)
-    text.destroy()
+    text_drawable CaptText = captText(text)
+    text_drawable.draw(x, y)
+    text_drawable.destroy()
 }
 
 func captTextCharacterWidthForScale(scale float = 14.0f) float {
