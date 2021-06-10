@@ -1,0 +1,82 @@
+
+struct CaptTexture (id uint) {
+    func isValid bool { return this.id != 0; }
+    
+    func invalidate { this.id = 0; }
+    
+    func destroy { glDeleteTextures(1, &this.id); }
+    
+    func load(filename *ubyte, approximate bool = true) { *this = captTexture(filename, approximate); }
+    
+    func load(filename String, approximate bool = true) { *this = captTexture(filename, approximate); }
+}
+
+func captTexture(filename String, approximate bool = true) CaptTexture {
+    cstr *ubyte = filename.cstr()
+    defer delete cstr
+    return captTexture(cstr, approximate)
+}
+
+func captTexture(filename *ubyte, approximate bool = true) CaptTexture {
+    captEnsurePrepared()
+    texture POD CaptTexture = undef
+    
+    if _captain_window == null {
+        printf('RUNTIME ERROR: Cannot create CaptTexture before captStart() is called\n')
+        printf('NOTE: Use captOnSetup() to load assets after captStart()\n')
+        texture.id = 0
+        return texture
+    }
+    
+    x, y, n int = undef
+    image *ubyte = stbi_load(filename, &x, &y, &n, 4)
+
+    if image == null {
+        texture.id = 0
+        return texture
+    }
+    
+    blur_mode GLenum = approximate ? GL_LINEAR : GL_NEAREST
+    glGenTextures(1, &texture.id)
+    glBindTexture(GL_TEXTURE_2D, texture.id)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, blur_mode)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, blur_mode)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+    glBindTexture(GL_TEXTURE_2D, 0ui)
+    stbi_image_free(image)
+    return texture
+}
+
+func captTextureFromMemory(data *ubyte, length usize, approximate bool = true) CaptTexture {
+    captEnsurePrepared()
+    texture POD CaptTexture = undef
+    
+    if _captain_window == null {
+        printf('RUNTIME ERROR: Cannot create CaptTexture before captStart() is called\n')
+        printf('NOTE: Use captOnSetup() to load assets after captStart()\n')
+        texture.id = 0
+        return texture
+    }
+    
+    x, y, n int = undef
+    image *ubyte = stbi_load_from_memory(data, length, &x, &y, &n, 4)
+
+    if image == null {
+        texture.id = 0
+        return texture
+    }
+    
+    blur_mode GLenum = approximate ? GL_LINEAR : GL_NEAREST
+    glGenTextures(1, &texture.id)
+    glBindTexture(GL_TEXTURE_2D, texture.id)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, blur_mode)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, blur_mode)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+    glBindTexture(GL_TEXTURE_2D, 0ui)
+    stbi_image_free(image)
+    return texture
+}

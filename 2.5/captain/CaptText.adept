@@ -1,0 +1,125 @@
+
+#default CaptText_warn_unnecessary_destroy true
+
+define CAPT_FONT_TEXTURE_WIDTH  = 384.0f
+define CAPT_FONT_TEXTURE_HEIGHT = 8.0f
+
+struct CaptText (model CaptModel, has bool) {
+    func draw(x, y float) {
+        transformation Matrix4f = undef
+        transformation.translateFromIdentity(x, y, 0.0f)
+        _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
+        captBindTexture(_captain_font)
+        this.model.draw()
+    }
+    
+    func draw(x, y float, custom_bitmap_font_texture POD CaptTexture) {
+        transformation Matrix4f = undef
+        transformation.translateFromIdentity(x, y, 0.0f)
+        _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
+        captBindTexture(custom_bitmap_font_texture)
+        this.model.draw()
+    }
+    
+    func destroy {
+        unless this.has {
+            #if CaptText_warn_unnecessary_destroy
+            printf('RUNTIME WARNING: CaptText.destroy() called when nothing preset\n')
+            #end
+            return
+        }
+        
+        this.model.destroy()
+        this.has = false
+    }
+}
+
+func captText(content *ubyte) CaptText = captText(stringConstant(content))
+func captText(content *ubyte, scale double) CaptText = captText(stringConstant(content), scale)
+
+func captText(content String, scale double = 14.0) CaptText {
+    vertices, uvs <float> List
+    x float = 0.0f
+    y float = 0.0f
+    
+    each ubyte in [content.array, content.length] {
+        if it == '\n'ub {
+            x = 0.0f
+            y += scale * 1.5
+            continue
+        }
+        
+        w float = scale / 7.0f * 5.0f
+        h float = scale
+        
+        points 18 float = undef
+        points[0]  = x;     points[1]  = y + h; points[2]  = 0.0f
+        points[3]  = x;     points[4]  = y;     points[5]  = 0.0f
+        points[6]  = x + w; points[7]  = y;     points[8]  = 0.0f
+        points[9]  = x;     points[10] = y + h; points[11] = 0.0f
+        points[12] = x + w; points[13] = y;     points[14] = 0.0f
+        points[15] = x + w; points[16] = y + h; points[17] = 0.0f
+        x += scale / 7.0f * 6.0f
+        
+        repeat 18, vertices.add(points[idx])
+        captAppendCharacterUVs(it, &uvs)
+    }
+    
+    text CaptText = undef
+    text.model.create(vertices.items, vertices.length, uvs.items, uvs.length)
+    text.has = true
+    return text
+}
+
+func captFontIndexFor(character ubyte) usize {
+    if character >= 'A'ub && character <= 'Z'ub, return cast usize (character - 'A'ub)
+    if character >= 'a'ub && character <= 'z'ub, return cast usize (character - 'a'ub)
+    if character >= '0'ub && character <= '9'ub, return cast usize (character - '0'ub + 35)
+    
+    special String = ".,!?-+/~:"
+    each ubyte in static [special.array, special.length], if it == character,
+        return idx + 26
+    
+    // Characters added on to old font
+    additional String = "'%"
+    each ubyte in static [additional.array, additional.length], if it == character,
+        return idx + 45
+    
+    return 29
+}
+
+func captAppendCharacterUVs(character ubyte, uvs *<float> List) {
+    if character == ' 'ub {
+        repeat 6, uvs.add(CAPT_FONT_TEXTURE_WIDTH); uvs.add(0.0f)
+        return
+    }
+    
+    index usize = captFontIndexFor(character)
+    u  float = (6.0f * index as float) / CAPT_FONT_TEXTURE_WIDTH
+    uw float = (6.0f * index as float + 5.0f) / CAPT_FONT_TEXTURE_WIDTH
+    v  float = 0.0f / CAPT_FONT_TEXTURE_HEIGHT
+    vh float = 7.0f / CAPT_FONT_TEXTURE_HEIGHT
+    
+    uvs.add(u)
+    uvs.add(vh)
+    uvs.add(u)
+    uvs.add(v)
+    uvs.add(uw)
+    uvs.add(v)
+    uvs.add(u)
+    uvs.add(vh)
+    uvs.add(uw)
+    uvs.add(v)
+    uvs.add(uw)
+    uvs.add(vh)
+}
+
+func captDrawText(text String, x, y float) {
+    text_drawable CaptText = captText(text)
+    text_drawable.draw(x, y)
+    text_drawable.destroy()
+}
+
+func captTextCharacterWidthForScale(scale float = 14.0f) float {
+    return scale / 7.0f * 6.0f
+}

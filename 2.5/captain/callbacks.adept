@@ -1,0 +1,30 @@
+
+// Stub callbacks for Captain
+
+func _captMouseCallback(_window *GLFWwindow, button int, action int, _mods int) {
+    if action == GLFW_PRESS && _captain_click as ptr {
+        mouse_x, mouse_y float = undef
+        if _captain_click_use_view_mouse, captMouseViewPosition(&mouse_x, &mouse_y)
+        else                              captMouseFramePosition(&mouse_x, &mouse_y)
+        
+        _captain_click(mouse_x, mouse_y, button + 1)
+    } else if action == GLFW_RELEASE && _captain_release as ptr {
+        mouse_x, mouse_y float = undef
+        if _captain_release_use_view_mouse, captMouseViewPosition(&mouse_x, &mouse_y)
+        else                                captMouseFramePosition(&mouse_x, &mouse_y)
+        
+        _captain_release(mouse_x, mouse_y, button + 1)
+    }
+}
+
+func _captKeyCallback(_window *GLFWwindow, k, s, a, m int) {
+    if _captain_key as ptr, _captain_key(k, s, a, m)
+}
+
+func _captCharCallback(_window *GLFWwindow, codepoint uint) {
+    if _captain_char as ptr, _captain_char(codepoint)
+}
+
+func _captScrollCallback(_window *GLFWwindow, x_offset double, y_offset double) {
+    if _captain_scroll as ptr, _captain_scroll(x_offset as float, y_offset as float)
+}

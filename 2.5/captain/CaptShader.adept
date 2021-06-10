@@ -1,0 +1,83 @@
+
+import String
+import "opengl/opengl.adept"
+import "sys/cstdio.adept"
+import "sys/cstdlib.adept"
+
+struct CaptShader (program, vertex, fragment GLuint) {
+    func create(vertex_code, fragment_code String) {
+        log_length int
+        log_message *ubyte
+        status GLint
+        code_length GLint = undef
+    
+        this.vertex = glCreateShader(GL_VERTEX_SHADER)
+        code_length = vertex_code.length
+        glShaderSource(this.vertex, 1, &vertex_code.array, &code_length)
+        glCompileShader(this.vertex)
+        glGetShaderiv(this.vertex, GL_COMPILE_STATUS, &status)
+    
+        if status == 0 {
+            puts('Failed to compile vertex shader')
+            log_message = malloc(1024)
+            glGetShaderInfoLog(this.vertex, 1024, &log_length, log_message)
+            if log_length != 0, puts(log_message)
+            free(log_message)
+        }
+    
+        this.fragment = glCreateShader(GL_FRAGMENT_SHADER)
+        code_length = fragment_code.length
+        glShaderSource(this.fragment, 1, &fragment_code.array, &code_length)
+        glCompileShader(this.fragment)
+        glGetShaderiv(this.fragment, GL_COMPILE_STATUS, &status)
+        
+        if status == 0 {
+            puts('Failed to compile fragment shader')
+            log_message = malloc(1024)
+            glGetShaderInfoLog(this.fragment, 1024, &log_length, log_message)
+            if log_length != 0, puts(log_message)
+            free(log_message)
+        }
+    
+        this.program = glCreateProgram()
+        glAttachShader(this.program, this.vertex)
+        glAttachShader(this.program, this.fragment)
+        glLinkProgram(this.program)
+        glValidateProgram(this.program)
+    }
+    
+    func use {
+        glUseProgram(this.program)
+    }
+    
+    func destroy {
+        glDetachShader(this.program, this.vertex)
+        glDetachShader(this.program, this.fragment)
+        glDeleteShader(this.vertex)
+        glDeleteShader(this.fragment)
+        glDeleteProgram(this.program)
+    }
+    
+    func getUniformLocation(name *ubyte) GLint {
+        return glGetUniformLocation(this.program, name)
+    }
+
+    func uploadFloat(location GLint, value float) {
+        glUniform1f(location, value)
+    }
+    
+    func uploadMatrix4f(location GLint, matrix *Matrix4f) {
+        if matrix == null, return
+        glUniformMatrix4fv(location, 1, false, &matrix.array as *float)
+    }
+    
+    func uploadMatrix4f(location GLint, matrix Matrix4f) {
+        glUniformMatrix4fv(location, 1, false, &matrix.array as *float)
+    }
+}
+
+func captShader(vertex_shader_code, fragment_shader_code String) CaptShader {
+    shader POD CaptShader
+    shader.create(vertex_shader_code, fragment_shader_code)
+    return shader
+}

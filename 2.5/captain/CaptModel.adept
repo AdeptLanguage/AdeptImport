@@ -1,0 +1,121 @@
+
+struct CaptModel (vao, vertices_vbo, uvs_vbo, texture_id GLuint, triangle_count int) {
+    func create(points *float, points_length usize, uvs *float, uvs_length usize) {
+        this.triangle_count = cast int(points_length / 3ui)
+        
+        this.vertices_vbo = 0ui
+        glGenBuffers(1, &this.vertices_vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
+        glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * points_length), points, GL_STATIC_DRAW)
+        
+        this.uvs_vbo = 0ui
+        glGenBuffers(1, &this.uvs_vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
+        glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * uvs_length), uvs, GL_STATIC_DRAW)
+        
+        glGenVertexArrays(1, &this.vao)
+        glBindVertexArray(this.vao)
+        
+        glEnableVertexAttribArray(0ui)
+        glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
+        glVertexAttribPointer(0ui, 3, GL_FLOAT, GL_FALSE, 0, null)
+        
+        glEnableVertexAttribArray(1ui)
+        glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
+        glVertexAttribPointer(1ui, 2, GL_FLOAT, GL_FALSE, 0, null)
+        
+        glBindBuffer(GL_ARRAY_BUFFER, 0ui)
+        glBindVertexArray(0ui)
+    }
+    
+    func draw {
+        glBindVertexArray(this.vao)
+        glDrawArrays(GL_TRIANGLES, 0, this.triangle_count)
+    }
+    
+    func destroy {
+        glDeleteBuffers(1, &this.vertices_vbo)
+        glDeleteBuffers(1, &this.uvs_vbo)
+        glDeleteVertexArrays(1, &this.vao)
+    }
+}
+
+func captModel(points <float> List, uvs <float> List) CaptModel {
+    model POD CaptModel
+    model.create(points.__array__(), points.__length__(), uvs.__array__(), uvs.__length__())
+    return model
+}
+
+func captModel(in w, h float, in x_flip, y_flip bool = false) CaptModel {
+    points_storage 18 float = undef
+    uv_data_storage 12 float = undef
+
+    points *float = &points_storage as *float
+    points_length usize = 18
+    uv_data *float = &uv_data_storage as *float
+    uv_data_length usize = 12
+    
+    points[0]  = 0.0f;   points[1]  = h;      points[2]  = 0.0f
+    points[3]  = 0.0f;   points[4]  = 0.0f;   points[5]  = 0.0f
+    points[6]  = w;      points[7]  = 0.0f;   points[8]  = 0.0f
+    points[9]  = 0.0f;   points[10] = h;      points[11] = 0.0f
+    points[12] = w;      points[13] = 0.0f;   points[14] = 0.0f
+    points[15] = w;      points[16] = h;      points[17] = 0.0f
+
+    // 2 3
+    // 1 6
+    
+    // 1, 2, 3, 1, 3, 4
+    uv_src 8 float = undef
+    uv_src[0]  = 0.0f; uv_src[1]  = 1.0f
+    uv_src[2]  = 0.0f; uv_src[3]  = 0.0f
+    uv_src[4]  = 1.0f; uv_src[5]  = 0.0f
+    uv_src[6]  = 1.0f;  uv_src[7] = 1.0f
+    
+    if x_flip {
+        // Swap 2 with 3 and 1 with 6
+        tmp 2 float = undef
+        tmp[0] = uv_src[2]
+        tmp[1] = uv_src[3]
+        uv_src[2] = uv_src[4]
+        uv_src[3] = uv_src[5]
+        uv_src[4] = tmp[0]
+        uv_src[5] = tmp[1]
+        tmp[0] = uv_src[0]
+        tmp[1] = uv_src[1]
+        uv_src[0] = uv_src[6]
+        uv_src[1] = uv_src[7]
+        uv_src[6] = tmp[0]
+        uv_src[7] = tmp[1]
+    }
+    
+    if y_flip {
+        // Swap 2 with 1 and 3 with 6
+        tmp 2 float = undef
+        
+        tmp[0] = uv_src[2]
+        tmp[1] = uv_src[3]
+        uv_src[2] = uv_src[0]
+        uv_src[3] = uv_src[1]
+        uv_src[0] = tmp[0]
+        uv_src[1] = tmp[1]
+        
+        tmp[0] = uv_src[4]
+        tmp[1] = uv_src[5]
+        uv_src[4] = uv_src[6]
+        uv_src[5] = uv_src[7]
+        uv_src[6] = tmp[0]
+        uv_src[7] = tmp[1]
+    }
+    
+    uv_data[0]  = uv_src[0]; uv_data[1]  = uv_src[1]
+    uv_data[2]  = uv_src[2]; uv_data[3]  = uv_src[3]
+    uv_data[4]  = uv_src[4]; uv_data[5]  = uv_src[5]
+    uv_data[6]  = uv_src[0]; uv_data[7]  = uv_src[1]
+    uv_data[8]  = uv_src[4]; uv_data[9]  = uv_src[5]
+    uv_data[10] = uv_src[6]; uv_data[11] = uv_src[7]
+
+    model CaptModel
+    model.create(points, points_length, uv_data, uv_data_length)
+    return model
+}

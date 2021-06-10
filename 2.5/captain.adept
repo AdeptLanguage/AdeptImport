@@ -1,8 +1,6 @@
 
 pragma compiler_supports '2.5'
 
-#default CaptText_warn_unnecessary_destroy true
-
 import 'glfw/glfw.adept'
 import 'opengl/opengl.adept'
 import 'stb/image.adept'
@@ -19,6 +17,14 @@ import random
 import where
 import cstdio
 import array_util
+
+import "captain/CaptText.adept"
+import "captain/CaptColor.adept"
+import "captain/CaptModel.adept"
+import "captain/CaptShader.adept"
+import "captain/CaptTexture.adept"
+import "captain/user_util.adept"
+import "captain/callbacks.adept"
 
 _captain_prepared bool
 _captain_window *GLFWwindow
@@ -113,23 +119,12 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     #end
     
-    unless _captain_resizable {
-        glfwWindowHint(GLFW_RESIZABLE, GL_FALSE)
-    }
-    
-    if _captain_always_on_top {
-        glfwWindowHint(GLFW_FLOATING, GL_TRUE)
-    }
-
-    if _captain_multisample != 0 {
-        glfwWindowHint(GLFW_SAMPLES, _captain_multisample)
-    }
+    unless _captain_resizable,    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE)
+    if _captain_always_on_top,    glfwWindowHint(GLFW_FLOATING, GL_TRUE)
+    if _captain_multisample != 0, glfwWindowHint(GLFW_SAMPLES, _captain_multisample)
     
     monitor *GLFWmonitor = null
-    
-    if fullscreen {
-        monitor = glfwGetPrimaryMonitor()
-    }
+    if fullscreen, monitor = glfwGetPrimaryMonitor()
     
     if width == 0 && height == 0 {
         video_mode *GLFWvidmode = glfwGetVideoMode(monitor)
@@ -152,14 +147,13 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     if _captain_multisample != 0, glEnable(GL_MULTISAMPLE)
     
-    _captain_shader.create("#version 400 core\nlayout(location = 0) in vec3 vp;\nlayout(location = 1) in vec2 texture_coords;\nuniform mat4 projection;\nuniform mat4 transformation;\nout vec2 uvs;\nvoid main() {\nuvs = texture_coords;\ngl_Position = projection * transformation * vec4(vp, 1.0);\n}",
-            "#version 400 core\nin vec2 uvs;\nout vec4 color;\nuniform sampler2D texture_sampler;\nuniform float opacity;\nvoid main(void) {\ncolor = texture(texture_sampler, uvs);\ncolor.a *= opacity;\n}")
+    _captain_shader.create(embed "captain/v.glsl", embed "captain/f.glsl")
     _captain_shader_transformation_location = _captain_shader.getUniformLocation('transformation')
     _captain_model = captModel(1.0f, 1.0f)
     
     glfwGetFramebufferSize(_captain_window, undef win_width int, undef win_height int)
-    _captain_display_ratio = cast float win_width / cast float win_height
-        
+    _captain_display_ratio = win_width as float / win_height as float
+    
     glfwSetMouseButtonCallback(_captain_window, func &_captMouseCallback)
     glfwSetKeyCallback(_captain_window, func &_captKeyCallback)
     glfwSetCharCallback(_captain_window, func &_captCharCallback)
@@ -184,7 +178,7 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
     
         glfwGetFramebufferSize(_captain_window, &win_width, &win_height)
         glViewport(0, 0, win_width, win_height)
-        _captain_display_ratio = cast float win_width / cast float win_height
+        _captain_display_ratio = win_width as float / win_height as float
         
         unless _captain_custom_view, captDefaultView()
         if _captain_view_preserve_ratio, _captain_view_width = _captain_view_height * _captain_display_ratio
@@ -215,51 +209,16 @@ func captDefaultView {
     captCustomViewBasedOnHeight(480.0f)
 }
 
-func _captMouseCallback(_window *GLFWwindow, button int, action int, _mods int) {
-    if action == GLFW_PRESS && _captain_click as ptr {
-        mouse_x, mouse_y float = undef
-        if _captain_click_use_view_mouse, captMouseViewPosition(&mouse_x, &mouse_y)
-        else                              captMouseFramePosition(&mouse_x, &mouse_y)
-        
-        _captain_click(mouse_x, mouse_y, button + 1)
-    } else if action == GLFW_RELEASE && _captain_release as ptr {
-        mouse_x, mouse_y float = undef
-        if _captain_release_use_view_mouse, captMouseViewPosition(&mouse_x, &mouse_y)
-        else                                captMouseFramePosition(&mouse_x, &mouse_y)
-        
-        _captain_release(mouse_x, mouse_y, button + 1)
-    }
-}
-
-func _captKeyCallback(_window *GLFWwindow, k, s, a, m int) {
-    if _captain_key as ptr, _captain_key(k, s, a, m)
-}
-
-func _captCharCallback(_window *GLFWwindow, codepoint uint) {
-    if _captain_char as ptr, _captain_char(codepoint)
-}
-
-func _captScrollCallback(_window *GLFWwindow, x_offset double, y_offset double) {
-    if _captain_scroll as ptr, _captain_scroll(x_offset as float, y_offset as float)
-}
-
-func captViewWidth float {
-    return _captain_view_width
-}
-
-func captViewHeight float {
-    return _captain_view_height
-}
+func captViewWidth float  = _captain_view_width
+func captViewHeight float = _captain_view_height
 
 func captFrameWidth int {
-    w, h int = undef
-    glfwGetFramebufferSize(_captain_window, &w, &h)
+    glfwGetFramebufferSize(_captain_window, undef w int, undef h int)
     return w
 }
 
 func captFrameHeight int {
-    w, h int = undef
-    glfwGetFramebufferSize(_captain_window, &w, &h)
+    glfwGetFramebufferSize(_captain_window, undef w int, undef h int)
     return h
 }
 
@@ -369,251 +328,14 @@ func captOnScroll(in on_scroll_func func(float, float) void) {
     _captain_scroll = on_scroll_func
 }
 
-struct CaptColor (r, g, b, a float)
-
-func captColor(r, g, b float, a float = 1.0f) CaptColor {
-    color CaptColor = undef
-    color.r = r
-    color.g = g
-    color.b = b
-    color.a = a
-    return color
-}
-
-func captColor(r, g, b int, a int = 255) CaptColor {
-    color CaptColor = undef
-    color.r = cast float r / 255.0f
-    color.g = cast float g / 255.0f
-    color.b = cast float b / 255.0f
-    color.a = cast float a / 255.0f
-    return color
-}
-
 func captClearColor(in color CaptColor) {
     glClearColor(color.r, color.g, color.b, color.a)
     glClear(GL_COLOR_BUFFER_BIT)
 }
 
-struct CaptTexture (id uint) {
-    func isValid bool = this.id != 0
-    
-    func invalidate {
-        this.id = 0
-    }
-    
-    func destroy {
-        glDeleteTextures(1, &this.id)
-    }
-    
-    func load(filename *ubyte, approximate bool = true) {
-        *this = captTexture(filename, approximate)
-    }
-    
-    func load(filename String, approximate bool = true) {
-        cstr *ubyte = filename.cstr()
-        defer delete cstr
-        *this = captTexture(cstr, approximate)
-    }
-}
-
-func captTexture(filename String, approximate bool = true) CaptTexture {
-    cstr *ubyte = filename.cstr()
-    defer delete cstr
-    return captTexture(cstr, approximate)
-}
-
-func captTexture(filename *ubyte, approximate bool = true) CaptTexture {
-    captEnsurePrepared()
-    texture POD CaptTexture = undef
-    
-    if _captain_window == null {
-        printf('RUNTIME ERROR: Cannot create CaptTexture before captStart() is called\n')
-        printf('NOTE: Use captOnSetup() to load assets after captStart()\n')
-        texture.id = 0
-        return texture
-    }
-    
-    x, y, n int = undef
-    image *ubyte = stbi_load(filename, &x, &y, &n, 4)
-
-    if image == null {
-        texture.id = 0
-        return texture
-    }
-    
-    blur_mode GLenum = approximate ? GL_LINEAR : GL_NEAREST
-    glGenTextures(1, &texture.id)
-    glBindTexture(GL_TEXTURE_2D, texture.id)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, blur_mode)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, blur_mode)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
-    glBindTexture(GL_TEXTURE_2D, 0ui)
-    stbi_image_free(image)
-    return texture
-}
-
-func captTextureFromMemory(data *ubyte, length usize, approximate bool = true) CaptTexture {
-    captEnsurePrepared()
-    texture POD CaptTexture = undef
-    
-    if _captain_window == null {
-        printf('RUNTIME ERROR: Cannot create CaptTexture before captStart() is called\n')
-        printf('NOTE: Use captOnSetup() to load assets after captStart()\n')
-        texture.id = 0
-        return texture
-    }
-    
-    x, y, n int = undef
-    image *ubyte = stbi_load_from_memory(data, length, &x, &y, &n, 4)
-
-    if image == null {
-        texture.id = 0
-        return texture
-    }
-    
-    blur_mode GLenum = approximate ? GL_LINEAR : GL_NEAREST
-    glGenTextures(1, &texture.id)
-    glBindTexture(GL_TEXTURE_2D, texture.id)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, blur_mode)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, blur_mode)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
-    glBindTexture(GL_TEXTURE_2D, 0ui)
-    stbi_image_free(image)
-    return texture
-}
-
-struct CaptModel (vao, vertices_vbo, uvs_vbo, texture_id GLuint, triangle_count int) {
-    func create(points *float, points_length usize, uvs *float, uvs_length usize) {
-        this.triangle_count = cast int(points_length / 3ui)
-        
-        this.vertices_vbo = 0ui
-        glGenBuffers(1, &this.vertices_vbo)
-        glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
-        glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * points_length), points, GL_STATIC_DRAW)
-        
-        this.uvs_vbo = 0ui
-        glGenBuffers(1, &this.uvs_vbo)
-        glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
-        glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * uvs_length), uvs, GL_STATIC_DRAW)
-        
-        glGenVertexArrays(1, &this.vao)
-        glBindVertexArray(this.vao)
-        
-        glEnableVertexAttribArray(0ui)
-        glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
-        glVertexAttribPointer(0ui, 3, GL_FLOAT, GL_FALSE, 0, null)
-        
-        glEnableVertexAttribArray(1ui)
-        glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
-        glVertexAttribPointer(1ui, 2, GL_FLOAT, GL_FALSE, 0, null)
-        
-        glBindBuffer(GL_ARRAY_BUFFER, 0ui)
-        glBindVertexArray(0ui)
-    }
-    
-    func draw {
-        glBindVertexArray(this.vao)
-        glDrawArrays(GL_TRIANGLES, 0, this.triangle_count)
-    }
-    
-    func destroy {
-        glDeleteBuffers(1, &this.vertices_vbo)
-        glDeleteBuffers(1, &this.uvs_vbo)
-        glDeleteVertexArrays(1, &this.vao)
-    }
-}
-
-func captModel(points <float> List, uvs <float> List) CaptModel {
-    model POD CaptModel
-    model.create(points.__array__(), points.__length__(), uvs.__array__(), uvs.__length__())
-    return model
-}
-
 func captBindTexture(texture POD CaptTexture) void {
     glActiveTexture(GL_TEXTURE0)
     glBindTexture(GL_TEXTURE_2D, texture.id)
-}
-
-struct CaptShader (program, vertex, fragment GLuint) {
-    func create(vertex_code, fragment_code String) {
-        log_length int
-        log_message *ubyte
-        status GLint
-        code_length GLint = undef
-    
-        this.vertex = glCreateShader(GL_VERTEX_SHADER)
-        code_length = vertex_code.length
-        glShaderSource(this.vertex, 1, &vertex_code.array, &code_length)
-        glCompileShader(this.vertex)
-        glGetShaderiv(this.vertex, GL_COMPILE_STATUS, &status)
-    
-        if status == 0 {
-            puts('Failed to compile vertex shader')
-            log_message = malloc(1024)
-            glGetShaderInfoLog(this.vertex, 1024, &log_length, log_message)
-            if log_length != 0, puts(log_message)
-            free(log_message)
-        }
-    
-        this.fragment = glCreateShader(GL_FRAGMENT_SHADER)
-        code_length = fragment_code.length
-        glShaderSource(this.fragment, 1, &fragment_code.array, &code_length)
-        glCompileShader(this.fragment)
-        glGetShaderiv(this.fragment, GL_COMPILE_STATUS, &status)
-        
-        if status == 0 {
-            puts('Failed to compile fragment shader')
-            log_message = malloc(1024)
-            glGetShaderInfoLog(this.fragment, 1024, &log_length, log_message)
-            if log_length != 0, puts(log_message)
-            free(log_message)
-        }
-    
-        this.program = glCreateProgram()
-        glAttachShader(this.program, this.vertex)
-        glAttachShader(this.program, this.fragment)
-        glLinkProgram(this.program)
-        glValidateProgram(this.program)
-    }
-    
-    func use {
-        glUseProgram(this.program)
-    }
-    
-    func destroy {
-        glDetachShader(this.program, this.vertex)
-        glDetachShader(this.program, this.fragment)
-        glDeleteShader(this.vertex)
-        glDeleteShader(this.fragment)
-        glDeleteProgram(this.program)
-    }
-    
-    func getUniformLocation(name *ubyte) GLint {
-        return glGetUniformLocation(this.program, name)
-    }
-
-    func uploadFloat(location GLint, value float) {
-        glUniform1f(location, value)
-    }
-    
-    func uploadMatrix4f(location GLint, matrix *Matrix4f) {
-        if matrix == null, return
-        glUniformMatrix4fv(location, 1, false, &matrix.array as *float)
-    }
-    
-    func uploadMatrix4f(location GLint, matrix Matrix4f) {
-        glUniformMatrix4fv(location, 1, false, &matrix.array as *float)
-    }
-}
-
-func captShader(vertex_shader_code, fragment_shader_code String) CaptShader {
-    shader POD CaptShader
-    shader.create(vertex_shader_code, fragment_shader_code)
-    return shader
 }
 
 func captDrawTexture(texture POD CaptTexture, in x, y, w, h float) {
@@ -643,294 +365,12 @@ func captDrawOpacity(in value float) {
     _captain_shader.uploadFloat(_captain_shader.getUniformLocation('opacity'), value)
 }
 
-func captModel(in w, h float, in x_flip, y_flip bool = false) CaptModel {
-    points_storage 18 float = undef
-    uv_data_storage 12 float = undef
-
-    points *float = &points_storage as *float
-    points_length usize = 18
-    uv_data *float = &uv_data_storage as *float
-    uv_data_length usize = 12
-    
-    points[0]  = 0.0f;   points[1]  = h;      points[2]  = 0.0f
-    points[3]  = 0.0f;   points[4]  = 0.0f;   points[5]  = 0.0f
-    points[6]  = w;      points[7]  = 0.0f;   points[8]  = 0.0f
-    points[9]  = 0.0f;   points[10] = h;      points[11] = 0.0f
-    points[12] = w;      points[13] = 0.0f;   points[14] = 0.0f
-    points[15] = w;      points[16] = h;      points[17] = 0.0f
-
-    // 2 3
-    // 1 6
-    
-    // 1, 2, 3, 1, 3, 4
-    uv_src 8 float = undef
-    uv_src[0]  = 0.0f; uv_src[1]  = 1.0f
-    uv_src[2]  = 0.0f; uv_src[3]  = 0.0f
-    uv_src[4]  = 1.0f; uv_src[5]  = 0.0f
-    uv_src[6]  = 1.0f;  uv_src[7] = 1.0f
-    
-    if x_flip {
-        // Swap 2 with 3 and 1 with 6
-        tmp 2 float = undef
-        tmp[0] = uv_src[2]
-        tmp[1] = uv_src[3]
-        uv_src[2] = uv_src[4]
-        uv_src[3] = uv_src[5]
-        uv_src[4] = tmp[0]
-        uv_src[5] = tmp[1]
-        tmp[0] = uv_src[0]
-        tmp[1] = uv_src[1]
-        uv_src[0] = uv_src[6]
-        uv_src[1] = uv_src[7]
-        uv_src[6] = tmp[0]
-        uv_src[7] = tmp[1]
-    }
-    
-    if y_flip {
-        // Swap 2 with 1 and 3 with 6
-        tmp 2 float = undef
-        
-        tmp[0] = uv_src[2]
-        tmp[1] = uv_src[3]
-        uv_src[2] = uv_src[0]
-        uv_src[3] = uv_src[1]
-        uv_src[0] = tmp[0]
-        uv_src[1] = tmp[1]
-        
-        tmp[0] = uv_src[4]
-        tmp[1] = uv_src[5]
-        uv_src[4] = uv_src[6]
-        uv_src[5] = uv_src[7]
-        uv_src[6] = tmp[0]
-        uv_src[7] = tmp[1]
-    }
-    
-    uv_data[0]  = uv_src[0]; uv_data[1]  = uv_src[1]
-    uv_data[2]  = uv_src[2]; uv_data[3]  = uv_src[3]
-    uv_data[4]  = uv_src[4]; uv_data[5]  = uv_src[5]
-    uv_data[6]  = uv_src[0]; uv_data[7]  = uv_src[1]
-    uv_data[8]  = uv_src[4]; uv_data[9]  = uv_src[5]
-    uv_data[10] = uv_src[6]; uv_data[11] = uv_src[7]
-
-    model CaptModel
-    model.create(points, points_length, uv_data, uv_data_length)
-    return model
-}
-
-func alias captRandomize() => randomize
-func alias captRandom() => normalizedRandom
-
 func captKeyHeld(key int) bool {
     return glfwGetKey(_captain_window, key) == GLFW_PRESS
 }
 
-// ---------------- captLoadTexturesByFieldName ----------------
-// Loads textures for all fields of a struct that are of type 'CaptTexture'
-// based on an 'assetsFolder' and the name of each field
-// For example, if 'assetsFolder' is 'where() + "assets/"',
-// Then a field named 'bob' that is of type 'CaptTexture' will be loaded
-// from the file '<folder of executable>/assets/bob.png'.
-//    struct Textures (
-//        road,
-//        car,
-//        font CaptTexture
-//    ) {
-//        func load {
-//            captLoadTexturesByFieldName(this)
-//        }
-//
-//        func unload {
-//            captUnloadTexturesByFieldName(this)
-//        }
-//    }
-func captLoadTexturesByFieldName(
-    pointer *$Textures,
-    assetsFolder String = where() + "assets/",
-    errorMessage String = "Failed to load texture \"%S\"\n",
-    suffix String = ".png",
-    approximateByDefault bool = false,
-    approximateExceptions *<String> Array = null
-) successful {
-    // NOTE: $Textures must be a struct
-    unless typeinfo $Textures.kind == AnyTypeKind::STRUCT {
-        print("ERROR: captLoadTexturesByFieldName() got non struct for '$Textures'!")
-        return false
-    }
-
-    datatype *AnyStructType = typeinfo $Textures as *AnyCompositeType
-    ok successful = true
-
-    repeat datatype.length {
-        unless datatype.members[idx] == typeinfo CaptTexture, continue
-
-        texture *CaptTexture = cast *CaptTexture (pointer + cast ptr (datatype.offsets[idx]))
-        fieldName String = stringConstant(datatype.member_names[idx])
-        basename String = fieldName + suffix
-        approximate bool = approximateByDefault
-        
-        if approximateExceptions && approximateExceptions.contains(fieldName){
-            approximate = !approximate
-        }
-
-        *texture = captTexture(assetsFolder + basename, approximateByDefault)
-
-        unless texture.isValid() {
-            printf(errorMessage, basename)
-            ok = false
-        }
-    }
-
-    return ok
-}
-
-// ---------------- captUnloadTexturesByFieldName ----------------
-// Calls '.destroy()' on all fields of a struct that are of type 'CaptTexture'
-func captUnloadTexturesByFieldName(pointer *$Textures) {
-    // NOTE: $Textures must be a struct
-    unless typeinfo $Textures.kind == AnyTypeKind::STRUCT {
-        print("ERROR: captUnloadTexturesByFieldName() got non composite for '$Textures'!")
-        return
-    }
-
-    datatype *AnyCompositeType = typeinfo $Textures as *AnyCompositeType
-
-    repeat datatype.length {
-        unless datatype.members[idx] == typeinfo CaptTexture, continue
-        texture *CaptTexture = cast *CaptTexture (pointer + cast ptr (datatype.offsets[idx]))
-        texture.destroy()
-    }
-}
-
-// ---------------- captDrawTiled ----------------
-// Draws a texture tiled over an area
 func captDrawTextureTiled(texture POD CaptTexture, startX, startY, tileW, tileH, fullW, fullH float) {
-    for x float = startX; x < startX + fullW; x += tileW {
-        for y float = startY; y < startY + fullH; y += tileH {
+    for x float = startX; x < startX + fullW; x += tileW,
+        for y float = startY; y < startY + fullH; y += tileH,
             captDrawTexture(texture, x, y, tileW, tileH)
-        }
-    }
-}
-
-
-define CAPT_FONT_TEXTURE_WIDTH  = 384.0f
-define CAPT_FONT_TEXTURE_HEIGHT = 8.0f
-
-struct CaptText (model CaptModel, has bool) {
-    func draw(x, y float) {
-        transformation Matrix4f = undef
-        transformation.translateFromIdentity(x, y, 0.0f)
-        _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
-        captBindTexture(_captain_font)
-        this.model.draw()
-    }
-    
-    func draw(x, y float, custom_bitmap_font_texture POD CaptTexture) {
-        transformation Matrix4f = undef
-        transformation.translateFromIdentity(x, y, 0.0f)
-        _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
-        captBindTexture(custom_bitmap_font_texture)
-        this.model.draw()
-    }
-    
-    func destroy {
-        unless this.has {
-            #if CaptText_warn_unnecessary_destroy
-            printf('RUNTIME WARNING: CaptText.destroy() called when nothing preset\n')
-            #end
-            return
-        }
-        
-        this.model.destroy()
-        this.has = false
-    }
-}
-
-func captText(content *ubyte) CaptText = captText(stringConstant(content))
-func captText(content *ubyte, scale double) CaptText = captText(stringConstant(content), scale)
-
-func captText(content String, scale double = 14.0) CaptText {
-    vertices, uvs <float> List
-    x float = 0.0f
-    y float = 0.0f
-    
-    each ubyte in [content.array, content.length] {
-        if it == '\n'ub {
-            x = 0.0f
-            y += scale * 1.5
-            continue
-        }
-        
-        w float = scale / 7.0f * 5.0f
-        h float = scale
-        
-        points 18 float = undef
-        points[0]  = x;     points[1]  = y + h; points[2]  = 0.0f
-        points[3]  = x;     points[4]  = y;     points[5]  = 0.0f
-        points[6]  = x + w; points[7]  = y;     points[8]  = 0.0f
-        points[9]  = x;     points[10] = y + h; points[11] = 0.0f
-        points[12] = x + w; points[13] = y;     points[14] = 0.0f
-        points[15] = x + w; points[16] = y + h; points[17] = 0.0f
-        x += scale / 7.0f * 6.0f
-        
-        repeat 18, vertices.add(points[idx])
-        captAppendCharacterUVs(it, &uvs)
-    }
-    
-    text CaptText = undef
-    text.model.create(vertices.items, vertices.length, uvs.items, uvs.length)
-    text.has = true
-    return text
-}
-
-func captFontIndexFor(character ubyte) usize {
-    if character >= 'A'ub && character <= 'Z'ub, return cast usize (character - 'A'ub)
-    if character >= 'a'ub && character <= 'z'ub, return cast usize (character - 'a'ub)
-    if character >= '0'ub && character <= '9'ub, return cast usize (character - '0'ub + 35)
-    
-    special String = ".,!?-+/~:"
-    each ubyte in static [special.array, special.length], if it == character,
-        return idx + 26
-    
-    // Characters added on to old font
-    additional String = "'%"
-    each ubyte in static [additional.array, additional.length], if it == character,
-        return idx + 45
-    
-    return 29
-}
-
-func captAppendCharacterUVs(character ubyte, uvs *<float> List) {
-    if character == ' 'ub {
-        repeat 6, uvs.add(CAPT_FONT_TEXTURE_WIDTH); uvs.add(0.0f)
-        return
-    }
-    
-    index usize = captFontIndexFor(character)
-    u  float = (6.0f * index as float) / CAPT_FONT_TEXTURE_WIDTH
-    uw float = (6.0f * index as float + 5.0f) / CAPT_FONT_TEXTURE_WIDTH
-    v  float = 0.0f / CAPT_FONT_TEXTURE_HEIGHT
-    vh float = 7.0f / CAPT_FONT_TEXTURE_HEIGHT
-    
-    uvs.add(u)
-    uvs.add(vh)
-    uvs.add(u)
-    uvs.add(v)
-    uvs.add(uw)
-    uvs.add(v)
-    uvs.add(u)
-    uvs.add(vh)
-    uvs.add(uw)
-    uvs.add(v)
-    uvs.add(uw)
-    uvs.add(vh)
-}
-
-func captDrawText(text String, x, y float) {
-    text_drawable CaptText = captText(text)
-    text_drawable.draw(x, y)
-    text_drawable.destroy()
-}
-
-func captTextCharacterWidthForScale(scale float = 14.0f) float {
-    return scale / 7.0f * 6.0f
 }

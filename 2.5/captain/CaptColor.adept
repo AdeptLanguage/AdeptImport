@@ -1,0 +1,20 @@
+
+struct CaptColor (r, g, b, a float)
+
+func captColor(r, g, b float, a float = 1.0f) CaptColor {
+    color CaptColor = undef
+    color.r = r
+    color.g = g
+    color.b = b
+    color.a = a
+    return color
+}
+
+func captColor(r, g, b int, a int = 255) CaptColor {
+    color CaptColor = undef
+    color.r = cast float r / 255.0f
+    color.g = cast float g / 255.0f
+    color.b = cast float b / 255.0f
+    color.a = cast float a / 255.0f
+    return color
+}
