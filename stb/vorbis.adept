@@ -8,7 +8,7 @@
 #default __arm64__ false
 
 #if __windows__
-    foreign 'windows_stb_vorbis.a'
+    foreign 'windows_x86_64_stb_vorbis.a'
 #elif __macos__
     #if __arm64__
         foreign 'macos_arm64_std_vorbis.a'
