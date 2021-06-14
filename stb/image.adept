@@ -9,7 +9,7 @@
     foreign 'windows_x86_64_stb_image.a'
 #elif __macos__
     #if __arm64__
-        foreign 'macos_arm64_std_image.a'
+        foreign 'macos_arm64_stb_image.a'
     #else
         foreign 'macos_x86_64_stb_image.a'
     #end
