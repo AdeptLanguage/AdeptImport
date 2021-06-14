@@ -4,4 +4,3 @@ import "opengl/opengl.adept"
 
 foreign 'glfw' library
 import 'other_glfw.adept'
-

@@ -1,10 +1,18 @@
 
 import 'openal/openal.adept'
 
+// NOTE: Adept versions before 2.5 don't have '__arm64__' defined,
+// so give a default value in case one isn't defined
+#default __arm64__ false
+
 #if __windows__
-foreign 'libalut.dll'
+    foreign 'libalut.dll'
 #elif __macos__
-foreign 'mac_libalut_static.a'
+    #if __arm64__
+        foreign 'macos_arm64_libalut_static.a'
+    #else
+        foreign 'macos_x86_64_libalut_static.a'
+    #end
 #end
 
 ALUT_API_MAJOR_VERSION               == 1

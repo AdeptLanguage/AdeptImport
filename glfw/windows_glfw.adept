@@ -6,4 +6,3 @@ foreign "windows_libgdi32.a"
 import "opengl/opengl.adept"
 
 import 'other_glfw.adept'
-

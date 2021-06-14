@@ -2,7 +2,16 @@
 pragma mac_only
 import "opengl/opengl.adept"
 
-foreign 'macos_libglfw3.a'
+// NOTE: Adept versions before 2.5 don't have '__arm64__' defined,
+// so give a default value in case one isn't defined
+#default __arm64__ false
+
+#if __arm64__
+    foreign 'macos_arm64_libglfw3.a'
+#else
+    foreign 'macos_x86_64_libglfw3.a'
+#end
+
 foreign 'Cocoa' framework
 foreign 'IOKit' framework
 foreign 'CoreFoundation' framework
