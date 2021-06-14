@@ -1,0 +1,72 @@
+
+// Function aliases to forward captain's random functions to those from standard random
+func alias captRandomize() => randomize
+func alias captRandom()    => normalizedRandom
+
+// ---------------- captLoadTexturesByFieldName ----------------
+// Loads textures for all fields of a struct that are of type 'CaptTexture'
+// based on an 'assetsFolder' and the name of each field
+// For example, if 'assetsFolder' is 'where() + "assets/"',
+// Then a field named 'bob' that is of type 'CaptTexture' will be loaded
+// from the file '<folder of executable>/assets/bob.png'.
+//    struct Textures (road, car, font CaptTexture) {
+//        func load  { captLoadTexturesByFieldName(this); }
+//        func unload { captUnloadTexturesByFieldName(this); }
+//    }
+func captLoadTexturesByFieldName(
+    pointer *$Textures,
+    assetsFolder String = where() + "assets/",
+    errorMessage String = "Failed to load texture \"%S\"\n",
+    suffix String = ".png",
+    approximateByDefault bool = false,
+    approximateExceptions *<String> Array = null
+) successful {
+    unless typeinfo $Textures.kind == AnyTypeKind::STRUCT {
+        // NOTE: $Textures must be a struct
+        print("ERROR: captLoadTexturesByFieldName() got non struct for '$Textures'!")
+        return false
+    }
+
+    datatype *AnyStructType = typeinfo $Textures as *AnyCompositeType
+    ok successful = true
+
+    repeat datatype.length {
+        unless datatype.members[idx] == typeinfo CaptTexture, continue
+
+        texture *CaptTexture = cast *CaptTexture (pointer + cast ptr (datatype.offsets[idx]))
+        fieldName String = stringConstant(datatype.member_names[idx])
+        basename String = fieldName + suffix
+        approximate bool = approximateByDefault
+        
+        if approximateExceptions && approximateExceptions.contains(fieldName){
+            approximate = !approximate
+        }
+
+        *texture = captTexture(assetsFolder + basename, approximateByDefault)
+
+        unless texture.isValid() {
+            printf(errorMessage, basename)
+            ok = false
+        }
+    }
+
+    return ok
+}
+
+// ---------------- captUnloadTexturesByFieldName ----------------
+// Calls '.destroy()' on all fields of a struct that are of type 'CaptTexture'
+func captUnloadTexturesByFieldName(pointer *$Textures) {
+    unless typeinfo $Textures.kind == AnyTypeKind::STRUCT {
+        // NOTE: $Textures must be a struct
+        print("ERROR: captUnloadTexturesByFieldName() got non composite for '$Textures'!")
+        return
+    }
+
+    datatype *AnyCompositeType = typeinfo $Textures as *AnyCompositeType
+
+    repeat datatype.length {
+        unless datatype.members[idx] == typeinfo CaptTexture, continue
+        texture *CaptTexture = cast *CaptTexture (pointer + cast ptr (datatype.offsets[idx]))
+        texture.destroy()
+    }
+}

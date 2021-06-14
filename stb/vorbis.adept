@@ -3,10 +3,18 @@
 
 #default STB_VORBIS_IMPLEMENTED_FOR_THIS_PLATFORM false
 
+// NOTE: Adept versions before 2.5 don't have '__arm64__' defined,
+// so give a default value in case one isn't defined
+#default __arm64__ false
+
 #if __windows__
     foreign 'windows_stb_vorbis.a'
 #elif __macos__
-    foreign 'macos_stb_vorbis.a'
+    #if __arm64__
+        foreign 'macos_arm64_std_vorbis.a'
+    #else
+        foreign 'macos_x86_64_stb_vorbis.a'
+    #end
 #elif !STB_VORBIS_IMPLEMENTED_FOR_THIS_PLATFORM
     #print_error "stb/vorbis.adept: Not implemented for this platform!"
     #print ""
