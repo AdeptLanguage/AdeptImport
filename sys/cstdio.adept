@@ -34,6 +34,13 @@ L_tmpnam    == 1024
     STDOUT == __stdoutp
     stderr == __stderrp
     STDERR == __stderrp
+#elif __wasm__
+    stdin  *FILE
+    stdout *FILE
+    stderr *FILE
+    STDIN == stdin
+    STDOUT == stdout
+    STDERR == stderr
 #else
     external stdin *FILE
     external stdout *FILE
