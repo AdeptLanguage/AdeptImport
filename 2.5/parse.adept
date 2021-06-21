@@ -1,1 +1,699 @@
-import '2.4/parse.adept'
+#default vsprintf_type_checks __typeinfo__
+
+import math
+import List
+import String
+import VariadicArray
+
+func toBool(this *String) bool {
+    if this.length == 1 {
+        c ubyte = this.array[0]
+        return c == '1'ub || c == 't'ub || c == 'y'ub || c == 'T'ub || c == 'Y'ub
+    }
+    
+    lowercase String = this.lowercase()
+    return lowercase == "true" || lowercase == "yes"
+}
+
+func toBool(this *String, out result *bool) successful {
+    if this.length == 1 {
+        c ubyte = this.array[0]
+        if c == '1'ub, *result = true;  return true
+        if c == '0'ub, *result = false; return true
+        if c == 't'ub, *result = true;  return true
+        if c == 'f'ub, *result = false; return true
+        if c == 'y'ub, *result = true;  return true
+        if c == 'n'ub, *result = false; return true
+        if c == 'Y'ub, *result = true;  return true
+        if c == 'N'ub, *result = false; return true
+        return false
+    }
+    
+    lowercase String = this.lowercase()
+    if lowercase == "true",  *result = true;  return true
+    if lowercase == "false", *result = false; return true
+    if lowercase == "yes",   *result = true;  return true
+    if lowercase == "no",    *result = false; return true
+    return false
+}
+
+func toUbyte(this *String)  ubyte  = this.toUlong() as ubyte
+func toUshort(this *String) ushort = this.toUlong() as ushort
+func toUint(this *String)   uint   = this.toUlong() as uint
+
+func toUlong(this *String) ulong {
+    // Check string length
+    if this.length == 0 || this.length > 20, return 0
+    
+    power ulong = 1
+    s *ubyte = this.array
+    i usize = this.length - 1
+    result ulong = 0
+    
+    until break {
+        c ubyte = s[i]
+        if c < '0'ub || c > '9'ub, return 0
+        result += cast ulong (c - '0'ub) * power
+        power *= 10
+        if i == 0, break
+        i -= 1
+    }
+    
+    return result
+}
+
+func toByte(this *String)  byte  = this.toLong() as byte
+func toShort(this *String) short = this.toLong() as short
+func toInt(this *String)   int   = this.toLong() as int
+
+func toLong(this *String) long {
+    // Check string length
+    if this.length == 0 || this.length > 20, return 0
+    
+    power long = 1
+    s *ubyte = this.array
+    i usize = this.length - 1
+    result long = 0
+    sign bool = s[0] == '-'ub
+    
+    until break {
+        c ubyte = s[i]
+        if c < '0'ub || c > '9'ub, return 0
+        result += cast long (c - '0'ub) * power
+        power *= 10
+        if i == sign as usize, break
+        i -= 1
+    }
+    
+    return sign ? 0sl - result : result
+}
+
+func toFloat(this *String) float {
+    // TODO: Do a real implementation
+    return this.toDouble() as float
+}
+
+func toDouble(this *String) double {
+    // Based on atof implementation by University of California
+    
+    /* 
+    * atof.c --
+    *
+    *    Source code for the "atof" library procedure.
+    *
+    * Copyright 1988 Regents of the University of California
+    * Permission to use, copy, modify, and distribute this
+    * software and its documentation for any purpose and without
+    * fee is hereby granted, provided that the above copyright
+    * notice appear in all copies.  The University of California
+    * makes no representations about the suitability of this
+    * software for any purpose.  It is provided "as is" without
+    * express or implied warranty.
+    */
+    
+    max_exponent int = 511
+    powers_of_10 *double = static double {
+        10.0,
+        100.0,
+        1.0e4,
+        1.0e8,
+        1.0e16,
+        1.0e32,
+        1.0e64,
+        1.0e128,
+        1.0e256
+    }
+    
+    sign int = 0
+    exp_sign int = 0
+    
+    fraction double = undef
+    dbl_exp double = undef
+    d *double = undef
+    
+    p *ubyte = undef
+    c ubyte = undef
+    exp int = 0
+    frac_exp int = 0
+    mant_size int = 0
+    dec_pt int = 0
+    pExp *ubyte = undef
+    
+    p = this.array
+    endP *ubyte = this.array + this.length as ptr
+    
+    // String is blank
+    if p == endP, return 0.0
+    
+    // Strip off leading blanks
+    while *p == ' 'ub {
+        p = p at 1
+        
+        // String is only spaces
+        if p == endP, return 0.0
+    }
+    
+    // Check for sign
+    if *p == '-'ub {
+        sign = 1
+        p = p at 1
+        
+        // String is only negative sign
+        if p == endP, return 0.0
+    } else {
+        sign = 0
+        
+        if *p == '+'ub {
+            p = p at 1
+            
+            // String is only positive sign
+            if p == endP, return 0.0
+        }
+    }
+    
+    // Count mantissa length (including dot) and locate decimal point
+    dec_pt = -1
+    until break {
+        c = p == endP ? 0x00ub : *p
+        
+        if c < '0'ub || c > '9'ub {
+            if c != '.'ub || dec_pt >= 0, break
+            dec_pt = mant_size
+        }
+        
+        p = p at 1
+        mant_size += 1
+    }
+    
+    // Collect digits in mantissa
+    pExp = p
+    p -= cast ptr (sizeof ubyte * mant_size)
+    if dec_pt < 0 {
+        dec_pt = mant_size
+    } else {
+        mant_size--
+    }
+    if mant_size > 18 {
+        frac_exp = dec_pt - 18
+        mant_size = 18
+    } else {
+        frac_exp = dec_pt - mant_size
+    }
+    if mant_size == 0 {
+        return 0.0
+    } else {
+        frac1, frac2 int = 0
+        while mant_size > 9 {
+            c = *p // (p should be valid)
+            p = p at 1
+            if c == '.'ub {
+                c = *p // (p should be valid)
+                p = p at 1
+            }
+            frac1 = 10 * frac1 + (c - '0'ub)
+            mant_size--
+        }
+        while mant_size > 0 {
+            c = *p // (p should be valid)
+            p = p at 1
+            if c == '.'ub {
+                c = *p // (p should be valid)
+                p = p at 1
+            }
+            frac2 = 10 * frac2 + (c - '0'ub)
+            mant_size--
+        }
+        fraction = 1.0e9 * frac1 as double + frac2 as double
+    }
+    
+    // Skim off exponent
+    p = pExp
+    if p != endP && (*p == 'e'ub || *p == 'E'ub) {
+        p = p at 1
+        if p != endP && *p == '-'ub {
+            exp_sign = 1
+            p = p at 1
+        } else {
+            exp_sign = 0
+            
+            if p != endP && *p == '+'ub {
+                p = p at 1
+            }
+        }
+        while p != endP && *p >= '0'ub && *p <= '9'ub {
+            exp = exp * 10 + (*p - '0'ub)
+            p = p at 1
+        }
+    }
+    exp = exp_sign ? frac_exp - exp : frac_exp + exp
+    
+    // Generate double
+    if exp < 0 {
+        exp_sign = 1
+        exp = 0 - exp
+    } else {
+        exp_sign = 0
+    }
+    if exp > max_exponent {
+        exp = max_exponent
+    }
+    dbl_exp = 1.0
+    d = powers_of_10
+    until exp == 0 {
+        if exp & 1 {
+            dbl_exp *= *d
+        }
+        exp >>= 1
+        d = d at 1
+    }
+    if exp_sign {
+        fraction /= dbl_exp
+    } else {
+        fraction *= dbl_exp
+    }
+    return sign ? 0.0 - fraction : fraction
+}
+
+func toUsize(this *String) usize = this.toUlong()
+
+func toBool(string String) bool = string.toBool()
+func toByte(string String) byte = string.toByte()
+func toUbyte(string String) ubyte = string.toUbyte()
+func toShort(string String) short = string.toShort()
+func toUshort(string String) ushort = string.toUshort()
+func toInt(string String) int = string.toInt()
+func toUint(string String) uint = string.toUint()
+func toLong(string String) long = string.toLong()
+func toUlong(string String) ulong = string.toUlong()
+func toUsize(string String) usize = string.toUlong()
+func toFloat(string String) float = string.toFloat()
+func toDouble(string String) double = string.toDouble()
+
+func toString(value *ubyte) String  = value ? stringConstant(value) : "(null)"
+func toString(value ptr)    String  = toHexString(value as ulong, 16)
+func toString(value bool)   String  = value ? "true" : "false"
+func toString(value byte)   String  = toString(value as long)
+func toString(value short)  String  = toString(value as long)
+func toString(value int)    String  = toString(value as long)
+
+func toString(value long) String {
+    if value == 0, return "0"
+    
+    a *ubyte = new ubyte * 20
+    len usize = 0
+    negative bool = value < 0
+    
+    // Make value positive if negative
+    if negative, value = 0sl - value
+    
+    // Layout digits smallest ^10 to largest ^10
+    until value == 0 || len == 19 {
+        a[len++] = '0123456789'[value % 10]
+        value /= 10
+    }
+    
+    // Append minus sign if negative
+    if negative, a[len++] = '-'ub
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 20
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toHexString(value byte)  String = toHexString(value as long, 2)
+func toHexString(value short) String = toHexString(value as long, 4)
+func toHexString(value int)   String = toHexString(value as long, 8)
+func toHexString(value long)  String = toHexString(value, 16)
+
+func toHexString(value long, min_digits usize) String {
+    a *ubyte = new ubyte * 20
+    len usize = 0
+    negative bool = value < 0
+    
+    // Handle zero
+    if value == 0 {
+        if min_digits < 2, min_digits = 2
+        
+        a[len++] = '0'ub
+        a[len++] = 'x'ub
+        
+        while min_digits != 0 {
+            a[len++] = '0'ub
+            min_digits--
+        }
+        
+        result POD String = undef
+        result.array = a
+        result.length = len
+        result.capacity = 20
+        result.ownership = StringOwnership::GIVEN
+        return result
+    }
+    
+    // Make value positive if negative
+    if negative, value = 0 - value
+    
+    // Layout digits smallest ^16 to largest ^16
+    until value == 0 || len == 17 {
+        a[len++] = '0123456789ABCDEF'[value % 16]
+        value /= 16
+    }
+    
+    // Pad with zeros
+    while len < min_digits, a[len++] = '0'ub
+    
+    // Append '0x'
+    a[len++] = 'x'ub
+    a[len++] = '0'ub
+    
+    // Append minus sign if negative
+    if negative, a[len++] = '-'ub
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 20
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toString(value ubyte)  String = toString(value as ulong)
+func toString(value ushort) String = toString(value as ulong)
+func toString(value uint)   String = toString(value as ulong)
+
+func toString(value ulong) String {
+    if value == 0, return "0"
+    
+    a *ubyte = new ubyte * 20
+    len usize = 0
+    
+    // Layout digits smallest ^10 to largest ^10
+    until value == 0 || len == 20 {
+        a[len++] = '0123456789'[value % 10]
+        value /= 10
+    }
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 20
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toHexString(value ptr)    String = toHexString(value as ulong, 16)
+func toHexString(value ubyte)  String = toHexString(value as ulong, 2)
+func toHexString(value ushort) String = toHexString(value as ulong, 4)
+func toHexString(value uint)   String = toHexString(value as ulong, 8)
+func toHexString(value ulong)  String = toHexString(value, 16)
+
+func toHexString(value ulong, min_digits usize) String {
+    a *ubyte = new ubyte * 18
+    len usize = 0
+    
+    // Handle zero
+    if value == 0 {
+        if min_digits < 2, min_digits = 2
+        
+        a[len++] = '0'ub
+        a[len++] = 'x'ub
+        
+        while min_digits != 0 {
+            a[len++] = '0'ub
+            min_digits--
+        }
+        
+        result POD String = undef
+        result.array = a
+        result.length = len
+        result.capacity = 20
+        result.ownership = StringOwnership::GIVEN
+        return result
+    }
+    
+    // Layout digits smallest ^16 to largest ^16
+    until value == 0 || len == 16 {
+        a[len++] = '0123456789ABCDEF'[value % 16]
+        value /= 16
+    }
+    
+    // Pad with zeros
+    while len < min_digits, a[len++] = '0'ub
+    
+    // Append '0x'
+    a[len++] = 'x'ub
+    a[len++] = '0'ub
+    
+    // Build string and reverse it
+    result POD String = undef
+    result.array = a
+    result.length = len
+    result.capacity = 18
+    result.ownership = StringOwnership::GIVEN
+    result.reverse()
+    return result
+}
+
+func toString(value float) String {
+    // TODO: Do a real implementation
+    return toString(value as double)
+}
+
+func toString(value double) String {
+    // TODO: Do a real implementation
+    result POD String = undef
+    result.array = new ubyte * 324
+    result.capacity = 324
+    sprintf(result.array, '%f', value)
+    result.length = strlen(result.array)
+    result.ownership = StringOwnership::GIVEN
+    
+    // Remove redundant zeros
+    while result.length > 2 {
+        c ubyte = result.array[result.length - 1]
+        if c != '0'ub || result.array[result.length - 2] == '.'ub, break
+        result.length--
+    }
+    return result
+}
+
+pragma __builtin_warn_bad_printf_format
+func sprintf(out result *String, format String, arguments ...) int {
+    return vsprintf(result, format, arguments)
+}
+
+pragma __builtin_warn_bad_printf_format
+func sprintf(format String, arguments ...) String {
+    result String
+    return vsprintf(&result, format, arguments) >= 0 ? result.commit() : ""
+}
+
+func vsprintf(out result *String, format String, arguments VariadicArray) int {
+    p *ubyte = format.array
+    end *ubyte = format.array at format.length
+    
+    until p == end {
+        unless *p == '%'ub {
+            result.append(*p)
+            p = p at 1
+            continue
+        }
+        
+        p = p at 1
+        if p == end, break
+        
+        // size_modifier == 1 for 'hh'
+        // size_modifier == 2 for 'h'
+        // size_modifier == 4 for none
+        // size_modifier == 8 for 'l' or 'll'
+        size_modifier int = 4
+        
+        while p != end && vsprintfFormatSpecifier(result, &p, end, &size_modifier, &arguments) {}
+        if p == end, break
+    }
+    
+    return 0
+}
+
+func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_modifier *int, arguments *VariadicArray) bool {
+    // Returns whether this format specifier stacks
+    
+    define WARNING_STUB = 'WARNING: vsprintf(*String, String, VariadicArray)'
+    
+    #if variadic_array_use_typeinfo
+    next_type *AnyType = arguments.getNextType()
+    #end
+    
+    switch **pptr {
+    case '%'ub, result.append("%")
+    case 'S'ub
+        #if vsprintf_type_checks
+        if next_type != typeinfo String,
+            printf('%s expected String value for %%S, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+        #end
+        
+        result.append(arguments.readString())
+    case 'b'ub, fallthrough
+    case 'B'ub
+        #if vsprintf_type_checks
+        unless next_type == typeinfo bool || next_type == typeinfo successful,
+            printf('%s expected bool value for %%%c, got \'%s\' instead\n', WARNING_STUB, **pptr, next_type.name)
+        #end
+        result.append(toString(arguments.readBool()))
+    case 'y'ub
+        #if vsprintf_type_checks
+        unless next_type == typeinfo bool || next_type == typeinfo successful,
+            printf('%s expected bool value for %%%c, got \'%s\' instead\n', WARNING_STUB, **pptr, next_type.name)
+        #end
+        result.append(arguments.readBool() ? "yes" : "no")
+    case 'Y'ub
+        #if vsprintf_type_checks
+        unless next_type == typeinfo bool || next_type == typeinfo successful,
+            printf('%s expected bool value for %%%c, got \'%s\' instead\n', WARNING_STUB, **pptr, next_type.name)
+        #end
+        result.append(arguments.readBool() ? "Yes" : "No")
+    case 'c'ub
+        #if vsprintf_type_checks
+        unless next_type == typeinfo ubyte,
+            printf('%s expected ubyte value for %%c, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+        #end
+        v ubyte = arguments.readUbyte()
+        result.append(v)
+    case 'z'ub
+        *pptr = (*pptr) at 1
+        if *pptr == end || **pptr != 'u'ub {
+            printf('%s expected \'u\' after \'%%z\' in format string\n', WARNING_STUB)
+            *pptr -= sizeof ubyte as ptr
+        }
+        
+        #if vsprintf_type_checks
+        unless next_type == typeinfo usize,
+            printf('%s expected ubyte value for %%c, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+        #end
+        result.append(arguments.readUsize())
+    case 'i'ub, fallthrough
+    case 'd'ub
+        #if variadic_array_use_typeinfo
+            value String
+            if      next_type == typeinfo int, value = toString(arguments.readInt())
+            else if next_type == typeinfo uint, value = toString(arguments.readUint())
+            else if next_type == typeinfo long, value = toString(arguments.readLong())
+            else if next_type == typeinfo ulong, value = toString(arguments.readUlong())
+            else if next_type == typeinfo usize, value = toString(arguments.readUlong()) // usize == ulong
+            else if next_type == typeinfo short, value = toString(arguments.readShort())
+            else if next_type == typeinfo ushort, value = toString(arguments.readUshort())
+            else if next_type == typeinfo byte, value = toString(arguments.readByte())
+            else if next_type == typeinfo ubyte, value = toString(arguments.readUbyte())
+            else if next_type == typeinfo bool, value = toString(arguments.readBool())
+            else if next_type == typeinfo successful, value = toString(arguments.readBool()) // successful == bool
+            else {
+                #if vsprintf_type_checks
+                    printf('%s got unknown type for %%%c\n', WARNING_STUB, 'd'ub)
+                #end
+                value = toString(arguments.readInt())
+            }
+            result.append(value)
+        #else
+            switch *size_modifier {
+            case 1, result.append(arguments.readByte())
+            case 2, result.append(arguments.readShort())
+            case 8, result.append(arguments.readLong())
+            default result.append(arguments.readInt())
+            }
+        #end
+    case 'u'ub
+        #if variadic_array_use_typeinfo
+            value String
+            if      next_type == typeinfo uint, value = toString(arguments.readUint())
+            else if next_type == typeinfo int, value = toString(arguments.readInt())
+            else if next_type == typeinfo long, value = toString(arguments.readLong())
+            else if next_type == typeinfo ulong, value = toString(arguments.readUlong())
+            else if next_type == typeinfo usize, value = toString(arguments.readUlong()) // usize == ulong
+            else if next_type == typeinfo short, value = toString(arguments.readShort())
+            else if next_type == typeinfo ushort, value = toString(arguments.readUshort())
+            else if next_type == typeinfo byte, value = toString(arguments.readByte())
+            else if next_type == typeinfo ubyte, value = toString(arguments.readUbyte())
+            else if next_type == typeinfo bool, value = toString(arguments.readBool())
+            else if next_type == typeinfo successful, value = toString(arguments.readBool()) // successful == bool
+            else {
+                #if vsprintf_type_checks
+                    printf('%s got unknown type for %%%c\n', WARNING_STUB, 'u'ub)
+                #end
+                value = toString(arguments.readUint())
+            }
+            result.append(value)
+        #else
+            switch *size_modifier {
+            case 1, result.append(arguments.readUbyte() as ushort)
+            case 2, result.append(arguments.readUshort())
+            case 8, result.append(arguments.readUlong())
+            default result.append(arguments.readUint())
+            }
+        #end
+    case 'l'ub
+        *size_modifier *= 2
+        if *size_modifier > 8, *size_modifier = 8
+        *pptr = (*pptr) at 1
+        return true
+    case 'h'ub
+        *size_modifier /= 2
+        if *size_modifier == 0, *size_modifier = 1
+        *pptr = (*pptr) at 1
+        return true
+    case 'f'ub
+        #if variadic_array_use_typeinfo
+            value double = 0
+            if      next_type == typeinfo double, value = cast double arguments.readDouble()
+            else if next_type == typeinfo float, value = cast double arguments.readFloat()
+            else if next_type == typeinfo int, value = cast double arguments.readInt()
+            else if next_type == typeinfo uint, value = cast double arguments.readUint()
+            else if next_type == typeinfo long, value = cast double arguments.readLong()
+            else if next_type == typeinfo ulong, value = cast double arguments.readUlong()
+            else if next_type == typeinfo usize, value = cast double arguments.readUlong() // usize == ulong
+            else if next_type == typeinfo short, value = cast double arguments.readShort()
+            else if next_type == typeinfo ushort, value = cast double arguments.readUshort()
+            else if next_type == typeinfo byte, value = cast double arguments.readByte()
+            else if next_type == typeinfo ubyte, value = cast double arguments.readUbyte()
+            else if next_type == typeinfo bool, value = cast double arguments.readBool()
+            else if next_type == typeinfo successful, value = cast double arguments.readBool() // successful == bool
+            else {
+                #if vsprintf_type_checks
+                    printf('%s got unknown type for %%%c\n', WARNING_STUB, 'f'ub)
+                #end
+                value = arguments.readDouble()
+            }
+            result.append(value)
+        #else
+            switch *size_modifier {
+            case 2, result.append(arguments.readFloat())
+            default result.append(arguments.readDouble())
+            }
+        #end
+    case 's'ub,
+        #if vsprintf_type_checks
+        if next_type != typeinfo *ubyte,
+            printf('%s expected *ubyte value for %%s, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+        #end
+        
+        result.append(arguments.readCString())
+    case 'p'ub
+        #if vsprintf_type_checks
+        if next_type.kind != AnyTypeKind::PTR,
+            printf('%s expected pointer value for %%p, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+        #end
+        
+        result.append(toString(arguments.readPtr()))
+    }
+    
+    *pptr = (*pptr) at 1
+    return false
+}
