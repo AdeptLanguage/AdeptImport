@@ -12,8 +12,11 @@ func clone(this *<*$P> List) <*$P> List {
     return new_list
 }
 
+// ---------------- make ----------------
+// If the provided list of pointers dosn't have ownership, it
+// will be made a clone of the original
 func make(this *<*$P> List) void {
-    if this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
+    unless this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
         *this = this.clone()
     }
 }
