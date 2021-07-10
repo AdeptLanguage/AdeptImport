@@ -11,3 +11,9 @@ func clone(this *<*$P> List) <*$P> List {
     memcpy(new_list.items, this.items, sizeof *$P * this.length)
     return new_list
 }
+
+func make(this *<*$P> List) void {
+    if this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
+        *this = this.clone()
+    }
+}
