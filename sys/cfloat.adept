@@ -1,8 +1,8 @@
 
 #default sys_cfloat_ignore_warning false
 
-#unless __macos__ || __wasm__ || sys_cfloat_ignore_warning
-    #warning "sys/cfloat.adept: Assuming same values as Intel x86_64 MacOS"
+#unless __x86_64__ || __wasm__ || (__macos__ && __arm64__) || sys_cfloat_ignore_warning
+    #warning "sys/cfloat.adept: Assuming same values as Intel x86_64"
     #print "    Use '#define sys_cfloat_ignore_warning true' to disable this warning"
 #end
 
