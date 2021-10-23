@@ -54,6 +54,8 @@ _captain_shader_transformation_location GLint
 _captain_multisample int
 _captain_font CaptTexture
 _captain_font_data String = embed "captain/bitmap_font.png"
+_captain_xdpi float
+_captain_ydpi float
 
 func captPrepare successful {
     _captain_window = null
@@ -78,6 +80,8 @@ func captPrepare successful {
     _captain_multisample = 0
     _captain_prepared = true
     _captain_font.invalidate()
+    _captain_xdpi = 1.0
+    _captain_ydpi = 1.0
     return glfwInit() != 0
 }
 
@@ -180,6 +184,10 @@ func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
         glViewport(0, 0, win_width, win_height)
         _captain_display_ratio = win_width as float / win_height as float
         
+        glfwGetWindowSize(_captain_window, undef real_win_width int, undef real_win_height int)
+        _captain_xdpi = win_width as float / real_win_width as float
+        _captain_ydpi = win_height as float / real_win_height as float
+        
         unless _captain_custom_view, captDefaultView()
         if _captain_view_preserve_ratio, _captain_view_width = _captain_view_height * _captain_display_ratio
         
@@ -240,18 +248,20 @@ func captCustomViewBasedOnHeight(height float) {
 
 func captMouseFramePosition(out x, y *float) {
     glfwGetCursorPos(_captain_window, undef x_d double, undef y_d double)
-    *x = x_d as float
-    *y = y_d as float
+    *x = x_d as float * _captain_xdpi
+    *y = y_d as float * _captain_ydpi
 }
 
 func captMouseFramePosition(out x, y *double) {
     glfwGetCursorPos(_captain_window, x, y)
+    *x *= _captain_xdpi
+    *y *= _captain_ydpi
 }
 
 func captMouseViewPosition(out x, y *float) {
     glfwGetCursorPos(_captain_window, undef x_d double, undef y_d double)
-    *x = x_d as float * captViewWidth() / captFrameWidth() as float
-    *y = y_d as float * captViewHeight() / captFrameHeight() as float
+    *x = x_d as float * _captain_xdpi * captViewWidth() / captFrameWidth() as float
+    *y = y_d as float * _captain_ydpi * captViewHeight() / captFrameHeight() as float
 }
 
 func captResizable(resizable bool) {
