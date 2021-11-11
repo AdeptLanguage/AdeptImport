@@ -1,0 +1,23 @@
+import '2.4/Matrix4f.adept'
+
+import Vector3f
+
+func setValue(this *Matrix4f, x, y usize, value float) {
+    this.array[y * 4 + x] = value
+}
+
+func multiply(this *Matrix4f, other POD Vector3f) Vector3f {
+    vx float = other.x
+    vy float = other.y
+    vz float = other.z
+
+    result POD Vector3f = undef
+    result.x = this.array[0] * vx + this.array[1] * vy + this.array[2] * vz + this.array[3]
+    result.y = this.array[4] * vx + this.array[5] * vy + this.array[6] * vz + this.array[7]
+    result.z = this.array[8] * vx + this.array[9] * vy + this.array[10] * vz + this.array[11]
+    return result
+}
+
+func __multiply__(m POD Matrix4f, other POD Vector3f) Vector3f {
+    return m.multiply(other)
+}
