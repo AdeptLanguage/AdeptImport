@@ -1,1 +1,87 @@
-import '2.4/InitializerList.adept'
+
+// NOTE: The official specification of '2.6/InitializerList' only
+// allows initializer lists to be used once.
+
+// Never reuse InitializerLists, doing so is undefined!
+
+import array_util
+
+struct <$T> InitializerList (array *$T, length usize) {
+    func __array__ *$T    = this.array
+    func __length__ usize = this.length
+    func __access__(index usize) *$T = this.array at index
+}
+
+func __initializer_list__(array *$T, length usize) <$T> InitializerList {
+    list POD <$T> InitializerList = undef
+    list.array = array
+    list.length = length
+    return list
+}
+
+implicit func __as__(initializer <long> InitializerList) <int> InitializerList {
+    // Allow using <long> InitializerList as <int> InitializerList
+    // DANGEROUS: Abuses the fact that InitializerLists are one-time-use
+
+    repeat static initializer.length {
+        (initializer.array as *int)[idx] = initializer.array[idx]
+    }
+
+    return *cast *<int> InitializerList (&initializer)
+}
+
+implicit func __as__(initializer <double> InitializerList) <float> InitializerList {
+    // Allow using <double> InitializerList as <float> InitializerList
+    // DANGEROUS: Abuses the fact that InitializerLists are one-time-use
+
+    repeat static initializer.length {
+        (initializer.array as *float)[idx] = initializer.array[idx]
+    }
+
+    return *cast *<float> InitializerList (&initializer)
+}
+
+implicit func __as__(initializer_list <$T> InitializerList) $#N $T {
+    arr POD $#N $T = undef
+    count usize = undef
+    
+    if initializer_list.length < $#N {
+        count = initializer_list.length
+        memset(arr at initializer_list.length, 0, sizeof $T * ($#N - initializer_list.length))
+    } else {
+        count = $#N
+    }
+
+    memcpy(&arr, initializer_list.array, sizeof $T * count)
+    return arr
+}
+
+implicit func __as__(initializer_list <long> InitializerList) $#N int {
+    arr POD $#N int = undef
+    count usize = undef
+    
+    if initializer_list.length < $#N {
+        count = initializer_list.length
+        memset(arr at initializer_list.length, 0, sizeof int * ($#N - initializer_list.length))
+    } else {
+        count = $#N
+    }
+
+    repeat static count, arr[idx] = initializer_list.array[idx] as int
+    return arr
+}
+
+implicit func __as__(initializer_list <double> InitializerList) $#N float {
+    arr POD $#N float = undef
+    count usize = undef
+    
+    if initializer_list.length < $#N {
+        count = initializer_list.length
+        memset(arr at initializer_list.length, 0, sizeof int * ($#N - initializer_list.length))
+    } else {
+        count = $#N
+    }
+
+    repeat static count, arr[idx] = initializer_list.array[idx] as float
+    return arr
+}
