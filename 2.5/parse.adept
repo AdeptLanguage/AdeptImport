@@ -473,7 +473,7 @@ func toString(value double) String {
     result POD String = undef
     result.array = new ubyte * 324
     result.capacity = 324
-    sprintf(result.array, '%f', value)
+    snprintf(result.array, result.capacity, '%f', value)
     result.length = strlen(result.array)
     result.ownership = StringOwnership::GIVEN
     

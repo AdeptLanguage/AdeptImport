@@ -4,8 +4,6 @@
 
 // Never reuse InitializerLists, doing so is undefined!
 
-import array_util
-
 struct <$T> InitializerList (array *$T, length usize) {
     func __array__ *$T    = this.array
     func __length__ usize = this.length
