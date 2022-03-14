@@ -15,7 +15,11 @@
     #end
 #elif __linux__
     pragma libm
-    foreign 'linux_elf_x86_64_stb_image.a'
+    #if __arm64__
+    	foreign 'linux_elf_arm64_stb_image.a'
+    #else
+    	foreign 'linux_elf_x86_64_stb_image.a'
+    #end
 #elif !STB_IMAGE_IMPLEMENTED_FOR_THIS_PLATFORM
     #print_error "stb/image.adept: Not implemented for this platform!"
     #print ""
