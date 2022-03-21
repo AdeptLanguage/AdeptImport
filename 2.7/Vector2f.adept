@@ -1,1 +1,3 @@
 import '2.5/Vector2f.adept'
+
+func alias Vector2f(float, float) => vector2f

@@ -1,1 +1,3 @@
 import '2.5/Vector2i.adept'
+
+func alias Vector2i(int, int) => vector2i

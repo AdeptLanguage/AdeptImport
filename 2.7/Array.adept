@@ -1,1 +1,83 @@
-import '2.6/Array.adept'
+
+#default array_bounds_checks true
+#default array_error_with_type true
+
+import InitializerList
+
+struct <$T> Array (items *$T, length usize) {
+    func __array__ *$T               = this.items
+    func __length__ usize            = this.length
+    func __access__(index usize) *$T {
+        #if array_bounds_checks
+            if index < 0 || index >= this.length {
+                #if array_error_with_type
+                printf('<%s> Array Error: [] index out of range\n', typenameof $T)
+                #else
+                printf('<$T> Array Error: [] index out of range\n')
+                #end
+                return this.items
+            }
+        #end
+        
+        return this.items at index
+    }
+}
+
+func Array(items *$T, length usize) <$T> Array {
+    result POD <$T> Array = undef
+    result.items = items
+    result.length = length
+    return result
+}
+
+// Backwards-compatibility
+func array(items *$T, length usize) <$T> Array = Array(items, length)
+
+func get(this *<$T> Array, index usize) $T {
+    #if array_bounds_checks
+        if index < 0 || index >= this.length {
+            #if array_error_with_type
+            printf('<%s> Array Error: [] index out of range\n', typenameof $T)
+            #else
+            printf('<$T> Array Error: [] index out of range\n')
+            #end
+            return *this.items
+        }
+    #end
+    
+    return this.items[index]
+}
+
+func getPointer(this *<$T> Array, index usize) *$T {
+    #if array_bounds_checks
+        if index < 0 || index >= this.length {
+            #if array_error_with_type
+            printf('<%s> Array Error: [] index out of range\n', typenameof $T)
+            #else
+            printf('<$T> Array Error: [] index out of range\n')
+            #end
+            return this.items
+        }
+    #end
+
+    return this.items at index
+}
+
+func contains(this *<$T> Array, value $~T) bool {
+    each $T in static *this, if it == value, return true
+    return false
+}
+
+func applyDefer(this *<$T> Array) {
+    each $T in static *this, it.__defer__()
+}
+
+implicit func __as__(initializer <$T> InitializerList) <$T> Array {
+    return array(initializer.array, initializer.length)
+}
+
+// Allow <long> InitializerList for <int> List
+implicit func __as__(initializer <long> InitializerList) <int> Array     = initializer as <int> InitializerList as <int> Array
+
+// Allow <double> InitializerList for <float> List
+implicit func __as__(initializer <double> InitializerList) <float> Array = initializer as <float> InitializerList as <float> Array

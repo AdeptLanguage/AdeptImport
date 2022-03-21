@@ -1,1 +1,31 @@
-import '2.4/Pair.adept'
+
+record <$T> Pair (first, second $T)
+record <$T, $S> AsymmetricPair (first $T, second $S)
+
+// For backwards-compatibility
+func pair(first, second $T) <$T> Pair {
+    return Pair(first, second)
+}
+
+// For backwards-compatibility
+func asymmetricPair(first $T, second $S) <$T, $S> AsymmetricPair {
+    return AsymmetricPair(first, second)
+}
+
+// ----------- future possible expansion -----------
+// Once struct aliases are added in, we can more
+// easily represent both symmetric and asymmetric pairs
+// using a single 'Pair' type
+// - Isaac Sep 25 2020
+
+/*
+struct alias <$T> Pair => <$T, $T> Pair
+struct <$First, $Second> Pair (first $First, second $Second)
+
+func pair(first $First, second $Second) <$First, $Second> Pair {
+    pair POD <$First, $Second> Pair
+    pair.first = first
+    pair.second = second
+    return pair
+}
+*/
