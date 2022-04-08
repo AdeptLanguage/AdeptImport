@@ -1,1 +1,362 @@
-import '2.4/terminal.adept'
+
+import String
+import parse
+import VariadicArray
+import cstdio
+
+func print(string String) {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('print', false)
+    #end
+
+    repeat string.length, putchar(string.array[idx])
+    putchar(0x0A)
+}
+
+func print(string *ubyte) {
+    print(stringConstant(string))
+}
+
+func print(thing $T) {
+    print(toString(thing))
+}
+
+#if __typeinfo__ && variadic_array_use_typeinfo
+func print(values ...) {
+    vplace(values, "\n", true, "", 'print')
+}
+#end
+
+func place(string String) {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('place', false)
+    #end
+
+    repeat string.length, putchar(string.array[idx])
+}
+
+func place(string *ubyte) {
+    place(stringConstant(string))
+}
+
+func place(thing $T) {
+    place(toString(thing))
+}
+
+#if __typeinfo__ && variadic_array_use_typeinfo
+func vplace(values VariadicArray, separator String = "", separator_after_last bool = true, ending String = "", fname *ubyte = 'vplace') {
+    #if String_error_on_donor_usage
+        separator.assertNotDonor(fname, false)
+        ending.assertNotDonor(fname, false)
+    #end
+
+    while values.hasNext() {
+        type *AnyType = values.getNextType()
+        
+        if type == typeinfo String {
+            place(values.readString())
+        } else if type == typeinfo *ubyte {
+            place(stringConstant(values.readCString()))
+        } else if type == typeinfo bool {
+            place(values.readBool())
+        } else if type == typeinfo byte {
+            place(values.readByte())
+        } else if type == typeinfo ubyte {
+            place(values.readUbyte())
+        } else if type == typeinfo short {
+            place(values.readShort())
+        } else if type == typeinfo ushort {
+            place(values.readUshort())
+        } else if type == typeinfo int {
+            place(values.readInt())
+        } else if type == typeinfo uint {
+            place(values.readUint())
+        } else if type == typeinfo long {
+            place(values.readLong())
+        } else if type == typeinfo ulong {
+            place(values.readUlong())
+        } else if type == typeinfo usize {
+            place(values.readUlong()) // ulong == usize
+        } else if type == typeinfo float {
+            place(values.readFloat())
+        } else if type == typeinfo double {
+            place(values.readDouble())
+        } else if type == typeinfo successful {
+            place(values.readBool())
+        } else if type.kind == AnyTypeKind::PTR {
+            place(values.readPtr())
+        } else {
+            printf('ERROR: %s(...) got unknown type %s', fname, type.name)
+            return
+        }
+        
+        // Print separator
+        if !separator.empty() && (values.hasNext() || separator_after_last), place(separator)
+    }
+    
+    unless ending.empty(), place(ending)
+}
+
+func placeEx(separator String, separator_after_last bool, ending String, values ...) {
+    #if String_error_on_donor_usage
+        separator.assertNotDonor('placeEx', false)
+        ending.assertNotDonor('placeEx', false)
+    #end
+
+    vplace(values, separator, separator_after_last, ending, 'placeEx')
+}
+
+func placePlain(values ...) {
+    vplace(values, "", false, "", 'placePlain')
+}
+
+func place(values ...) {
+    vplace(values, ", ", false, "\n", 'place')
+}
+#end
+
+func newline {
+    putchar(0x0A)
+}
+
+func scan String {
+    return gets()
+}
+
+func scan(prompt String) String {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('scan', false)
+    #end
+
+    place(prompt)
+    return scan()
+}
+
+func scan(result *$T) successful {
+    return scan("", result)
+}
+
+func scan(prompt String, out result *String) successful {
+    *result = scan(prompt)
+    return true
+}
+
+func scan(prompt String, out result **ubyte) successful {
+    *result = scan(prompt).cstr()
+    return true
+}
+
+func scan(prompt String, out result *bool) successful {
+    input String = scan(prompt)
+    return input.toBool(result)
+}
+
+func scan(prompt String, out result *byte) successful {
+    input String = scan(prompt)
+    *result = toByte(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *ubyte) successful {
+    input String = scan(prompt)
+    *result = toUbyte(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *short) successful {
+    input String = scan(prompt)
+    *result = toShort(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *ushort) successful {
+    input String = scan(prompt)
+    *result = toUshort(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *int) successful {
+    input String = scan(prompt)
+    *result = toInt(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *uint) successful {
+    input String = scan(prompt)
+    *result = toUint(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *long) successful {
+    input String = scan(prompt)
+    *result = toLong(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *ulong) successful {
+    input String = scan(prompt)
+    *result = toUlong(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *float) successful {
+    input String = scan(prompt)
+    *result = toFloat(input.trimmedView())
+    return true
+}
+
+func scan(prompt String, out result *double) successful {
+    input String = scan(prompt)
+    *result = toDouble(input.trimmedView())
+    return true
+}
+
+func scanInt int = skimInt()
+func scanInt(prompt String) int {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('scanInt', false)
+    #end
+
+    return skimInt(prompt)
+}
+
+func scanIntInto(out result *int) successful = skimIntInto(result)
+func scanIntInto(prompt String, out result *int) successful {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('scanIntInto', false)
+    #end
+
+    return skimIntInto(prompt, result)
+}
+
+func scanDouble double = skimDouble()
+func scanDouble(prompt String) double {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('scanIntInto', false)
+    #end
+
+    return skimDouble(prompt)
+}
+
+func scanDoubleInto(out result *double) successful = skimDoubleInto(result)
+func scanDoubleInto(prompt String, out result *double) successful {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('scanDoubleInto', false)
+    #end
+
+    return skimDoubleInto(prompt, result)
+}
+
+func skim String {
+    result POD String = undef
+    result.array = new ubyte * 16
+    result.length = 0
+    result.capacity = 16
+    result.ownership = StringOwnership::GIVEN
+    
+    until break {
+        c int = fgetc(STDIN)
+        
+        if c == 0x20 {
+            if result.length == 0, continue else break
+        }
+        if c == 0x0A || c == EOF, break
+        
+        if result.length == result.capacity {
+            result.capacity *= 2
+            result.array = realloc(result.array, result.capacity)
+        }
+        
+        result.array[result.length] = c
+        result.length += 1
+    }
+    
+    return result
+}
+
+func skim(prompt String) String {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('skim', false)
+    #end
+
+    place(prompt)
+    return skim()
+}
+
+func skimInt int {
+    result int = undef
+    skimIntInto(&result)
+    return result
+}
+
+func skimInt(prompt String) int {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('skimInt', false)
+    #end
+
+    place(prompt)
+    skimIntInto(undef result int)
+    return result
+}
+
+func skimIntInto(out result *int) successful {
+    *result = 0
+    
+    skimmed String = skim()
+    is_negative bool = false
+    
+    repeat skimmed.length {
+        c ubyte = skimmed.array[idx]
+        
+        if c < 0x30 || c > 0x39 {
+            unless idx == 0 && c == '-'ub, return false
+            
+            is_negative = true
+            continue
+        }
+        
+        *result = *result * 10 + (c - 0x30)
+    }
+    
+    if is_negative, *result = 0 - *result
+    return true
+}
+
+func skimIntInto(prompt String, out result *int) successful {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('skimIntInto', false)
+    #end
+
+    place(prompt)
+    return skimIntInto(result)
+}
+
+func skimDouble double {
+    skimDoubleInto(undef result double)
+    return result
+}
+
+func skimDouble(prompt String) double {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('skimDouble', false)
+    #end
+
+    place(prompt)
+    skimDoubleInto(undef result double)
+    return result
+}
+
+func skimDoubleInto(out result *double) successful {
+    skimmed String = skim() + "\0"
+    *result = strtod(skimmed.array, undef end *ubyte)
+    return (end == skimmed.array at (skimmed.length - 1))
+}
+
+func skimDoubleInto(prompt String, out result *double) successful {
+    #if String_error_on_donor_usage
+        prompt.assertNotDonor('skimDoubleInto', false)
+    #end
+
+    place(prompt)
+    return skimDoubleInto(result)
+}

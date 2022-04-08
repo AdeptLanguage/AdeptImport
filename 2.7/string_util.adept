@@ -1,1 +1,190 @@
-import '2.5/string_util.adept'
+
+import String
+
+func split(this *String, delimiter String) <String> List {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('split', true)
+        delimiter.assertNotDonor('split', false)
+    #end
+
+    result <String> List
+    prev_idx usize = 0
+    
+    if delimiter.empty() {
+        // Cannot have empty delimitier
+        result.add(this.clone())
+        return result.commit()
+    }
+    
+    repeat static this.length {
+        while idx + delimiter.length <= this.length && this.span(idx, delimiter.length) == delimiter {
+            unless prev_idx == idx, result.add(this.segment(prev_idx, idx))
+            idx += delimiter.length
+            prev_idx = idx
+        }
+    }
+    
+    unless prev_idx == this.length, result.add(this.segment(prev_idx, this.length))
+    return result.commit()
+}
+
+func splitIntoViews(this *String, delimiter String) <StringView> List {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('splitIntoViews', true)
+        delimiter.assertNotDonor('splitIntoViews', false)
+    #end
+
+    result <StringView> List
+    prev_idx usize = 0
+    
+    if delimiter.empty() {
+        // Cannot have empty delimitier
+        result.add(*this)
+        return result.commit()
+    }
+    
+    repeat static this.length {
+        while idx + delimiter.length <= this.length && this.span(idx, delimiter.length) == delimiter {
+            unless prev_idx == idx, result.add(this.range(prev_idx, idx))
+            idx += delimiter.length
+            prev_idx = idx
+        }
+    }
+    
+    unless prev_idx == this.length, result.add(this.range(prev_idx, this.length))
+    return result.commit()
+}
+
+func levenshtein(s1, s2 String) usize {
+    #if String_error_on_donor_usage
+        s1.assertNotDonor('levenshtein', false)
+        s2.assertNotDonor('levenshtein', false)
+    #end
+    
+    x, y, s1len, s2len usize = undef
+    s1a *ubyte = s1.array
+    s2a *ubyte = s2.array
+    s1len = s1.length
+    s2len = s2.length
+    w usize = s2len + 1
+    
+    // Indexed by [x + y * w]
+    matrix *usize = new undef usize * (w * (s1len + 1))
+    defer delete matrix
+    
+    matrix[0] = 0
+
+    for(x = 1; x <= s2len; x++){
+        matrix[x] = matrix[x - 1] + 1
+    }
+
+    for(y = 1; y < s1len; y++){
+        matrix[y * w] = matrix[(y - 1) * w] + 1
+    }
+
+    for(x = 1; x <= s2len; x++){
+        for(y = 1; y <= s1len; y++){
+            a usize = matrix[x - 1 + y * w] + 1
+            b usize = matrix[x + (y - 1) * w] + 1
+            c usize = matrix[x - 1 + (y - 1) * w] + (s1a[y - 1] == s2a[x - 1] ? 0 : 1)
+            matrix[x + y * w] = a < b ? (a < c ? a : c) : (b < c ? b : c)
+        }
+    }
+
+    return matrix[s2len + s1len * w]
+}
+
+func getUntil(this *String, delimiter ubyte) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('getUntil', true)
+    #end
+
+    return this.sub(0, this.atUntil(delimiter))
+}
+
+func getUntil(this *String, delimiter String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('getUntil', true)
+        delimiter.assertNotDonor('getUntil', false)
+    #end
+
+    return this.sub(0, this.atUntil(delimiter))
+}
+
+func getUntilAsView(this *String, delimiter ubyte) StringView {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('getUntilAsView', true)
+    #end
+    return this.span(0, this.atUntil(delimiter))
+}
+
+func getUntilAsView(this *String, delimiter String) StringView {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('getUntilAsView', true)
+        delimiter.assertNotDonor('getUntilAsView', false)
+    #end
+
+    return this.span(0, this.atUntil(delimiter))
+}
+
+func atUntil(this *String, delimiter ubyte) usize {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('atUntil', true)
+    #end
+
+    if this.length == 0, return 0
+    
+    each ubyte in static *this, if it == delimiter, return idx
+    return this.length
+}
+
+func atUntil(this *String, delimiter String) usize {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('atUntil', true)
+        delimiter.assertNotDonor('atUntil', false)
+    #end
+
+    if delimiter.length > this.length || delimiter.length == 0 {
+        return this.length
+    }
+    
+    repeat static (this.length - delimiter.length + 1) {
+        if this.span(idx, delimiter.length) == delimiter {
+            return idx
+        }
+    }
+    
+    return this.length
+}
+
+func removeUntil(this *String, delimiter String) void {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('removeUntil', true)
+        delimiter.assertNotDonor('removeUntil', false)
+    #end
+
+    this.decapitate(this.atUntil(delimiter))
+}
+
+func removedUntil(this *String, delimiter String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('removedUntil', true)
+        delimiter.assertNotDonor('removedUntil', false)
+    #end
+
+    return this.decapitated(this.atUntil(delimiter))
+}
+
+func join(this *<String> List) String {
+    result String
+
+    each String in static *this {
+        #if String_error_on_donor_usage
+            it.assertNotDonor('join', false)
+        #end
+
+        result.append(it)
+    }
+
+    return result
+}
