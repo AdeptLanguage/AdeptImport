@@ -8,8 +8,8 @@
 #if String_error_on_donor_usage
     func assertNotDonor(this *String, function_name *ubyte, is_method bool) {
         if this.ownership == StringOwnership::DONOR {
-            error_message *ubyte = is_method ? 'RUNTIME ERROR: String.adept: Cannot use String.%s method on value of string that was donated\n'
-                                             : 'RUNTIME ERROR: String.adept: Cannot use %s function with value of string that was donated\n'
+            error_message *ubyte = is_method ? 'RUNTIME ERROR: String.adept: Cannot use String.%s method on string that was previously donated\n'
+                                             : 'RUNTIME ERROR: String.adept: Cannot use %s function with string that was previously donated\n'
             fprintf(stderr, error_message, function_name)
             abort()
         }
