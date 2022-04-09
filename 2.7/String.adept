@@ -110,17 +110,21 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
 
     func donate() String {
         if this.ownership == StringOwnership::OWN {
-            given POD String = POD String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
+            result POD String = POD String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
             *this = POD "<DONATED>"
             this.ownership = StringOwnership::DONOR
-            return given
+            return result
+        } else {
+            #if String_error_on_donor_usage
+                this.assertNotDonor('donate', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: String.adept: Cannot donate() string that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+            return ""
         }
-
-        #if String_error_on_donor_usage
-            this.assertNotDonor('donate', true)
-        #end
-
-        return *this
     }
 
     func clone() String {
