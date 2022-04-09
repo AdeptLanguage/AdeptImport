@@ -76,7 +76,7 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
                 downsized *$T = memcpy(malloc(other.length * sizeof $T), other.items, other.length * sizeof $T)
 
                 delete this.items
-                *this = POD List(downsized, other.length, other.capacity, Ownership::OWN)
+                *this = POD List(downsized, other.length, other.length, Ownership::OWN)
                 return
             }
             
