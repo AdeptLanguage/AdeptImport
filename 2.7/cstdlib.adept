@@ -25,14 +25,14 @@ func strncat(out dest *String, src String, n usize) StringView {
     return *dest
 }
 
-func strcmp(str1 String, str2 String) int {
-    return str1.compare(str2)
+func strcmp(a, b String) int {
+    return a.compare(b)
 }
 
-func strncmp(str1 String, str2 String, n usize) int {
-    if str1.length > n, str1.length = n
-    if str2.length > n, str2.length = n
-    return str1.compare(str2)
+func strncmp(a, b String, n usize) int {
+    if a.length > n, a.length = n
+    if b.length > n, b.length = n
+    return a.compare(b)
 }
 
 func strchr(haystack String, character ubyte) StringView {

@@ -1,12 +1,14 @@
 
 #default List_bounds_checks true
 #default List_error_with_type true
+#default List_error_on_donor_usage true
 #default List_ownership_checks true
 #default List_disable_safety false
 
 #if List_disable_safety
     #set List_bounds_checks false
     #set List_ownership_checks false
+    #set List_error_on_donor_usage false
 #end
 
 #if List_ownership_checks
@@ -22,6 +24,17 @@
     func assertBounds(this *<$T> List, index usize, operation *ubyte) {
         if index < 0 || index >= this.length {
             fprintf(stderr, '<%s> List Error: %s index out of range\n', operation, typenameof $T)
+            abort()
+        }
+    }
+#end
+
+#if List_error_on_donor_usage
+    func assertNotDonor(this *<$T> List, function_name *ubyte, is_method bool) {
+        if this.ownership == Ownership::DONOR {
+            error_message *ubyte = is_method ? 'RUNTIME ERROR: List.adept: Cannot use List.%s method on <%s> List that was previously donated\n'
+                                             : 'RUNTIME ERROR: List.adept: Cannot use %s function with <%s> List that was previously donated\n'
+            fprintf(stderr, error_message, function_name, typenameof $T)
             abort()
         }
     }
@@ -53,14 +66,26 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func __array__() *$T {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('__array__', true)
+        #end
+        
         return this.items
     }
 
     func __length__() usize {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('__length__', true)
+        #end
+
         return this.length
     }
 
     func __access__(index usize) *$T {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('__access__', true)
+        #end
+
         #if List_bounds_checks
             this.assertBounds(index, '[]')
         #end
@@ -72,31 +97,63 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         if this.ownership == Ownership::OWN {
             this.ownership = Ownership::REFERENCE
             return List(this.items, this.length, this.capacity, Ownership::GIVEN)
-        } else {
-            return *this
         }
+
+        #if List_error_on_donor_usage
+            this.assertNotDonor('commit', true)
+        #end
+        
+        return *this
     }
 
     func donate() <$T> List {
-        if this.ownership == Ownership::OWN {
-            this.ownership = Ownership::DONOR
-            return List(this.items, this.length, this.capacity, Ownership::GIVEN)
-        } else {
-            return *this
+        if this.ownership != Ownership::OWN {
+            #if List_error_on_donor_usage
+                this.assertNotDonor('donate', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: List.adept: Cannot donate() <%s> List that doesn\'t have ownership\n', typenameof $T)
+            abort()
+
+            // (unreachable)
         }
+
+        this.ownership = Ownership::DONOR
+        return List(this.items, this.length, this.capacity, Ownership::GIVEN)
     }
 
+    func give() <$T> List {
+        if this.ownership != StringOwnership::OWN {
+            #if List_error_on_donor_usage
+                this.assertNotDonor('give', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: String.adept: Cannot give() string that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+        }
+        
+        this.ownership = Ownership::REFERENCE
+        return List(this.items, this.length, this.capacity, Ownership::GIVEN)
+    }
 
     func add() *$T {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('add', true)
+        #end
+
         #if List_ownership_checks
             this.assertOwnership('add() to')
         #end
         
         if this.items == null {
-            this.items = malloc(sizeof $T * 4)
-            this.length = 0
-            this.capacity = 4
-            this.ownership = Ownership::OWN
+            *this = POD List(
+                cast *$T malloc(sizeof $T * 4),
+                0,
+                4,
+                Ownership::OWN
+            )
         } else if this.length == this.capacity {
             this.capacity *= 2
             resized *$T = malloc(sizeof $T * this.capacity)
@@ -119,6 +176,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func insert(index usize) *$T {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('insert', true)
+        #end
+
         if this.add() {
             inserted *$T = this.items at index
             memmove(this.items at (index + 1), inserted, (this.length - index - 1) * sizeof $T)
@@ -130,6 +191,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func insert(index usize, item POD $~T) {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('insert', true)
+        #end
+
         inserted_item *$T = this.insert(index)
 
         if inserted_item != null {
@@ -138,6 +203,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func prepend(item POD $~T) {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('prepend', true)
+        #end
+
         if this.add() != null {
             memmove(this.items at 1, this.items, sizeof $T * (this.length - 1))
             memset(this.items, 0, sizeof $T)
@@ -146,6 +215,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func remove(index usize) {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('remove', true)
+        #end
+
         #if List_ownership_checks
             this.assertOwnership('remove() from')
         #end
@@ -160,6 +233,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func reserve(count usize) {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('reserve', true)
+        #end
+
         #if List_ownership_checks
             this.assertOwnership('reserve() space for')
         #end
@@ -176,6 +253,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func get(index usize) $T {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('get', true)
+        #end
+
         #if List_bounds_checks
             this.assertBounds(index, 'get()')
         #end
@@ -184,6 +265,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func getPointer(index usize) *$T {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('getPointer', true)
+        #end
+
         #if List_bounds_checks
             this.assertBounds(index, 'getPointer()')
         #end
@@ -201,6 +286,10 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func empty() bool {
+        #if List_error_on_donor_usage
+            this.assertNotDonor('empty()', true)
+        #end
+
         return this.length == 0
     }
 }
@@ -224,6 +313,10 @@ func List(items *$T, length, capacity usize, ownership Ownership = Ownership::RE
 }
 
 func __pass__(list POD <$T> List) <$T> List {
+    #if List_error_on_donor_usage
+        list.assertNotDonor('__pass__', false)
+    #end
+
     if list.ownership == Ownership::OWN {
         list.ownership = Ownership::REFERENCE
     } else if list.ownership == Ownership::GIVEN {
@@ -234,6 +327,10 @@ func __pass__(list POD <$T> List) <$T> List {
 }
 
 func reverse(this *<$T> List) void {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('reverse', true)
+    #end
+
     #if List_ownership_checks
         this.assertOwnership('reverse()')
     #end
@@ -246,6 +343,10 @@ func reverse(this *<$T> List) void {
 }
 
 func reduce(this *<$T> List) void {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('reduce', true)
+    #end
+
     #if List_ownership_checks
         this.assertOwnership('reduce()')
     #end
@@ -254,6 +355,10 @@ func reduce(this *<$T> List) void {
 }
 
 func reduce(this *<$T> List, amount usize) void {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('reduce', true)
+    #end
+
     #if List_ownership_checks
         this.assertOwnership('reduce()')
     #end
@@ -268,19 +373,35 @@ func reduce(this *<$T> List, amount usize) void {
 }
 
 func first(this *<$T> List) *$T {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('first', true)
+    #end
+
     return this.length ? this.items : null
 }
 
 func last(this *<$T> List) *$T {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('last', true)
+    #end
+
     return this.length ? this.items at (this.length - 1) : null
 }
 
 func contains(this *<$T> List, value $~T) bool {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('contains', true)
+    #end
+
     each $T in static *this, if it == value, return true
     return false
 }
 
 func map(this *<$T> List, function func($~T) $S) <$S> List {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('map', true)
+    #end
+
     items *$T = calloc(this.length, sizeof $S)
 
     each $T in static *this {
@@ -291,6 +412,10 @@ func map(this *<$T> List, function func($~T) $S) <$S> List {
 }
 
 func map(this *<$T> List, function func(*$T) $S) <$S> List {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('map', true)
+    #end
+
     items *$T = calloc(this.length, sizeof $S)
 
     each $T in static *this {

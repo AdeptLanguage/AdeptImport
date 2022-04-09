@@ -1,1 +1,2 @@
-import '2.4/Ownership.adept'
+
+enum Ownership (REFERENCE, OWN, GIVEN, DONOR)

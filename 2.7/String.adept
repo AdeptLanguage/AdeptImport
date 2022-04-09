@@ -1,6 +1,5 @@
 
-#default log_string_deletion false // (obsolete, replaced by String_log_deletion)
-#default String_log_deletion log_string_deletion
+#default String_log_deletion false
 #default String_error_on_donor_usage true
 #default String_include_deprecated_modulus_formatting true
 #default String_include_deprecated_equals true
@@ -78,6 +77,7 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
         #if String_error_on_donor_usage
             this.assertNotDonor('__array__', true)
         #end
+
         return this.array
     } 
 
@@ -85,6 +85,7 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
         #if String_error_on_donor_usage
             this.assertNotDonor('__length__', true)
         #end
+
         return this.length
     }
 
@@ -92,6 +93,7 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
         #if String_error_on_donor_usage
             this.assertNotDonor('__access__', true)
         #end
+
         return this.array at index
     }
 
@@ -107,31 +109,9 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
 
         return *this
     }
-    
-    func give() String {
-        if this.ownership == StringOwnership::OWN {
-            this.ownership = StringOwnership::REFERENCE
-            return String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
-        } else {
-            #if String_error_on_donor_usage
-                this.assertNotDonor('give', true)
-            #end
-
-            fprintf(stderr, 'RUNTIME ERROR: String.adept: Cannot give() string that doesn\'t have ownership\n')
-            abort()
-
-            // (unreachable)
-            return ""
-        }
-    }
 
     func donate() String {
-        if this.ownership == StringOwnership::OWN {
-            result POD String = POD String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
-            *this = POD "<DONATED>"
-            this.ownership = StringOwnership::DONOR
-            return result
-        } else {
+        if this.ownership != StringOwnership::OWN {
             #if String_error_on_donor_usage
                 this.assertNotDonor('donate', true)
             #end
@@ -140,8 +120,28 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
             abort()
 
             // (unreachable)
-            return ""
         }
+
+        result POD String = POD String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
+        *this = POD "<DONATED>"
+        this.ownership = StringOwnership::DONOR
+        return result
+    }
+    
+    func give() String {
+        if this.ownership != StringOwnership::OWN {
+            #if String_error_on_donor_usage
+                this.assertNotDonor('give', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: String.adept: Cannot give() string that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+        }
+
+        this.ownership = StringOwnership::REFERENCE
+        return String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
     }
 
     func clone() String {

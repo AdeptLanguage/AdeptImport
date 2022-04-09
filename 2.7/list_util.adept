@@ -1,1 +1,29 @@
-import '2.5/list_util.adept'
+import '2.4/list_util.adept'
+
+// ---------------- clone ----------------
+// Clones a list of pointers
+func clone(this *<*$P> List) <*$P> List {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('clone()', true)
+    #end
+
+    return List(
+        cast **$P memcpy(malloc(sizeof *$P * this.length), this.items, sizeof *$P * this.length),
+        this.length,
+        this.length,
+        Ownership::OWN
+    )
+}
+
+// ---------------- make ----------------
+// If the provided list of pointers dosn't have ownership, it
+// will be made a clone of the original
+func make(this *<*$P> List) void {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('make()', true)
+    #end
+
+    unless this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
+        *this = this.clone()
+    }
+}
