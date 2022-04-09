@@ -107,6 +107,23 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
 
         return *this
     }
+    
+    func give() String {
+        if this.ownership == StringOwnership::OWN {
+            this.ownership = StringOwnership::REFERENCE
+            return String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
+        } else {
+            #if String_error_on_donor_usage
+                this.assertNotDonor('give', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: String.adept: Cannot give() string that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+            return ""
+        }
+    }
 
     func donate() String {
         if this.ownership == StringOwnership::OWN {
