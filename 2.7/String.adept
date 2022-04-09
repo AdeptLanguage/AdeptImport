@@ -602,11 +602,11 @@ func append(this *String, other String) {
 }
 
 func append(this *String, other ubyte) {
-    this.append(stringView(&other, 1))
+    this.append(StringView(&other, 1))
 }
 
 func append(this *String, other *ubyte) {
-    this.append(stringConstant(other))
+    this.append(StringView(other))
 }
 
 func append(this *String, other $T~__primitive__) {
@@ -799,12 +799,7 @@ func StringView(array *ubyte, length usize) String {
     return String(array, length, length, StringOwnership::REFERENCE)
 }
 
-func alias string(*ubyte) => String // For backwards-compatibility
-func alias string(*ubyte, usize) => String // For backwards-compatibility
-func alias stringView(*ubyte) => StringView // For backwards-compatibility
-func alias stringView(*ubyte, usize) => StringView // For backwards-compatibility
-
-func alias stringConstant(*ubyte) => stringView
+func alias stringConstant(*ubyte) => StringView
 
 func stringTake(null_terminated *ubyte) String {
     length usize = strlen(null_terminated)

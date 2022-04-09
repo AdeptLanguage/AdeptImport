@@ -1,1 +1,68 @@
-import '2.4/cstdlib.adept'
+
+import 'sys/cstring.adept'
+
+import String
+
+func strcpy(out dest *String, src String) StringView {
+    *dest = src.clone()
+    return dest.reference()
+}
+
+func strncpy(out dest *String, src String, n usize) StringView {
+    if src.length > n, src.length = n
+    *dest = src.clone()
+    return dest.reference()
+}
+
+func strcat(out dest *String, src String) StringView {
+    dest.append(src)
+    return dest.reference()
+}
+
+func strncat(out dest *String, src String, n usize) StringView {
+    if src.length > n, src.length = n
+    dest.append(src)
+    return *dest
+}
+
+func strcmp(str1 String, str2 String) int {
+    return str1.compare(str2)
+}
+
+func strncmp(str1 String, str2 String, n usize) int {
+    if str1.length > n, str1.length = n
+    if str2.length > n, str2.length = n
+    return str1.compare(str2)
+}
+
+func strchr(haystack String, character ubyte) StringView {
+    each ubyte in haystack, if it == character, return haystack.range(idx, haystack.length)
+    return ""
+}
+
+func strrchr(haystack String, character ubyte) StringView {
+    repeat haystack.length,
+        if haystack[haystack.length - idx - 1] == character, return haystack.range(0, haystack.length - idx)
+    return ""
+}
+
+func strspn(string String, choices String) usize {
+    each ubyte in string, unless choices.contains(it), return idx
+    return string.length
+}
+
+func strstr(str1 String, str2 String) long {
+    return str1.first(str2)
+}
+
+func strerrorConstant(errnum int) String {
+    return StringView(strerror(errnum))
+}
+
+func strlen(string String) usize {
+    return string.length
+}
+
+func strdup(string String) String {
+    return string.clone()
+}
