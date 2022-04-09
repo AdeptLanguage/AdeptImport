@@ -1,7 +1,49 @@
-import '2.4/list_util.adept'
 
-// ---------------- clone ----------------
-// Clones a list of pointers
+import String
+import Array
+import array_util
+
+func toString(list <$T> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+    return toString(list.asArray(), separator, beginning, ending, separator_after_last, surrounding)
+}
+
+func toString(list <String> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(list.asArray(), separator, beginning, ending, separator_after_last, "\"")
+}
+
+func toString(list <*ubyte> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(list.asArray(), separator, beginning, ending, separator_after_last, "'")
+}
+
+func toString(this *<$T> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false, surrounding String = "") String {
+    return toString(this.asArray(), separator, beginning, ending, separator_after_last, surrounding)
+}
+
+func toString(this *<String> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(this.asArray(), separator, beginning, ending, separator_after_last, "\"")
+}
+
+func toString(this *<*ubyte> List, separator = ", ", beginning = "[", ending String = "]", separator_after_last bool = false) String {
+    return toString(this.asArray(), separator, beginning, ending, separator_after_last, "'")
+}
+
+func asArray(this *<$T> List) <$T> Array {
+    return array(this.items, this.length)
+}
+
+func clone(this *<$T~__primitive__> List) <*$T> List {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('clone()', true)
+    #end
+
+    return List(
+        cast **$P memcpy(malloc(sizeof $T * this.length), this.items, sizeof $T * this.length),
+        this.length,
+        this.length,
+        Ownership::OWN
+    )
+}
+
 func clone(this *<*$P> List) <*$P> List {
     #if List_error_on_donor_usage
         this.assertNotDonor('clone()', true)
@@ -15,15 +57,25 @@ func clone(this *<*$P> List) <*$P> List {
     )
 }
 
-// ---------------- make ----------------
-// If the provided list of pointers dosn't have ownership, it
-// will be made a clone of the original
-func make(this *<*$P> List) void {
+func make(this *<$T_Clonable> List) void {
     #if List_error_on_donor_usage
         this.assertNotDonor('make()', true)
     #end
 
     unless this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
         *this = this.clone()
+    }
+}
+
+func toOwned(this *<$T_Clonable> List) <$T_Clonable> List {
+    #if List_error_on_donor_usage
+        this.assertNotDonor('toOwned', true)
+    #end
+    
+    unless this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
+        this.ownership = Ownership::DONOR
+        return List(this.items, this.length, this.capacity, Ownership::GIVEN)
+    } else {
+        return this.clone()
     }
 }

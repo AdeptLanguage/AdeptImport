@@ -1,14 +1,30 @@
 
 #default Grid_bounds_checks true
+#default Grid_error_on_donor_usage true
+
+#if Grid_error_on_donor_usage
+    func assertNotDonor(this *<$T> Grid, function_name *ubyte, is_method bool) {
+        if this.ownership == Ownership::DONOR {
+            error_message *ubyte = is_method ? 'RUNTIME ERROR: Grid.adept: Cannot use Grid.%s method on <%s> Grid that was previously donated\n'
+                                             : 'RUNTIME ERROR: Grid.adept: Cannot use %s function with <%s> Grid that was previously donated\n'
+            fprintf(stderr, error_message, function_name, typenameof $T)
+            abort()
+        }
+    }
+#end
+
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import Ownership
 
 record GridCoord (x, y int)
 
 func GridCoord(index usize, w, _h int) GridCoord {
     #if Grid_bounds_checks
-    if index > w * _h {
-        printf("ERROR: gridCoord(usize, int, int) got bad index %zu into grid of size (%d, %d)\n", index, w, _h)
-        return gridCoord(0, 0)
-    }
+        if index > w * _h {
+            fprintf(stderr, 'RUNTIME ERROR: Grid.adept: gridCoord(usize, int, int) got bad index %zu into grid of size (%d, %d)\n', index, w, _h)
+            abort()
+        }
     #end
 
     gc POD GridCoord
@@ -21,60 +37,125 @@ func __equals__(a, b POD GridCoord) bool {
     return a.x == b.x && a.y == b.y
 }
 
-struct <$T> Grid (data *$T, w, h int, ownership Ownership) {
+record <$T> Grid (data *$T, w, h int, ownership Ownership) {
+    func __defer__ {
+        if this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
+            each $T in static [this.data, this.w * this.h], it.?__defer__()
+            delete this.data
+        }
+    }
+
     func __assign__(other POD <$T> Grid) {
         this.__defer__()
+
+        exhaustive switch other.ownership {
+        case Ownership::OWN
+            this.ownership = Ownership::REFERENCE
+        case Ownership::REFERENCE
+            this.ownership = Ownership::REFERENCE
+        case Ownership::GIVEN
+            this.ownership = Ownership::OWN
+        case Ownership::DONOR
+            #if Grid_error_on_donor_usage
+                this.assertNotDonor('__assign__', true)
+            #end
+            abort()
+        }
 
         this.data = other.data
         this.w = other.w
         this.h = other.h
-
-        if other.ownership == Ownership::GIVEN {
-            this.ownership = Ownership::OWN
-        } else {
-            this.ownership = Ownership::REFERENCE
-        }
     }
 
-    func __defer__ {
-        unless this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN, return
-        each $T in [this.data, this.w * this.h], it.?__defer__()
-        delete this.data
+    func __array__ *$T {
+        #if Grid_error_on_donor_usage
+            this.assertNotDonor('__array__', true)
+        #end
+
+        return this.data
     }
 
-    func __array__ *$T = this.data
-    func __length__ usize = this.w * this.h
+    func __length__ usize {
+        #if Grid_error_on_donor_usage
+            this.assertNotDonor('__length__', true)
+        #end
+
+        return this.w * this.h
+    }
 
     func __access__(coord GridCoord) *$T {
+        #if Grid_error_on_donor_usage
+            this.assertNotDonor('__access__', true)
+        #end
+
         #if Grid_bounds_checks
-        if coord.x < 0 || coord.x >= this.w || coord.y < 0 || coord.y >= this.h {
-            printf("ERROR: <$T> Grid of size (%d, %d) got bad access at (%d, %d)\n", this.w, this.h, coord.x, coord.y)
-            return this.data
-        }
+            if coord.x < 0 || coord.x >= this.w || coord.y < 0 || coord.y >= this.h {
+                fprintf(stderr, 'RUNTIME ERROR: Grid.adept: <%s> Grid of size (%d, %d) got bad access at (%d, %d)\n', typenameof $T, this.w, this.h, coord.x, coord.y)
+                abort()
+            }
         #end
 
         return this.data at (coord.y * this.w + coord.x)
     }
 
     func commit <$T> Grid {
-        c POD <$T> Grid = POD *this
-        c.ownership = Ownership::GIVEN
+        if this.ownership != Ownership::OWN {
+            #if Grid_error_on_donor_usage
+                this.assertNotDonor('commit', true)
+            #end
+            
+            return *this
+        }
+
         this.ownership = Ownership::REFERENCE
-        return c
+        return Grid(this.data, this.w, this.h, Ownership::GIVEN)
     }
 
     func donate <$T> Grid {
-        d POD <$T> Grid = POD *this
-        d.ownership = Ownership::DONATED
+        if this.ownership != Ownership::OWN {
+            #if Grid_error_on_donor_usage
+                this.assertNotDonor('donate', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: Grid.adept: Cannot donate() <%s> Grid that doesn\'t have ownership\n', typenameof $T)
+            abort()
+
+            // (unreachable)
+        }
+
+        this.ownership = Ownership::DONOR
+        return Grid(this.data, this.w, this.h, Ownership::GIVEN)
+    }
+    
+    func give <$T> Grid {
+        if this.ownership != Ownership::OWN {
+            #if Grid_error_on_donor_usage
+                this.assertNotDonor('give', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: Grid.adept: Cannot give() <%s> Grid that doesn\'t have ownership\n', typenameof $T)
+            abort()
+
+            // (unreachable)
+        }
+
         this.ownership = Ownership::REFERENCE
-        return d
+        return Grid(this.data, this.w, this.h, Ownership::GIVEN)
     }
 
     func isValid(coord GridCoord) bool {
+        #if Grid_error_on_donor_usage
+            this.assertNotDonor('isValid', true)
+        #end
+
         return coord.x >= 0 && coord.y >= 0 && coord.x < this.w && coord.y < this.h
     }
 
     func flipY {
+        #if Grid_error_on_donor_usage
+            this.assertNotDonor('flipY', true)
+        #end
+
         tmp *$T = new undef $T * this.w
         defer delete tmp
 
@@ -89,6 +170,10 @@ struct <$T> Grid (data *$T, w, h int, ownership Ownership) {
 }
 
 func __pass__(grid POD <$T> Grid) <$T> Grid {
+    #if Grid_error_on_donor_usage
+        this.assertNotDonor('__pass__', false)
+    #end
+
     if grid.ownership == Ownership::OWN {
         grid.ownership = Ownership::REFERENCE
     } else if grid.ownership == Ownership::GIVEN {
@@ -99,16 +184,7 @@ func __pass__(grid POD <$T> Grid) <$T> Grid {
 }
 
 func Grid(w, h int, square $T) <$T> Grid {
-    g POD <$T> Grid
-    g.data = new $T * (w * h)
-    g.w = w
-    g.h = h
-    g.ownership = Ownership::OWN
-    each $T in g, it = square
-    return g
+    grid POD <$T> Grid = POD Grid(new $T * (w * h), w, h, Ownership::GIVEN)
+    each $T in static grid, it = square
+    return grid
 }
-
-// Backwards-compatibility
-func alias gridCoord(int, int) => GridCoord
-func alias gridCoord(usize, int, int) => GridCoord
-func grid(w, h int, square POD $T) <$T> Grid = Grid(w, h, square)

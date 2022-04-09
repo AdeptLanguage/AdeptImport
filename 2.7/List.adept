@@ -14,7 +14,7 @@
 #if List_ownership_checks
     func assertOwnership(this *<$T> List, verb *ubyte) {
         if this.ownership != Ownership::OWN && !(this.ownership == Ownership::REFERENCE && this.items == null) {
-            fprintf(stderr, '<%s> List Error: Cannot %s list that doesn\'t have ownership\n', typenameof $T)
+            fprintf(stderr, '<%s> List Error: Cannot %s list that doesn\'t have ownership\n', typenameof $T, verb)
             abort()
         }
     }
@@ -55,14 +55,38 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func __assign__(other POD <$T> List) {
-        this.__defer__()
-        
-        *this = POD List(
-            other.items,
-            other.length,
-            other.capacity,
-            other.ownership == Ownership::GIVEN ? Ownership::OWN : Ownership::REFERENCE
-        )
+        exhaustive switch other.ownership {
+        case Ownership::OWN
+            this.__defer__()
+            this.ownership = Ownership::REFERENCE
+        case Ownership::DONOR
+            #if List_error_on_donor_usage
+                this.assertNotDonor('__assign__', true)
+            #end
+            abort()
+        case Ownership::GIVEN
+            this.__defer__()
+            this.ownership = Ownership::OWN
+        case Ownership::REFERENCE
+            define self_has_ownership = this.ownership == Ownership::OWN
+            define other_items_right_of_self_items = other.items >= this.items
+            define other_items_left_of_self_items = other.items < this.items + cast ptr (this.capacity * sizeof $T)
+
+            if self_has_ownership && other_items_right_of_self_items && other_items_left_of_self_items {
+                downsized *$T = memcpy(malloc(other.length * sizeof $T), other.items, other.length * sizeof $T)
+
+                delete this.items
+                *this = POD List(downsized, other.length, other.capacity, Ownership::OWN)
+                return
+            }
+            
+            this.__defer__()
+            this.ownership = Ownership::REFERENCE
+        }
+
+        this.items = other.items
+        this.length = other.length
+        this.capacity = other.capacity
     }
 
     func __array__() *$T {
@@ -94,16 +118,16 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     }
 
     func commit() <$T> List {
-        if this.ownership == Ownership::OWN {
-            this.ownership = Ownership::REFERENCE
-            return List(this.items, this.length, this.capacity, Ownership::GIVEN)
+        if this.ownership != Ownership::OWN {
+            #if List_error_on_donor_usage
+                this.assertNotDonor('commit', true)
+            #end
+            
+            return *this
         }
 
-        #if List_error_on_donor_usage
-            this.assertNotDonor('commit', true)
-        #end
-        
-        return *this
+        this.ownership = Ownership::REFERENCE
+        return List(this.items, this.length, this.capacity, Ownership::GIVEN)
     }
 
     func donate() <$T> List {

@@ -98,16 +98,16 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
     }
 
     func commit() String {
-        if this.ownership == StringOwnership::OWN {
-            this.ownership = StringOwnership::REFERENCE
-            return String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
+        if this.ownership != StringOwnership::OWN {
+            #if String_error_on_donor_usage
+                this.assertNotDonor('commit', true)
+            #end
+
+            return *this
         }
 
-        #if String_error_on_donor_usage
-            this.assertNotDonor('commit', true)
-        #end
-
-        return *this
+        this.ownership = StringOwnership::REFERENCE
+        return String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
     }
 
     func donate() String {
@@ -671,9 +671,8 @@ func toOwned(this *String) String {
     #end
     
     unless this.ownership == StringOwnership::OWN || this.ownership == StringOwnership::GIVEN {
-        result POD String = POD *this
         this.ownership = StringOwnership::DONOR
-        return result
+        return String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
     } else {
         return this.clone()
     }

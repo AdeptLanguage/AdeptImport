@@ -1,20 +1,15 @@
 
-#default array_bounds_checks true
-#default array_error_with_type true
+#default Array_bounds_checks true
 
 import InitializerList
 
-struct <$T> Array (items *$T, length usize) {
+record <$T> Array (items *$T, length usize) {
     func __array__ *$T               = this.items
     func __length__ usize            = this.length
     func __access__(index usize) *$T {
-        #if array_bounds_checks
+        #if Array_bounds_checks
             if index < 0 || index >= this.length {
-                #if array_error_with_type
                 printf('<%s> Array Error: [] index out of range\n', typenameof $T)
-                #else
-                printf('<$T> Array Error: [] index out of range\n')
-                #end
                 return this.items
             }
         #end
@@ -23,24 +18,10 @@ struct <$T> Array (items *$T, length usize) {
     }
 }
 
-func Array(items *$T, length usize) <$T> Array {
-    result POD <$T> Array = undef
-    result.items = items
-    result.length = length
-    return result
-}
-
-// Backwards-compatibility
-func array(items *$T, length usize) <$T> Array = Array(items, length)
-
 func get(this *<$T> Array, index usize) $T {
-    #if array_bounds_checks
+    #if Array_bounds_checks
         if index < 0 || index >= this.length {
-            #if array_error_with_type
-            printf('<%s> Array Error: [] index out of range\n', typenameof $T)
-            #else
-            printf('<$T> Array Error: [] index out of range\n')
-            #end
+            printf('<%s> Array Error: get() index out of bounds\n', typenameof $T)
             return *this.items
         }
     #end
@@ -49,13 +30,9 @@ func get(this *<$T> Array, index usize) $T {
 }
 
 func getPointer(this *<$T> Array, index usize) *$T {
-    #if array_bounds_checks
+    #if Array_bounds_checks
         if index < 0 || index >= this.length {
-            #if array_error_with_type
-            printf('<%s> Array Error: [] index out of range\n', typenameof $T)
-            #else
-            printf('<$T> Array Error: [] index out of range\n')
-            #end
+            printf('<%s> Array Error: getPointer() index out of bounds\n', typenameof $T)
             return this.items
         }
     #end
