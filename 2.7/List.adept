@@ -426,10 +426,10 @@ func map(this *<$T> List, function func($~T) $S) <$S> List {
         this.assertNotDonor('map', true)
     #end
 
-    items *$T = calloc(this.length, sizeof $S)
+    items *$S = calloc(this.length, sizeof $S)
 
     each $T in static *this {
-        items[idx] = function(&it)
+        items[idx] = function(it)
     }
 
     return List(items, this.length, this.length, Ownership::GIVEN)
