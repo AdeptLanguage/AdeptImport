@@ -49,7 +49,7 @@ import InitializerList
 struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
     func __defer__ {
         if this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
-            each $T in static [this.items, this.length], it.?__defer__()
+            each $T in static [this.items, this.length], (&it).?__defer__()
             delete this.items
         }
     }

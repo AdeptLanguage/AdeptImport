@@ -1,5 +1,4 @@
 
-
 import basics
 
 /*
@@ -29,10 +28,11 @@ struct JSONArray (struct JSON, elements <*JSON> List)
 struct JSONObject (struct JSON, fields <JSONField> List)
 
 // Don't automatically handle memory management when JSON values go out of scope
-verbatim func __defer__(this *JSONField)  {}
-verbatim func __defer__(this *JSONString) {}
-verbatim func __defer__(this *JSONArray)  {}
-verbatim func __defer__(this *JSONObject) {}
+verbatim func __defer__(this *JSON)  = delete
+verbatim func __defer__(this *JSONField)  = delete
+verbatim func __defer__(this *JSONString) = delete
+verbatim func __defer__(this *JSONArray)  = delete
+verbatim func __defer__(this *JSONObject) = delete
 
 func isNull(this *JSON)    bool = this.kind == JSONKind::NULL
 func isBoolean(this *JSON) bool = this.kind == JSONKind::BOOLEAN
