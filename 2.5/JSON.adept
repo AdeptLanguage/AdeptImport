@@ -428,14 +428,15 @@ func JSON\isWhitespace(c ubyte) bool {
 }
 
 func JSONFromFile(filename String) *JSON {
-    unless JSONFileContents(filename, def content String), return null
-    return JSON(content)
+    if JSONFileContents(filename, def content String) {
+        return JSON(content)
+    }
+    return null
 }
 
 func JSONFileContents(filename String, out contents *String) successful {
     // NOTE: Only works for files smaller than ~4GB
     // NOTE: Might work with files larger than ~4GB now, haven't tested yet
-
 
     buffer *ubyte = null
     filename_cstr *ubyte = filename.cstr()
