@@ -3,6 +3,7 @@ import String
 import parse
 import VariadicArray
 import cstdio
+import 'sys/cstdlib.adept'
 
 func print(string String) {
     #if String_error_on_donor_usage
@@ -86,8 +87,8 @@ func vplace(values VariadicArray, separator String = "", separator_after_last bo
         } else if type.kind == AnyTypeKind::PTR {
             place(values.readPtr())
         } else {
-            printf('ERROR: %s(...) got unknown type %s', fname, type.name)
-            return
+            fprintf(stderr, 'RUNTIME ERROR: %s(...) got unknown type %s\n', fname, type.name)
+            abort()
         }
         
         // Print separator

@@ -50,7 +50,7 @@ func applyDefer(this *<$T> Array) {
 }
 
 implicit func __as__(initializer <$T> InitializerList) <$T> Array {
-    return array(initializer.array, initializer.length)
+    return Array(initializer.array, initializer.length)
 }
 
 // Allow <long> InitializerList for <int> List

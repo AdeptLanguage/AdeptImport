@@ -1,1 +1,147 @@
-import '2.5/Optional.adept'
+
+#default Optional_error_no_value true
+
+#if Optional_error_no_value
+    import 'sys/cstdio.adept'
+    import 'sys/cstdlib.adept'
+#end
+
+import String
+import 'sys/cstring.adept'
+
+struct <$T> Optional (value $T, has bool) {
+    verbatim func __defer__ {
+        if this.has, this.value.?__defer__()
+    }
+
+    func __assign__(other <$T> Optional) {
+        this.__defer__()
+
+        if other.has {
+            memset(&this.value, 0, sizeof $T)
+            this.value = other.value
+            this.has = true
+        } else {
+            this.has = false
+        }
+    }
+
+    func assign(value POD $T) {
+        this.__defer__()
+        memset(&this.value, 0, sizeof $T)
+        this.value = value
+        this.has = true
+    }
+
+    func assignPOD(value POD $T) {
+        this.__defer__()
+        this.value = POD value
+        this.has = true
+    }
+
+    func get() $T {
+        #if Optional_error_no_value
+            unless this.has {
+                redprintf(stderr, 'RUNTIME ERROR: <%s> Optional.get() called when no value exists\n', typenameof $T)
+                abort()
+            }
+        #end
+
+        return this.value
+    }
+
+    func getPointer() *$T {
+        #if Optional_error_no_value
+            unless this.has {
+                redprintf(stderr, 'RUNTIME ERROR: <%s> Optional.getPointer() called when no value exists\n', typenameof $T)
+                abort()
+            }
+        #end
+
+        return &this.value
+    }
+
+    func rid() {
+        if this.has {
+            this.__defer__()
+            this.has = false
+        }
+    }
+
+    func isSome(out captured *$T) bool {
+        if this.has {
+            *captured = POD this.value
+            this.has = false
+            return true
+        } else {
+            return false
+        }
+    }
+
+    func isSome() bool {
+        return this.has
+    }
+
+    func isNone() bool {
+        return !this.has
+    }
+
+    func map(function func($~T) $S) <$S> Optional {
+        if this.has {
+            defer this.has = false
+
+            // We will assign it, since this is usually the desired behavior
+            // When working with non-trivial types
+            result POD $S = function(this.value)
+            return some(result)
+        } else {
+            return none() ~> <$S> Optional
+        }
+    }
+
+    func mapPOD(function func($~T) $S) <$S> Optional {
+        if this.has {
+            defer this.has = false
+            return some(function(this.value))
+        } else {
+            return none() ~> <$S> Optional
+        }
+    }
+
+    func assign() <$T> Optional {
+        if this.has {
+            this.has = false
+            assigned POD $T = this.value
+            return some(assigned)
+        } else {
+            return none() ~> <$T> Optional
+        }
+    }
+
+    func pass() <$T> Optional {
+        if this.has {
+            this.has = false
+            return some(__pass__(this.value))
+        } else {
+            return none() ~> <$T> Optional
+        }
+    }
+}
+
+func none() <$T> Optional {
+    o POD <$T> Optional = undef
+    o.has = false
+    return o
+}
+
+func some(contained POD $T) <$T> Optional {
+    o POD <$T> Optional = undef
+    o.value = POD contained
+    o.has = true
+    return o
+}
+
+// Since we have no way of knowing whether we
+// are responsible for the supplied optional,
+// we cannot properly toString it
+func toString(_ <$T> Optional) String = delete {}

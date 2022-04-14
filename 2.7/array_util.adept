@@ -41,7 +41,7 @@ func toString(this *<*ubyte> Array, separator = ", ", beginning = "[", ending St
 }
 
 func toString(pointer *$T, length usize) String {
-    return toString(array(pointer, length))
+    return toString(Array(pointer, length))
 }
 
 func toString(fixed_array $#N $T) String {

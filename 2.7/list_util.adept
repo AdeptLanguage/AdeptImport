@@ -28,7 +28,7 @@ func toString(this *<*ubyte> List, separator = ", ", beginning = "[", ending Str
 }
 
 func asArray(this *<$T> List) <$T> Array {
-    return array(this.items, this.length)
+    return Array(this.items, this.length)
 }
 
 func clone(this *<$T~__primitive__> List) <*$T> List {
