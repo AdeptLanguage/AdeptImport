@@ -71,11 +71,10 @@ func toOwned(this *<$T_Clonable> List) <$T_Clonable> List {
     #if List_error_on_donor_usage
         this.assertNotDonor('toOwned', true)
     #end
-    
-    unless this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN {
-        this.ownership = Ownership::DONOR
-        return List(this.items, this.length, this.capacity, Ownership::GIVEN)
-    } else {
-        return this.clone()
+
+    if this.ownership == Ownership::GIVEN {
+        return *this
     }
+
+    return this.clone()
 }

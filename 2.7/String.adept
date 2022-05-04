@@ -669,13 +669,12 @@ func toOwned(this *String) String {
     #if String_error_on_donor_usage
         this.assertNotDonor('toOwned', true)
     #end
-    
-    unless this.ownership == StringOwnership::OWN || this.ownership == StringOwnership::GIVEN {
-        this.ownership = StringOwnership::DONOR
-        return String(this.array, this.length, this.capacity, StringOwnership::GIVEN)
-    } else {
-        return this.clone()
+
+    if this.ownership == StringOwnership::GIVEN {
+        return *this
     }
+
+    return this.clone()
 }
 
 func reference(this *String) String {
