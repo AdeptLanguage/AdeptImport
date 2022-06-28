@@ -42,7 +42,7 @@ struct <$T> Optional (value $T, has bool) {
     func get() $T {
         #if Optional_error_no_value
             unless this.has {
-                redprintf(stderr, 'RUNTIME ERROR: <%s> Optional.get() called when no value exists\n', typenameof $T)
+                fprintf(stderr, 'RUNTIME ERROR: <%s> Optional.get() called when no value exists\n', typenameof $T)
                 abort()
             }
         #end
@@ -53,7 +53,7 @@ struct <$T> Optional (value $T, has bool) {
     func getPointer() *$T {
         #if Optional_error_no_value
             unless this.has {
-                redprintf(stderr, 'RUNTIME ERROR: <%s> Optional.getPointer() called when no value exists\n', typenameof $T)
+                fprintf(stderr, 'RUNTIME ERROR: <%s> Optional.getPointer() called when no value exists\n', typenameof $T)
                 abort()
             }
         #end
