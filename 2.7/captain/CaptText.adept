@@ -114,8 +114,8 @@ func captAppendCharacterUVs(character ubyte, uvs *<float> List) {
     uvs.add(vh)
 }
 
-func captDrawText(text String, x, y float) {
-    drawable CaptText(text)
+func captDrawText(text String, x, y float, scale double = CAPT_DEFAULT_TEXT_SCALE) {
+    drawable CaptText(text, scale)
     drawable.draw(x, y)
     drawable.destroy()
 }
