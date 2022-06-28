@@ -1,0 +1,121 @@
+
+struct CaptModel (vao, vertices_vbo, uvs_vbo, texture_id GLuint, triangle_count int) {
+    constructor(w, h float, x_flip, y_flip bool = false){
+        // Numbered points as they appear in vertices list
+        // 2 3
+        // 1 6
+
+        points <float> Array = {
+            0.0f, h,    0.0f,
+            0.0f, 0.0f, 0.0f,
+            w,    0.0f, 0.0f,
+            0.0f, h,    0.0f,
+            w,    0.0f, 0.0f,
+            w,    h,    0.0f,
+        }
+
+        uv_src <float> Array = {
+            0.0f, 1.0f,
+            0.0f, 0.0f,
+            1.0f, 0.0f,
+            1.0f, 1.0f,
+        }
+        
+        if x_flip {
+            // Swap 2 with 3 and 1 with 6
+            tmp [2] float = undef
+
+            tmp[0] = uv_src[2]
+            tmp[1] = uv_src[3]
+            uv_src[2] = uv_src[4]
+            uv_src[3] = uv_src[5]
+            uv_src[4] = tmp[0]
+            uv_src[5] = tmp[1]
+            tmp[0] = uv_src[0]
+            tmp[1] = uv_src[1]
+            uv_src[0] = uv_src[6]
+            uv_src[1] = uv_src[7]
+            uv_src[6] = tmp[0]
+            uv_src[7] = tmp[1]
+        }
+        
+        if y_flip {
+            // Swap 2 with 1 and 3 with 6
+            tmp [2] float = undef
+            
+            tmp[0] = uv_src[2]
+            tmp[1] = uv_src[3]
+            uv_src[2] = uv_src[0]
+            uv_src[3] = uv_src[1]
+            uv_src[0] = tmp[0]
+            uv_src[1] = tmp[1]
+            
+            tmp[0] = uv_src[4]
+            tmp[1] = uv_src[5]
+            uv_src[4] = uv_src[6]
+            uv_src[5] = uv_src[7]
+            uv_src[6] = tmp[0]
+            uv_src[7] = tmp[1]
+        }
+
+        uvs <float> Array = {
+            uv_src[0],
+            uv_src[1],
+            uv_src[2],
+            uv_src[3],
+            uv_src[4],
+            uv_src[5],
+            uv_src[0],
+            uv_src[1],
+            uv_src[4],
+            uv_src[5],
+            uv_src[6],
+            uv_src[7],
+        }
+        
+        this.__constructor__(points.__array__(), points.__length__(), uvs.__array__(), uvs.__length__())
+    }
+
+    constructor(points <float> List, uvs <float> List){
+        this.__constructor__(points.__array__(), points.__length__(), uvs.__array__(), uvs.__length__())
+    }
+
+    constructor(points *float, points_length usize, uvs *float, uvs_length usize) {
+        this.triangle_count = cast int(points_length / 3ui)
+        
+        this.vertices_vbo = 0ui
+        glGenBuffers(1, &this.vertices_vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
+        glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * points_length), points, GL_STATIC_DRAW)
+        
+        this.uvs_vbo = 0ui
+        glGenBuffers(1, &this.uvs_vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
+        glBufferData(GL_ARRAY_BUFFER, cast int(sizeof float * uvs_length), uvs, GL_STATIC_DRAW)
+        
+        glGenVertexArrays(1, &this.vao)
+        glBindVertexArray(this.vao)
+        
+        glEnableVertexAttribArray(0ui)
+        glBindBuffer(GL_ARRAY_BUFFER, this.vertices_vbo)
+        glVertexAttribPointer(0ui, 3, GL_FLOAT, GL_FALSE, 0, null)
+        
+        glEnableVertexAttribArray(1ui)
+        glBindBuffer(GL_ARRAY_BUFFER, this.uvs_vbo)
+        glVertexAttribPointer(1ui, 2, GL_FLOAT, GL_FALSE, 0, null)
+        
+        glBindBuffer(GL_ARRAY_BUFFER, 0ui)
+        glBindVertexArray(0ui)
+    }
+    
+    func draw {
+        glBindVertexArray(this.vao)
+        glDrawArrays(GL_TRIANGLES, 0, this.triangle_count)
+    }
+    
+    func destroy {
+        glDeleteBuffers(1, &this.vertices_vbo)
+        glDeleteBuffers(1, &this.uvs_vbo)
+        glDeleteVertexArrays(1, &this.vao)
+    }
+}

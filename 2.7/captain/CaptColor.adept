@@ -1,0 +1,16 @@
+
+struct CaptColor (r, g, b, a float) {
+    constructor(r, g, b float, a float = 1.0f){
+        this.r = r
+        this.g = g
+        this.b = b
+        this.a = a
+    }
+
+    constructor(r, g, b int, a int = 255){
+        this.r = r as float / 255.0f
+        this.g = g as float / 255.0f
+        this.b = b as float / 255.0f
+        this.a = a as float / 255.0f
+    }
+}

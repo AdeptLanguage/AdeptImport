@@ -1,0 +1,78 @@
+
+struct CaptTexture (id uint) {
+    constructor(filename String, approximate bool = true){
+        cstr *ubyte = filename.cstr()
+        defer delete cstr
+        this.__constructor__(cstr, approximate)
+    }
+
+    constructor(filename *ubyte, approximate bool = true) {
+        captEnsurePrepared()
+        
+        if _captain_window == null {
+            printf('RUNTIME ERROR: Cannot create CaptTexture before captStart() is called\n')
+            printf('NOTE: Use captOnSetup() to load assets after captStart()\n')
+            this.id = 0
+            return
+        }
+        
+        x, y, n int = undef
+        image *ubyte = stbi_load(filename, &x, &y, &n, 4)
+
+        if image == null {
+            this.id = 0
+            return
+        }
+        
+        blur_mode GLenum = approximate ? GL_LINEAR : GL_NEAREST
+        glGenTextures(1, &this.id)
+        glBindTexture(GL_TEXTURE_2D, this.id)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, blur_mode)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, blur_mode)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+        glBindTexture(GL_TEXTURE_2D, 0ui)
+        stbi_image_free(image)
+    }
+
+    constructor(file_data *ubyte, file_size usize, approximate bool = true) {
+        captEnsurePrepared()
+        
+        if _captain_window == null {
+            printf('RUNTIME ERROR: Cannot create CaptTexture before captStart() is called\n')
+            printf('NOTE: Use captOnSetup() to load assets after captStart()\n')
+            this.id = 0
+            return
+        }
+        
+        x, y, n int = undef
+        image *ubyte = stbi_load_from_memory(file_data, file_size, &x, &y, &n, 4)
+
+        if image == null {
+            this.id = 0
+            return
+        }
+        
+        blur_mode GLenum = approximate ? GL_LINEAR : GL_NEAREST
+        glGenTextures(1, &this.id)
+        glBindTexture(GL_TEXTURE_2D, this.id)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, blur_mode)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, blur_mode)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+        glBindTexture(GL_TEXTURE_2D, 0ui)
+        stbi_image_free(image)
+    }
+
+    func isValid bool { return this.id != 0; }
+    
+    func invalidate { this.id = 0; }
+    
+    func destroy { glDeleteTextures(1, &this.id); }
+    
+    func load(filename *ubyte, approximate bool = true) { this.__constructor__(filename, approximate); }
+    
+    func load(filename String, approximate bool = true) { this.__constructor__(filename, approximate); }
+}

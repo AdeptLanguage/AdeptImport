@@ -1,1 +1,386 @@
-import '2.5/captain.adept'
+
+pragma compiler_supports '2.7'
+
+import 'glfw/glfw.adept'
+import 'opengl/opengl.adept'
+import 'stb/image.adept'
+import 'sys/ctime.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstring.adept'
+
+import List
+import Array
+import String
+import Matrix4f
+import math
+import random
+import where
+import cstdio
+import array_util
+
+import "captain/CaptText.adept"
+import "captain/CaptColor.adept"
+import "captain/CaptModel.adept"
+import "captain/CaptShader.adept"
+import "captain/CaptTexture.adept"
+import "captain/user_util.adept"
+import "captain/callbacks.adept"
+
+_captain_prepared bool
+_captain_window *GLFWwindow
+_captain_setup func() void
+_captain_exit func() void
+_captain_draw func() void
+_captain_step func() void
+_captain_step_fps uint
+_captain_click func(float, float, int) void
+_captain_click_use_view_mouse bool
+_captain_release func(float, float, int) void
+_captain_release_use_view_mouse bool
+_captain_key func(int, int, int, int) void
+_captain_char func(uint) void
+_captain_scroll func(float, float) void
+_captain_shader CaptShader
+_captain_display_ratio float
+_captain_view_width float
+_captain_view_height float
+_captain_custom_view bool
+_captain_custom_view_ratio float
+_captain_view_preserve_ratio bool
+_captain_resizable bool
+_captain_always_on_top bool
+_captain_model CaptModel
+_captain_shader_transformation_location GLint
+_captain_multisample int
+_captain_font CaptTexture
+_captain_font_data String = embed "captain/bitmap_font.png"
+_captain_xdpi float
+_captain_ydpi float
+
+func captPrepare successful {
+    _captain_window = null
+    _captain_setup = null
+    _captain_exit = null
+    _captain_draw = null
+    _captain_step = null
+    _captain_step_fps = 60
+    _captain_click = null
+    _captain_release = null
+    _captain_key = null
+    _captain_char = null
+    _captain_scroll = null
+    _captain_display_ratio = 0.0f
+    _captain_view_width = 0.0f
+    _captain_view_height = 0.0f
+    _captain_custom_view = false
+    _captain_custom_view_ratio = 1.0f
+    _captain_view_preserve_ratio = false
+    _captain_resizable = true
+    _captain_shader_transformation_location = 0
+    _captain_multisample = 0
+    _captain_prepared = true
+    _captain_font.invalidate()
+    _captain_xdpi = 1.0
+    _captain_ydpi = 1.0
+    return glfwInit() != 0
+}
+
+func captStart(in fullscreen bool) {
+    if fullscreen, captStart('', 0, 0, true)
+    else           captStart('', 640, 480, false)
+}
+
+func captStart(in title *ubyte = '', in fullscreen bool = false) {
+    if fullscreen, captStart(title, 0, 0, true)
+    else           captStart(title, 640, 480, false)
+}
+
+func captStart(title String = "", in fullscreen bool = false) {
+    title_cstr *ubyte = title.cstr()
+    defer delete title_cstr
+    captStart(title_cstr, fullscreen)
+}
+
+func captStart(in title String, in width, height int, in fullscreen bool) {
+    title_cstr *ubyte = title.cstr()
+    defer delete title_cstr
+    captStart(title_cstr, width, height, fullscreen)
+}
+
+func captEnsurePrepared {
+    if _captain_prepared || captPrepare(), return
+    printf('RUNTIME ERROR: captPrepare() failed\n')
+    return
+}
+
+func captStart(in title *ubyte, in width, height int, in fullscreen bool) {
+    captEnsurePrepared()
+    
+    #if __macos__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #end
+    
+    unless _captain_resizable,    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE)
+    if _captain_always_on_top,    glfwWindowHint(GLFW_FLOATING, GL_TRUE)
+    if _captain_multisample != 0, glfwWindowHint(GLFW_SAMPLES, _captain_multisample)
+    
+    monitor *GLFWmonitor = null
+    if fullscreen, monitor = glfwGetPrimaryMonitor()
+    
+    if width == 0 && height == 0 {
+        video_mode *GLFWvidmode = glfwGetVideoMode(monitor)
+        width = video_mode.width
+        height = video_mode.height
+    }
+    
+    _captain_window = glfwCreateWindow(width, height, title, monitor, null)
+    
+    if _captain_window == null {
+        glfwTerminate()
+        return
+    }
+    
+    glfwMakeContextCurrent(_captain_window)
+    glfwSwapInterval(1)
+    openglInit()
+    
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    if _captain_multisample != 0, glEnable(GL_MULTISAMPLE)
+    
+    _captain_shader = CaptShader(embed "captain/v.glsl", embed "captain/f.glsl")
+    _captain_shader_transformation_location = _captain_shader.getUniformLocation('transformation')
+    _captain_model = CaptModel(1.0f, 1.0f)
+    
+    glfwGetFramebufferSize(_captain_window, undef win_width int, undef win_height int)
+    _captain_display_ratio = win_width as float / win_height as float
+    
+    glfwSetMouseButtonCallback(_captain_window, func &_captMouseCallback)
+    glfwSetKeyCallback(_captain_window, func &_captKeyCallback)
+    glfwSetCharCallback(_captain_window, func &_captCharCallback)
+    glfwSetScrollCallback(_captain_window, func &_captScrollCallback)
+    
+    _captain_font = CaptTexture(_captain_font_data.array, _captain_font_data.length, false)
+
+    unless _captain_custom_view, captDefaultView()    
+    if _captain_setup as ptr, _captain_setup()
+    
+    previous_time double = glfwGetTime()
+    projection Matrix4f
+
+    until glfwWindowShouldClose(_captain_window) {
+        if glfwGetTime() - previous_time > 1.0 / cast float _captain_step_fps {
+            if _captain_step as ptr, _captain_step()
+            previous_time += 1.0 / cast float _captain_step_fps
+        }
+        
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    
+        glfwGetFramebufferSize(_captain_window, &win_width, &win_height)
+        glViewport(0, 0, win_width, win_height)
+        _captain_display_ratio = win_width as float / win_height as float
+        
+        glfwGetWindowSize(_captain_window, undef real_win_width int, undef real_win_height int)
+        _captain_xdpi = win_width as float / real_win_width as float
+        _captain_ydpi = win_height as float / real_win_height as float
+        
+        unless _captain_custom_view, captDefaultView()
+        if _captain_view_preserve_ratio, _captain_view_width = _captain_view_height * _captain_display_ratio
+        
+        projection.ortho(0.0f, _captain_view_width, _captain_view_height, 0.0f, 1.0f, -1.0f)
+        
+        _captain_shader.use()
+        _captain_shader.uploadMatrix4f(_captain_shader.getUniformLocation('projection'), projection)
+        _captain_shader.uploadFloat(_captain_shader.getUniformLocation('opacity'), 1.0f)
+        
+        if _captain_draw as ptr, _captain_draw()
+        
+        glfwSwapBuffers(_captain_window)
+        glfwPollEvents()
+    }
+    
+    if _captain_exit as ptr, _captain_exit()
+    
+    _captain_font.destroy()
+    _captain_model.destroy()
+    _captain_shader.destroy()
+    
+    glfwDestroyWindow(_captain_window)
+    glfwTerminate()
+}
+
+func captDefaultView {
+    captCustomViewBasedOnHeight(480.0f)
+}
+
+func captViewWidth float  = _captain_view_width
+func captViewHeight float = _captain_view_height
+
+func captFrameWidth int {
+    glfwGetFramebufferSize(_captain_window, undef w int, undef h int)
+    return w
+}
+
+func captFrameHeight int {
+    glfwGetFramebufferSize(_captain_window, undef w int, undef h int)
+    return h
+}
+
+func captCustomView(width, height float) {
+    captEnsurePrepared()
+    _captain_view_width = width
+    _captain_view_height = height
+    _captain_custom_view = true
+    _captain_view_preserve_ratio = false
+}
+
+func captCustomViewBasedOnHeight(height float) {
+    captEnsurePrepared()
+    _captain_view_width = height * _captain_display_ratio
+    _captain_view_height = height
+    _captain_custom_view = true
+    _captain_view_preserve_ratio = true
+}
+
+func captMouseFramePosition(out x, y *float) {
+    glfwGetCursorPos(_captain_window, undef x_d double, undef y_d double)
+    *x = x_d as float * _captain_xdpi
+    *y = y_d as float * _captain_ydpi
+}
+
+func captMouseFramePosition(out x, y *double) {
+    glfwGetCursorPos(_captain_window, x, y)
+    *x *= _captain_xdpi
+    *y *= _captain_ydpi
+}
+
+func captMouseViewPosition(out x, y *float) {
+    glfwGetCursorPos(_captain_window, undef x_d double, undef y_d double)
+    *x = x_d as float * _captain_xdpi * captViewWidth() / captFrameWidth() as float
+    *y = y_d as float * _captain_ydpi * captViewHeight() / captFrameHeight() as float
+}
+
+func captResizable(resizable bool) {
+    captEnsurePrepared()
+    _captain_resizable = resizable
+}
+
+func captAlwaysOnTop(always_on_top bool) {
+    captEnsurePrepared()
+    _captain_always_on_top = always_on_top
+}
+
+func captMultisample(multisample_rate int) {
+    captEnsurePrepared()
+    _captain_multisample = multisample_rate
+}
+
+func captHideCursor(hide bool) {
+    captEnsurePrepared()
+    glfwSetInputMode(_captain_window, GLFW_CURSOR, hide ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL)
+}
+
+func captOnSetup(in on_setup_func func() void) {
+    captEnsurePrepared()
+    _captain_setup = on_setup_func
+}
+
+func captOnExit(in on_exit_func func() void) {
+    captEnsurePrepared()
+    _captain_exit = on_exit_func
+}
+
+func captOnDraw(in on_draw_func func() void) {
+    captEnsurePrepared()
+    _captain_draw = on_draw_func
+}
+
+func captOnStep(in on_step_func func() void) {
+    captEnsurePrepared()
+    _captain_step = on_step_func
+    _captain_step_fps = 60
+}
+
+func captOnStep(in on_step_func func() void, in step_fps uint) {
+    captEnsurePrepared()
+    _captain_step = on_step_func
+    _captain_step_fps = step_fps == 0 ? 1000000 : step_fps
+}
+
+func captOnClick(in on_click_func func(float, float, int) void, use_mouse_view_coords bool) {
+    captEnsurePrepared()
+    _captain_click = on_click_func
+    _captain_click_use_view_mouse = use_mouse_view_coords
+}
+
+func captOnRelease(in on_release_func func(float, float, int) void, use_mouse_view_coords bool) {
+    captEnsurePrepared()
+    _captain_release = on_release_func
+    _captain_release_use_view_mouse = use_mouse_view_coords
+}
+
+func captOnKey(in on_key_func func(int, int, int, int) void) {
+    captEnsurePrepared()
+    _captain_key = on_key_func
+}
+
+func captOnChar(in on_char_func func(uint) void) {
+    captEnsurePrepared()
+    _captain_char = on_char_func
+}
+
+func captOnScroll(in on_scroll_func func(float, float) void) {
+    captEnsurePrepared()
+    _captain_scroll = on_scroll_func
+}
+
+func captClearColor(in color CaptColor) {
+    glClearColor(color.r, color.g, color.b, color.a)
+    glClear(GL_COLOR_BUFFER_BIT)
+}
+
+func captBindTexture(texture POD CaptTexture) void {
+    glActiveTexture(GL_TEXTURE0)
+    glBindTexture(GL_TEXTURE_2D, texture.id)
+}
+
+func captDrawTexture(texture POD CaptTexture, in x, y, w, h float) {
+    transformation Matrix4f = undef
+    transformation.translateFromIdentity(x, y, 0.0f)
+    transformation.scale(w, h, 1.0f)
+    _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
+    captBindTexture(texture)
+    _captain_model.draw()
+}
+
+func captDrawTextureUsingModel(model POD CaptModel, texture POD CaptTexture, in x, y float) {
+    transformation Matrix4f = undef
+    transformation.translateFromIdentity(x, y, 0.0f)
+    _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
+    captBindTexture(texture)
+    model.draw()
+}
+
+func captDrawTextureUsingModelAndTransformation(model POD CaptModel, texture POD CaptTexture, transformation Matrix4f) {
+    _captain_shader.uploadMatrix4f(_captain_shader_transformation_location, transformation)
+    captBindTexture(texture)
+    model.draw()
+}
+
+func captDrawOpacity(in value float) {
+    _captain_shader.uploadFloat(_captain_shader.getUniformLocation('opacity'), value)
+}
+
+func captKeyHeld(key int) bool {
+    return glfwGetKey(_captain_window, key) == GLFW_PRESS
+}
+
+func captDrawTextureTiled(texture POD CaptTexture, startX, startY, tileW, tileH, fullW, fullH float) {
+    for x float = startX; x < startX + fullW; x += tileW,
+        for y float = startY; y < startY + fullH; y += tileH,
+            captDrawTexture(texture, x, y, tileW, tileH)
+}
