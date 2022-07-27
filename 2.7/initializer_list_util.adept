@@ -1,0 +1,7 @@
+
+import Array
+import array_util
+
+func toString(initializer_list <$T> InitializerList) String {
+    return toString(Array(initializer_list.__array__(), initializer_list.__length__()))
+}
