@@ -276,15 +276,15 @@ struct curl_version_info_data (
     gsasl_version *ubyte, /* human readable string. */
 )
 
-#define CURLINFO_STRING   0x100000
-#define CURLINFO_LONG     0x200000
-#define CURLINFO_DOUBLE   0x300000
-#define CURLINFO_SLIST    0x400000
-#define CURLINFO_PTR      0x400000 /* same as SLIST */
-#define CURLINFO_SOCKET   0x500000
-#define CURLINFO_OFF_T    0x600000
-#define CURLINFO_MASK     0x0fffff
-#define CURLINFO_TYPEMASK 0xf00000
+define CURLINFO_STRING   = 0x100000
+define CURLINFO_LONG     = 0x200000
+define CURLINFO_DOUBLE   = 0x300000
+define CURLINFO_SLIST    = 0x400000
+define CURLINFO_PTR      = 0x400000 /* same as SLIST */
+define CURLINFO_SOCKET   = 0x500000
+define CURLINFO_OFF_T    = 0x600000
+define CURLINFO_MASK     = 0x0fffff
+define CURLINFO_TYPEMASK = 0xf00000
 
 alias CURLINFO = int
 
