@@ -1,0 +1,698 @@
+
+// `curl/curl.adept` - Dynamically linked libcurl bindings
+
+#if __windows__
+    #runtime_resource "libcurl-x64.dll"
+    #runtime_resource "curl-ca-bundle.crt"
+
+    foreign "libcurl-x64.dll"
+
+    import 'windows/winsock.adept'
+
+    alias curl_off_t = long
+    alias curl_socklen_t = socklen_t
+    alias curl_socket_t = SOCKET
+    define CURL_SOCKET_BAD = INVALID_SOCKET
+#elif __unix__
+    foreign "curl" library
+
+    import 'unix/off_t.adept'
+    import 'unix/fd_set.adept'
+    import 'unix/socklen_t.adept'
+
+    alias curl_off_t = off_t
+    alias curl_socklen_t = socklen_t
+    alias curl_socket_t = int
+    define CURL_SOCKET_BAD = -1
+#else
+    #print_error "curl/curl.adept: Unsupported platform - This file only works on Windows and UNIX"
+    #halt
+#end
+
+import 'sys/ctime.adept'
+import 'sys/cstdio.adept'
+import "CURLoption.adept"
+
+struct CURL ()
+alias CURLM = CURL
+alias CURLSH = CURL
+struct curl_mime ()
+struct curl_mimepart ()
+struct curl_slist ()
+struct curl_pushheaders ()
+struct CURLU ()
+
+struct curl_httppost (
+    next *curl_httppost,              // Next entry in the list
+    name *ubyte,                      // Pointer to allocated name
+    namelength long,                  // Length of name length
+    contents *ubyte,                  // Pointer to allocated data contents
+    contentslength long,              // Length of contents field, see also CURL_HTTPPOST_LARGE
+    buffer *ubyte,                    // Pointer to allocated buffer contents
+    bufferlength long,                // Length of buffer field
+    contenttype *ubyte,               // Content-Type
+    contentheader *curl_slist,        // List of extra headers for this form
+    more *curl_httppost,              // If one field name has more than one file, this link should link to following files
+    flags long,                       // As defined below
+    showfilename *ubyte,              // The file name to show. If not set, the actual file name will be used (if this is a file part)
+    userp ptr,                        // Custom pointer used for HTTPPOST_CALLBACK posts
+    contentlen curl_off_t,            // Alternative length of contents field. Used if CURL_HTTPPOST_LARGE is set. Added in 7.46.0
+)
+
+define CURL_HTTPPOST_FILENAME = 1<<0 // specified content is a file name
+define CURL_HTTPPOST_READFILE = 1<<1 // specified content is a file name
+define CURL_HTTPPOST_PTRNAME = 1<<2 // Name is only stored pointer do not free in formfree
+define CURL_HTTPPOST_PTRCONTENTS = 1<<3 // Contents is only stored pointer do not free in formfree
+define CURL_HTTPPOST_BUFFER = 1<<4 // Upload file from buffer
+define CURL_HTTPPOST_PTRBUFFER = 1<<5 // Upload file from pointer contents
+define CURL_HTTPPOST_CALLBACK = 1<<6 // Upload file contents by using the regular read callback to get the data and pass the given pointer as custom pointer
+define CURL_HTTPPOST_LARGE = 1<<7 // Use size in 'contentlen', added in 7.46.0
+
+foreign enum CURLcode (
+    CURLE_OK,
+    CURLE_UNSUPPORTED_PROTOCOL,    // 1
+    CURLE_FAILED_INIT,             // 2
+    CURLE_URL_MALFORMAT,           // 3
+    CURLE_NOT_BUILT_IN,            /* 4 - [was obsoleted in August 2007 for 7.17.0, reused in April 2011 for 7.21.5] */
+    CURLE_COULDNT_RESOLVE_PROXY,   // 5
+    CURLE_COULDNT_RESOLVE_HOST,    // 6
+    CURLE_COULDNT_CONNECT,         // 7
+    CURLE_WEIRD_SERVER_REPLY,      // 8
+    CURLE_REMOTE_ACCESS_DENIED,    // 9 a service was denied by the server due to lack of access - when login fails this is not returned.
+    CURLE_FTP_ACCEPT_FAILED,       // 10 - [was obsoleted in April 2006 for 7.15.4, reused in Dec 2011 for 7.24.0
+    CURLE_FTP_WEIRD_PASS_REPLY,    // 11
+    CURLE_FTP_ACCEPT_TIMEOUT,      // 12 - timeout occurred accepting server [was obsoleted in August 2007 for 7.17.0, reused in Dec 2011 for 7.24.0
+    CURLE_FTP_WEIRD_PASV_REPLY,    // 13
+    CURLE_FTP_WEIRD_227_FORMAT,    // 14
+    CURLE_FTP_CANT_GET_HOST,       // 15
+    CURLE_HTTP2,                   // 16 - A problem in the http2 framing layer.  [was obsoleted in August 2007 for 7.17.0, reused in July 2014 for 7.38.0]
+    CURLE_FTP_COULDNT_SET_TYPE,    // 17
+    CURLE_PARTIAL_FILE,            // 18
+    CURLE_FTP_COULDNT_RETR_FILE,   // 19
+    CURLE_OBSOLETE20,              // 20 - NOT USED
+    CURLE_QUOTE_ERROR,             // 21 - quote command failure
+    CURLE_HTTP_RETURNED_ERROR,     // 22
+    CURLE_WRITE_ERROR,             // 23
+    CURLE_OBSOLETE24,              // 24 - NOT USED
+    CURLE_UPLOAD_FAILED,           // 25 - failed upload "command"
+    CURLE_READ_ERROR,              // 26 - couldn't open/read from file
+    CURLE_OUT_OF_MEMORY,           // 27
+    CURLE_OPERATION_TIMEDOUT,      // 28 - the timeout time was reached
+    CURLE_OBSOLETE29,              // 29 - NOT USED
+    CURLE_FTP_PORT_FAILED,         // 30 - FTP PORT operation failed
+    CURLE_FTP_COULDNT_USE_REST,    // 31 - the REST command failed
+    CURLE_OBSOLETE32,              // 32 - NOT USED
+    CURLE_RANGE_ERROR,             // 33 - RANGE "command" didn't work
+    CURLE_HTTP_POST_ERROR,         // 34
+    CURLE_SSL_CONNECT_ERROR,       // 35 - wrong when connecting with SSL
+    CURLE_BAD_DOWNLOAD_RESUME,     // 36 - couldn't resume download
+    CURLE_FILE_COULDNT_READ_FILE,  // 37
+    CURLE_LDAP_CANNOT_BIND,        // 38
+    CURLE_LDAP_SEARCH_FAILED,      // 39
+    CURLE_OBSOLETE40,              // 40 - NOT USED
+    CURLE_FUNCTION_NOT_FOUND,      // 41 - NOT USED starting with 7.53.0
+    CURLE_ABORTED_BY_CALLBACK,     // 42
+    CURLE_BAD_FUNCTION_ARGUMENT,   // 43
+    CURLE_OBSOLETE44,              // 44 - NOT USED
+    CURLE_INTERFACE_FAILED,        // 45 - CURLOPT_INTERFACE failed
+    CURLE_OBSOLETE46,              // 46 - NOT USED
+    CURLE_TOO_MANY_REDIRECTS,      // 47 - catch endless re-direct loops
+    CURLE_UNKNOWN_OPTION,          // 48 - User specified an unknown option
+    CURLE_SETOPT_OPTION_SYNTAX,    // 49 - Malformed setopt option
+    CURLE_OBSOLETE50,              // 50 - NOT USED
+    CURLE_OBSOLETE51,              // 51 - NOT USED
+    CURLE_GOT_NOTHING,             // 52 - when this is a specific error
+    CURLE_SSL_ENGINE_NOTFOUND,     // 53 - SSL crypto engine not found
+    CURLE_SSL_ENGINE_SETFAILED,    // 54 - can not set SSL crypto engine as default
+    CURLE_SEND_ERROR,              // 55 - failed sending network data
+    CURLE_RECV_ERROR,              // 56 - failure in receiving network data
+    CURLE_OBSOLETE57,              // 57 - NOT IN USE
+    CURLE_SSL_CERTPROBLEM,         // 58 - problem with the local certificate
+    CURLE_SSL_CIPHER,              // 59 - couldn't use specified cipher
+    CURLE_PEER_FAILED_VERIFICATION, // 60 - peer's certificate or fingerprint wasn't verified fine
+    CURLE_BAD_CONTENT_ENCODING,    // 61 - Unrecognized/bad encoding
+    CURLE_OBSOLETE62,              // 62 - NOT IN USE since 7.82.0
+    CURLE_FILESIZE_EXCEEDED,       // 63 - Maximum file size exceeded
+    CURLE_USE_SSL_FAILED,          // 64 - Requested FTP SSL level failed
+    CURLE_SEND_FAIL_REWIND,        // 65 - Sending the data requires a rewind that failed
+    CURLE_SSL_ENGINE_INITFAILED,   // 66 - failed to initialise ENGINE
+    CURLE_LOGIN_DENIED,            // 67 - user, password or similar was not accepted and we failed to login
+    CURLE_TFTP_NOTFOUND,           // 68 - file not found on server
+    CURLE_TFTP_PERM,               // 69 - permission problem on server
+    CURLE_REMOTE_DISK_FULL,        // 70 - out of disk space on server
+    CURLE_TFTP_ILLEGAL,            // 71 - Illegal TFTP operation
+    CURLE_TFTP_UNKNOWNID,          // 72 - Unknown transfer ID
+    CURLE_REMOTE_FILE_EXISTS,      // 73 - File already exists
+    CURLE_TFTP_NOSUCHUSER,         // 74 - No such user
+    CURLE_OBSOLETE75,              // 75 - NOT IN USE since 7.82.0
+    CURLE_OBSOLETE76,              // 76 - NOT IN USE since 7.82.0
+    CURLE_SSL_CACERT_BADFILE,      // 77 - could not load CACERT file, missing or wrong format
+    CURLE_REMOTE_FILE_NOT_FOUND,   // 78 - remote file not found
+    CURLE_SSH,                     // 79 - error from the SSH layer, somewhat generic so the error message will be of interest when this has happened
+    CURLE_SSL_SHUTDOWN_FAILED,     // 80 - Failed to shut down the SSL connection
+    CURLE_AGAIN,                   // 81 - socket is not ready for send/recv, wait till it's ready and try again (Added in 7.18.2)
+    CURLE_SSL_CRL_BADFILE,         // 82 - could not load CRL file, missing or wrong format (Added in 7.19.0)
+    CURLE_SSL_ISSUER_ERROR,        // 83 - Issuer check failed.  (Added in 7.19.0)
+    CURLE_FTP_PRET_FAILED,         // 84 - a PRET command failed
+    CURLE_RTSP_CSEQ_ERROR,         // 85 - mismatch of RTSP CSeq numbers
+    CURLE_RTSP_SESSION_ERROR,      // 86 - mismatch of RTSP Session Ids
+    CURLE_FTP_BAD_FILE_LIST,       // 87 - unable to parse FTP file list
+    CURLE_CHUNK_FAILED,            // 88 - chunk callback reported error
+    CURLE_NO_CONNECTION_AVAILABLE, // 89 - No connection available, the session will be queued
+    CURLE_SSL_PINNEDPUBKEYNOTMATCH, // 90 - specified pinned public key did not match
+    CURLE_SSL_INVALIDCERTSTATUS,   // 91 - invalid certificate status
+    CURLE_HTTP2_STREAM,            // 92 - stream error in HTTP/2 framing layer
+    CURLE_RECURSIVE_API_CALL,      // 93 - an api function was called from inside a callback
+    CURLE_AUTH_ERROR,              // 94 - an authentication function returned an error
+    CURLE_HTTP3,                   // 95 - An HTTP/3 layer problem
+    CURLE_QUIC_CONNECT_ERROR,      // 96 - QUIC connection error
+    CURLE_PROXY,                   // 97 - proxy handshake error
+    CURLE_SSL_CLIENTCERT,          // 98 - client-side certificate required
+    CURLE_UNRECOVERABLE_POLL,      // 99 - poll/select returned fatal error
+    CURL_LAST // never use!
+)
+
+define CURLOPTTYPE_LONG          = 0
+define CURLOPTTYPE_OBJECTPOINT   = 10000
+define CURLOPTTYPE_FUNCTIONPOINT = 20000
+define CURLOPTTYPE_OFF_T         = 30000
+define CURLOPTTYPE_BLOB          = 40000
+
+foreign enum CURLversion (
+    CURLVERSION_FIRST,
+    CURLVERSION_SECOND,
+    CURLVERSION_THIRD,
+    CURLVERSION_FOURTH,
+    CURLVERSION_FIFTH,
+    CURLVERSION_SIXTH,
+    CURLVERSION_SEVENTH,
+    CURLVERSION_EIGHTH,
+    CURLVERSION_NINTH,
+    CURLVERSION_TENTH,
+    CURLVERSION_LAST /* never actually use this */
+)
+
+struct curl_header (
+    name ubyte,    // This might not use the same case
+    value *ubyte,
+    amount usize,  // Number of headers using this name 
+    index usize,   // ... of this instance, 0 or higher
+    origin uint,   // See bits below
+    anchor ptr     // Handle privately used by libcurl
+)
+
+foreign enum CURLHcode (
+    CURLHE_OK,
+    CURLHE_BADINDEX,      // Header exists but not with this index
+    CURLHE_MISSING,       // No such header exists
+    CURLHE_NOHEADERS,     // No headers at all exist (yet)
+    CURLHE_NOREQUEST,     // No request with this number was used
+    CURLHE_OUT_OF_MEMORY, // Out of memory while processing
+    CURLHE_BAD_ARGUMENT,  // A function argument was not okay
+    CURLHE_NOT_BUILT_IN   // If API was disabled in the build
+)
+
+// 'origin' bits
+define CURLH_HEADER    = 1<<0 // Plain server header
+define CURLH_TRAILER   = 1<<1 // Trailers
+define CURLH_CONNECT   = 1<<2 // CONNECT headers
+define CURLH_1XX       = 1<<3 // 1xx headers
+define CURLH_PSEUDO    = 1<<4 // Pseudo headers
+
+foreign enum curl_easytype (
+    CURLOT_LONG,    // Long (a range of values)
+    CURLOT_VALUES,  //      (a defined set or bitmask)
+    CURLOT_OFF_T,   // curl_off_t (a range of values)
+    CURLOT_OBJECT,  // Pointer (void *)
+    CURLOT_STRING,  //         (char * to zero terminated buffer)
+    CURLOT_SLIST,   //         (struct curl_slist *)
+    CURLOT_CBPTR,   //         (void * passed as-is to a callback)
+    CURLOT_BLOB,    // Blob (struct curl_blob *)
+    CURLOT_FUNCTION // Function pointer
+)
+
+struct curl_easyoption (
+    name *ubyte,
+    id CURLoption,
+    type curl_easytype,
+    flags uint
+)
+
+struct curl_version_info_data (
+    age CURLversion,      /* age of the returned struct */
+    version *ubyte,       /* LIBCURL_VERSION */
+    version_num uint,     /* LIBCURL_VERSION_NUM */
+    host *ubyte,          /* OS/host/cpu/machine when configured */
+    features int,         /* bitmask, see defines below */
+    ssl_version *ubyte,   /* human readable string */
+    ssl_version_num long, /* not used anymore, always 0 */
+    libz_version *ubyte,  /* human readable string */
+    protocols **ubyte,    /* protocols is terminated by an entry with a NULL protoname */
+    /* The fields below this were added in CURLVERSION_SECOND */
+    ares *ubyte,
+    ares_num int,
+    /* This field was added in CURLVERSION_THIRD */
+    libidn *ubyte,
+    /* These field were added in CURLVERSION_FOURTH */
+    /* Same as '_libiconv_version' if built with HAVE_ICONV */
+    iconv_ver_num int,
+    libssh_version *ubyte, /* human readable string */
+    /* These fields were added in CURLVERSION_FIFTH */
+    brotli_ver_num uint,   /* Numeric Brotli version (MAJOR << 24) | (MINOR << 12) | PATCH */
+    brotli_version *ubyte, /* human readable string. */
+    /* These fields were added in CURLVERSION_SIXTH */
+    nghttp2_ver_num uint,   /* Numeric nghttp2 version (MAJOR << 16) | (MINOR << 8) | PATCH */
+    nghttp2_version *ubyte, /* human readable string. */
+    quic_version *ubyte,    /* human readable quic (+ HTTP/3) library + version or NULL */
+    /* These fields were added in CURLVERSION_SEVENTH */
+    cainfo *ubyte,       /* the built-in default CURLOPT_CAINFO, might be NULL */
+    capath *ubyte,       /* the built-in default CURLOPT_CAPATH, might be NULL */
+    /* These fields were added in CURLVERSION_EIGHTH */
+    zstd_ver_num uint,   /* Numeric Zstd version (MAJOR << 24) | (MINOR << 12) | PATCH */
+    zstd_version *ubyte, /* human readable string. */
+    /* These fields were added in CURLVERSION_NINTH */
+    hyper_version *ubyte, /* human readable string. */
+    /* These fields were added in CURLVERSION_TENTH */
+    gsasl_version *ubyte, /* human readable string. */
+)
+
+#define CURLINFO_STRING   0x100000
+#define CURLINFO_LONG     0x200000
+#define CURLINFO_DOUBLE   0x300000
+#define CURLINFO_SLIST    0x400000
+#define CURLINFO_PTR      0x400000 /* same as SLIST */
+#define CURLINFO_SOCKET   0x500000
+#define CURLINFO_OFF_T    0x600000
+#define CURLINFO_MASK     0x0fffff
+#define CURLINFO_TYPEMASK 0xf00000
+
+alias CURLINFO = int
+
+define CURLINFO_NONE = 0 /* first, never use this */
+define CURLINFO_EFFECTIVE_URL    = CURLINFO_STRING + 1
+define CURLINFO_RESPONSE_CODE    = CURLINFO_LONG   + 2
+define CURLINFO_TOTAL_TIME       = CURLINFO_DOUBLE + 3
+define CURLINFO_NAMELOOKUP_TIME  = CURLINFO_DOUBLE + 4
+define CURLINFO_CONNECT_TIME     = CURLINFO_DOUBLE + 5
+define CURLINFO_PRETRANSFER_TIME = CURLINFO_DOUBLE + 6
+define CURLINFO_SIZE_UPLOAD      = CURLINFO_DOUBLE + 7
+define CURLINFO_SIZE_UPLOAD_T    = CURLINFO_OFF_T  + 7
+define CURLINFO_SIZE_DOWNLOAD    = CURLINFO_DOUBLE + 8
+define CURLINFO_SIZE_DOWNLOAD_T  = CURLINFO_OFF_T  + 8
+define CURLINFO_SPEED_DOWNLOAD   = CURLINFO_DOUBLE + 9
+define CURLINFO_SPEED_DOWNLOAD_T = CURLINFO_OFF_T  + 9
+define CURLINFO_SPEED_UPLOAD     = CURLINFO_DOUBLE + 10
+define CURLINFO_SPEED_UPLOAD_T   = CURLINFO_OFF_T  + 10
+define CURLINFO_HEADER_SIZE      = CURLINFO_LONG   + 11
+define CURLINFO_REQUEST_SIZE     = CURLINFO_LONG   + 12
+define CURLINFO_SSL_VERIFYRESULT = CURLINFO_LONG   + 13
+define CURLINFO_FILETIME         = CURLINFO_LONG   + 14
+define CURLINFO_FILETIME_T       = CURLINFO_OFF_T  + 14
+define CURLINFO_CONTENT_LENGTH_DOWNLOAD   = CURLINFO_DOUBLE + 15
+define CURLINFO_CONTENT_LENGTH_DOWNLOAD_T = CURLINFO_OFF_T  + 15
+define CURLINFO_CONTENT_LENGTH_UPLOAD     = CURLINFO_DOUBLE + 16
+define CURLINFO_CONTENT_LENGTH_UPLOAD_T   = CURLINFO_OFF_T  + 16
+define CURLINFO_STARTTRANSFER_TIME = CURLINFO_DOUBLE + 17
+define CURLINFO_CONTENT_TYPE     = CURLINFO_STRING + 18
+define CURLINFO_REDIRECT_TIME    = CURLINFO_DOUBLE + 19
+define CURLINFO_REDIRECT_COUNT   = CURLINFO_LONG   + 20
+define CURLINFO_PRIVATE          = CURLINFO_STRING + 21
+define CURLINFO_HTTP_CONNECTCODE = CURLINFO_LONG   + 22
+define CURLINFO_HTTPAUTH_AVAIL   = CURLINFO_LONG   + 23
+define CURLINFO_PROXYAUTH_AVAIL  = CURLINFO_LONG   + 24
+define CURLINFO_OS_ERRNO         = CURLINFO_LONG   + 25
+define CURLINFO_NUM_CONNECTS     = CURLINFO_LONG   + 26
+define CURLINFO_SSL_ENGINES      = CURLINFO_SLIST  + 27
+define CURLINFO_COOKIELIST       = CURLINFO_SLIST  + 28
+define CURLINFO_LASTSOCKET       = CURLINFO_LONG   + 29
+define CURLINFO_FTP_ENTRY_PATH   = CURLINFO_STRING + 30
+define CURLINFO_REDIRECT_URL     = CURLINFO_STRING + 31
+define CURLINFO_PRIMARY_IP       = CURLINFO_STRING + 32
+define CURLINFO_APPCONNECT_TIME  = CURLINFO_DOUBLE + 33
+define CURLINFO_CERTINFO         = CURLINFO_PTR    + 34
+define CURLINFO_CONDITION_UNMET  = CURLINFO_LONG   + 35
+define CURLINFO_RTSP_SESSION_ID  = CURLINFO_STRING + 36
+define CURLINFO_RTSP_CLIENT_CSEQ = CURLINFO_LONG   + 37
+define CURLINFO_RTSP_SERVER_CSEQ = CURLINFO_LONG   + 38
+define CURLINFO_RTSP_CSEQ_RECV   = CURLINFO_LONG   + 39
+define CURLINFO_PRIMARY_PORT     = CURLINFO_LONG   + 40
+define CURLINFO_LOCAL_IP         = CURLINFO_STRING + 41
+define CURLINFO_LOCAL_PORT       = CURLINFO_LONG   + 42
+define CURLINFO_TLS_SESSION      = CURLINFO_PTR    + 43
+define CURLINFO_ACTIVESOCKET     = CURLINFO_SOCKET + 44
+define CURLINFO_TLS_SSL_PTR      = CURLINFO_PTR    + 45
+define CURLINFO_HTTP_VERSION     = CURLINFO_LONG   + 46
+define CURLINFO_PROXY_SSL_VERIFYRESULT = CURLINFO_LONG + 47
+define CURLINFO_PROTOCOL         = CURLINFO_LONG   + 48
+define CURLINFO_SCHEME           = CURLINFO_STRING + 49
+define CURLINFO_TOTAL_TIME_T     = CURLINFO_OFF_T + 50
+define CURLINFO_NAMELOOKUP_TIME_T = CURLINFO_OFF_T + 51
+define CURLINFO_CONNECT_TIME_T   = CURLINFO_OFF_T + 52
+define CURLINFO_PRETRANSFER_TIME_T = CURLINFO_OFF_T + 53
+define CURLINFO_STARTTRANSFER_TIME_T = CURLINFO_OFF_T + 54
+define CURLINFO_REDIRECT_TIME_T  = CURLINFO_OFF_T + 55
+define CURLINFO_APPCONNECT_TIME_T = CURLINFO_OFF_T + 56
+define CURLINFO_RETRY_AFTER      = CURLINFO_OFF_T + 57
+define CURLINFO_EFFECTIVE_METHOD = CURLINFO_STRING + 58
+define CURLINFO_PROXY_ERROR      = CURLINFO_LONG + 59
+define CURLINFO_REFERER          = CURLINFO_STRING + 60
+define CURLINFO_CAINFO           = CURLINFO_STRING + 61
+define CURLINFO_CAPATH           = CURLINFO_STRING + 62
+define CURLINFO_LASTONE          = 62
+
+foreign enum CURLFORMcode (
+    CURL_FORMADD_OK, /* first, no error */
+    CURL_FORMADD_MEMORY,
+    CURL_FORMADD_OPTION_TWICE,
+    CURL_FORMADD_NULL,
+    CURL_FORMADD_UNKNOWN_OPTION,
+    CURL_FORMADD_INCOMPLETE,
+    CURL_FORMADD_ILLEGAL_ARRAY,
+    CURL_FORMADD_DISABLED, /* libcurl was built with this disabled */
+    CURL_FORMADD_LAST /* last */
+)
+
+/* enum for the different supported SSL backends */
+foreign enum curl_sslbackend (
+    CURLSSLBACKEND_NONE,
+    CURLSSLBACKEND_OPENSSL,
+    CURLSSLBACKEND_GNUTLS,
+    CURLSSLBACKEND_NSS,
+    CURLSSLBACKEND_OBSOLETE4,  /* Was QSOSSL. */
+    CURLSSLBACKEND_GSKIT,
+    CURLSSLBACKEND_POLARSSL,
+    CURLSSLBACKEND_WOLFSSL,
+    CURLSSLBACKEND_SCHANNEL,
+    CURLSSLBACKEND_SECURETRANSPORT,
+    CURLSSLBACKEND_AXTLS, /* never used since 7.63.0 */
+    CURLSSLBACKEND_MBEDTLS,
+    CURLSSLBACKEND_MESALINK,
+    CURLSSLBACKEND_BEARSSL,
+    CURLSSLBACKEND_RUSTLS
+)
+
+struct curl_ssl_backend (id curl_sslbackend, name *ubyte)
+
+foreign enum CURLsslset (
+    CURLSSLSET_OK,
+    CURLSSLSET_UNKNOWN_BACKEND,
+    CURLSSLSET_TOO_LATE,
+    CURLSSLSET_NO_BACKENDS /* libcurl was built without any SSL support */
+)
+
+/* These are the return codes for the seek callbacks */
+define CURL_SEEKFUNC_OK       = 0
+define CURL_SEEKFUNC_FAIL     = 1 /* fail the entire transfer */
+define CURL_SEEKFUNC_CANTSEEK = 2 /* tell libcurl seeking can't be done, so libcurl might try other means instead */
+alias curl_seek_callback = func(/*instream*/ ptr, /*offset*/ curl_off_t, /*origin*/ int) int
+
+alias curl_read_callback = func(/*buffer*/ *ubyte, /*size*/ usize, /*nitems*/ usize, /*instream*/ ptr) usize
+
+alias curl_malloc_callback = func(usize) ptr
+alias curl_free_callback = func(ptr) void
+alias curl_realloc_callback = func(ptr, usize) ptr
+alias curl_strdup_callback = func(*ubyte) *ubyte
+alias curl_calloc_callback = func(usize, usize) ptr
+
+alias curl_formget_callback = func(ptr, *ubyte, usize) usize
+
+foreign enum CURLSHoption (
+    CURLSHOPT_NONE,       /* don't use */
+    CURLSHOPT_SHARE,      /* specify a data type to share */
+    CURLSHOPT_UNSHARE,    /* specify which data type to stop sharing */
+    CURLSHOPT_LOCKFUNC,   /* pass in a 'curl_lock_function' pointer */
+    CURLSHOPT_UNLOCKFUNC, /* pass in a 'curl_unlock_function' pointer */
+    CURLSHOPT_USERDATA,   /* pass in a user data pointer used in the lock/unlock callback functions */
+    CURLSHOPT_LAST        /* never use */
+)
+
+foreign enum CURLSHcode (
+  CURLSHE_OK,           /* all is fine */
+  CURLSHE_BAD_OPTION,   /* 1 */
+  CURLSHE_IN_USE,       /* 2 */
+  CURLSHE_INVALID,      /* 3 */
+  CURLSHE_NOMEM,        /* 4 out of memory */
+  CURLSHE_NOT_BUILT_IN, /* 5 feature not present in lib */
+  CURLSHE_LAST          /* never use */
+)
+
+// Name: curl_push_callback
+//
+// Desc: This callback gets called when a new stream is being pushed by the
+//       server. It approves or denies the new stream. It can also decide
+//       to completely fail the connection.
+//
+// Returns: CURL_PUSH_OK, CURL_PUSH_DENY or CURL_PUSH_ERROROUT
+alias curl_push_callback = func(/*parent*/ *CURL, /*easy*/ *CURL, /*num_headers*/ usize, /*headers*/ *curl_pushheaders, /*userp*/ ptr) int
+
+define CURL_PUSH_OK       = 0
+define CURL_PUSH_DENY     = 1
+define CURL_PUSH_ERROROUT = 2 /* added in 7.72.0 */
+
+alias CURLMcode = int
+
+define CURLM_CALL_MULTI_PERFORM = -1 as CURLMcode    /* please call curl_multi_perform() or curl_multi_socket*() soon */
+define CURLM_OK = 0 as CURLMcode
+define CURLM_BAD_HANDLE = 1 as CURLMcode             /* the passed-in handle is not a valid CURLM handle */
+define CURLM_BAD_EASY_HANDLE = 2 as CURLMcode        /* an easy handle was not good/valid */
+define CURLM_OUT_OF_MEMORY = 3 as CURLMcode          /* if you ever get this, you're in deep sh*t */
+define CURLM_INTERNAL_ERROR = 4 as CURLMcode         /* this is a libcurl bug */
+define CURLM_BAD_SOCKET = 5 as CURLMcode             /* the passed in socket argument did not match */
+define CURLM_UNKNOWN_OPTION = 6 as CURLMcode         /* curl_multi_setopt() with unsupported option */
+define CURLM_ADDED_ALREADY = 7 as CURLMcode          /* an easy handle already added to a multi handle was attempted to get added - again */
+define CURLM_RECURSIVE_API_CALL = 8 as CURLMcode     /* an api function was called from inside a callback */
+define CURLM_WAKEUP_FAILURE = 9 as CURLMcode         /* wakeup is unavailable or failed */
+define CURLM_BAD_FUNCTION_ARGUMENT = 10 as CURLMcode /* function called with a bad parameter */
+define CURLM_ABORTED_BY_CALLBACK = 11 as CURLMcode
+define CURLM_UNRECOVERABLE_POLL = 12 as CURLMcode
+define CURLM_LAST = (CURLM_UNRECOVERABLE_POLL + 1) as CURLMcode
+
+// just to make code nicer when using curl_multi_socket() you can now check
+// for CURLM_CALL_MULTI_SOCKET too in the same style it works for
+// curl_multi_perform() and CURLM_CALL_MULTI_PERFORM 
+define CURLM_CALL_MULTI_SOCKET = CURLM_CALL_MULTI_PERFORM
+
+/* bitmask bits for CURLMOPT_PIPELINING */
+define CURLPIPE_NOTHING   = 0
+define CURLPIPE_HTTP1     = 1
+define CURLPIPE_MULTIPLEX = 2
+
+foreign enum CURLMSG (
+    CURLMSG_NONE, /* first, not used */
+    CURLMSG_DONE, /* This easy handle has completed. 'result' contains the CURLcode of the transfer */
+    CURLMSG_LAST  /* last, not used */
+)
+
+struct CURLMsg (
+    msg CURLMSG,         /* what this message means */
+    easy_handle *CURL,   /* the handle it concerns */
+    data union (
+        whatever ptr,    /* message-specific data */
+        result CURLcode  /* return code for transfer */
+    )
+)
+
+/* Based on poll(2) structure and values.  We don't use pollfd and POLL* constants explicitly to cover platforms without poll(). */
+define CURL_WAIT_POLLIN    = 0x0001
+define CURL_WAIT_POLLPRI   = 0x0002
+define CURL_WAIT_POLLOUT   = 0x0004
+
+struct curl_waitfd (
+    fd short,
+    events short,
+    revents curl_socket_t /* not supported yet */
+)
+
+/*
+ * Name:    curl_multi_socket() and
+ *          curl_multi_socket_all()
+ *
+ * Desc:    An alternative version of curl_multi_perform() that allows the
+ *          application to pass in one of the file descriptors that have been
+ *          detected to have "action" on them and let libcurl perform.
+ *          See man page for details.
+ */
+define CURL_POLL_NONE   = 0
+define CURL_POLL_IN     = 1
+define CURL_POLL_OUT    = 2
+define CURL_POLL_INOUT  = 3
+define CURL_POLL_REMOVE = 4
+
+define CURL_SOCKET_TIMEOUT = CURL_SOCKET_BAD
+
+define CURL_CSELECT_IN   = 0x01
+define CURL_CSELECT_OUT  = 0x02
+define CURL_CSELECT_ERR  = 0x04
+
+alias curl_socket_callback = func(/*easy*/ *CURL, /*s*/ curl_socket_t, /*what*/ int, /*userp*/ ptr, /*socketp*/ ptr) int
+
+/* the error codes for the URL API */
+foreign enum CURLUcode (
+    CURLUE_OK,
+    CURLUE_BAD_HANDLE,
+    CURLUE_BAD_PARTPOINTER,
+    CURLUE_MALFORMED_INPUT,
+    CURLUE_BAD_PORT_NUMBER,
+    CURLUE_UNSUPPORTED_SCHEME,
+    CURLUE_URLDECODE,
+    CURLUE_OUT_OF_MEMORY,
+    CURLUE_USER_NOT_ALLOWED,
+    CURLUE_UNKNOWN_PART,
+    CURLUE_NO_SCHEME,
+    CURLUE_NO_USER,
+    CURLUE_NO_PASSWORD,
+    CURLUE_NO_OPTIONS,
+    CURLUE_NO_HOST,
+    CURLUE_NO_PORT,
+    CURLUE_NO_QUERY,
+    CURLUE_NO_FRAGMENT,
+    CURLUE_NO_ZONEID,
+    CURLUE_BAD_FILE_URL,
+    CURLUE_BAD_FRAGMENT,
+    CURLUE_BAD_HOSTNAME,
+    CURLUE_BAD_IPV6,
+    CURLUE_BAD_LOGIN,
+    CURLUE_BAD_PASSWORD,
+    CURLUE_BAD_PATH,
+    CURLUE_BAD_QUERY,
+    CURLUE_BAD_SCHEME,
+    CURLUE_BAD_SLASHES,
+    CURLUE_BAD_USER,
+    CURLUE_LAST
+)
+
+foreign enum CURLUPart (
+    CURLUPART_URL,
+    CURLUPART_SCHEME,
+    CURLUPART_USER,
+    CURLUPART_PASSWORD,
+    CURLUPART_OPTIONS,
+    CURLUPART_HOST,
+    CURLUPART_PORT,
+    CURLUPART_PATH,
+    CURLUPART_QUERY,
+    CURLUPART_FRAGMENT,
+    CURLUPART_ZONEID /* added in 7.65.0 */
+)
+
+define CURLU_DEFAULT_PORT = 1<<0       // Return default port number
+define CURLU_NO_DEFAULT_PORT = 1<<1    // Act as if no port number was set, if the port number matches the default for the scheme
+define CURLU_DEFAULT_SCHEME = 1<<2     // Return default scheme if missing
+define CURLU_NON_SUPPORT_SCHEME = 1<<3 // Allow non-supported scheme
+define CURLU_PATH_AS_IS = 1<<4         // Leave dot sequences
+define CURLU_DISALLOW_USER = 1<<5      // No user+password allowed
+define CURLU_URLDECODE = 1<<6          // URL decode on get
+define CURLU_URLENCODE = 1<<7          // URL encode on set
+define CURLU_APPENDQUERY = 1<<8        // Append a form style part
+define CURLU_GUESS_SCHEME = 1<<9       // Legacy curl-style guessing
+define CURLU_NO_AUTHORITY = 1<<10      // Allow empty authority when the scheme is unknown.
+define CURLU_ALLOW_SPACE = 1<<11       // Allow spaces in the URL
+
+alias CURLMoption = int
+
+define CURLMOPT_SOCKETFUNCTION = CURLOPTTYPE_FUNCTIONPOINT + 1 // This is the socket callback function pointer
+define CURLMOPT_SOCKETDATA = CURLOPTTYPE_OBJECTPOINT + 2 // This is the argument passed to the socket callback
+define CURLMOPT_PIPELINING = CURLOPTTYPE_LONG + 3 // set to 1 to enable pipelining for this multi handle
+define CURLMOPT_TIMERFUNCTION = CURLOPTTYPE_FUNCTIONPOINT + 4 // This is the timer callback function pointer
+define CURLMOPT_TIMERDATA = CURLOPTTYPE_OBJECTPOINT + 5 // This is the argument passed to the timer callback
+define CURLMOPT_MAXCONNECTS = CURLOPTTYPE_LONG + 6 // maximum number of entries in the connection cache
+define CURLMOPT_MAX_HOST_CONNECTIONS = CURLOPTTYPE_LONG + 7 // maximum number of (pipelining) connections to one host
+define CURLMOPT_MAX_PIPELINE_LENGTH = CURLOPTTYPE_LONG + 8 // maximum number of requests in a pipeline
+define CURLMOPT_CONTENT_LENGTH_PENALTY_SIZE = CURLOPTTYPE_OFF_T + 9 // a connection with a content-length longer than this will not be considered for pipelining
+define CURLMOPT_CHUNK_LENGTH_PENALTY_SIZE = CURLOPTTYPE_OFF_T + 10 // a connection with a chunk length longer than this will not be considered for pipelining
+define CURLMOPT_PIPELINING_SITE_BL = CURLOPTTYPE_OBJECTPOINT + 11 // a list of site names(+port) that are blocked from pipelining
+define CURLMOPT_PIPELINING_SERVER_BL = CURLOPTTYPE_OBJECTPOINT + 12 // a list of server types that are blocked from pipelining
+define CURLMOPT_MAX_TOTAL_CONNECTIONS = CURLOPTTYPE_LONG + 13 // maximum number of open connections in total
+define CURLMOPT_PUSHFUNCTION = CURLOPTTYPE_FUNCTIONPOINT + 14 // This is the server push callback function pointer
+define CURLMOPT_PUSHDATA = CURLOPTTYPE_OBJECTPOINT + 15 // This is the argument passed to the server push callback
+define CURLMOPT_MAX_CONCURRENT_STREAMS = CURLOPTTYPE_LONG + 16 // maximum number of concurrent streams to support on a connection
+define CURLMOPT_LASTENTRY = CURLMOPT_MAX_CONCURRENT_STREAMS + 1  // the last unused
+
+foreign curl_easy_cleanup(curl *CURL) void
+foreign curl_easy_duphandle(handle *CURL) *CURL
+foreign curl_easy_escape(curl *CURL, string *ubyte, length int) *ubyte
+foreign curl_easy_getinfo(curl *CURL, info CURLINFO, ...) CURLcode
+foreign curl_easy_header(easy *CURL, name *ubyte, index usize, origin uint, request int, hout **curl_header) CURLHcode
+foreign curl_easy_init() *CURL
+foreign curl_easy_nextheader(easy *CURL, origin uint, request int, prev *curl_header) *curl_header
+foreign curl_easy_option_by_id(id CURLoption) *curl_easyoption
+foreign curl_easy_option_by_name(name *ubyte) *curl_easyoption
+foreign curl_easy_option_next(prev *curl_easyoption) *curl_easyoption
+foreign curl_easy_pause(handle *CURL, bitmask int) CURLcode
+foreign curl_easy_perform(easy_handle *CURL) CURLcode
+foreign curl_easy_recv(curl *CURL, buffer ptr, buflen usize, n *usize) CURLcode
+foreign curl_easy_reset(handle *CURL) void
+foreign curl_easy_send(curl *CURL, buffer ptr, buflen usize, n *usize) CURLcode
+foreign curl_easy_setopt(handle *CURL, option CURLoption, ...) CURLcode
+foreign curl_easy_strerror(code CURLcode) *ubyte
+foreign curl_easy_unescape(curl *CURL, url *ubyte, inlength int, outlength *int) *ubyte
+foreign curl_easy_upkeep(curl *CURL) CURLcode
+foreign curl_escape(string *ubyte, length int) *ubyte
+foreign curl_formadd(firstitem **curl_httppost, lastitem **curl_httppost) CURLFORMcode
+foreign curl_formfree(form *curl_httppost) void
+foreign curl_formget(form *curl_httppost, arg ptr, append curl_formget_callback) int
+foreign curl_free(p ptr) void
+foreign curl_getdate(datestring *ubyte, now *time_t) time_t
+foreign curl_getenv(variable *ubyte) *ubyte
+foreign curl_global_cleanup() void
+foreign curl_global_init(flags int) CURLcode
+foreign curl_global_init_mem(flags int, m curl_malloc_callback, f curl_free_callback, r curl_realloc_callback, s curl_strdup_callback, c curl_calloc_callback) CURLcode
+foreign curl_global_sslset(id curl_sslbackend, name *ubyte, avail ***curl_ssl_backend) CURLsslset
+foreign curl_maprintf(format *ubyte, ...) *ubyte
+foreign curl_mfprintf(fd *FILE, format *ubyte, ...) int
+foreign curl_mime_addpart(mime *curl_mime) *curl_mimepart
+foreign curl_mime_data(part *curl_mimepart, data *ubyte, datasize usize) CURLcode
+foreign curl_mime_data_cb(part *curl_mimepart, datasize curl_off_t, readfunc curl_read_callback, seekfunc curl_seek_callback, freefunc curl_free_callback, arg ptr) CURLcode
+foreign curl_mime_encoder(part *curl_mimepart, encoding *ubyte) CURLcode
+foreign curl_mime_filedata(part *curl_mimepart, filename *ubyte) CURLcode
+foreign curl_mime_filename(part *curl_mimepart, filename *ubyte) CURLcode
+foreign curl_mime_free(mime *curl_mime) void
+foreign curl_mime_headers(part *curl_mimepart, headers *curl_slist, take_ownership int) CURLcode
+foreign curl_mime_init(easy_handle *CURL) *curl_mime
+foreign curl_mime_name(part *curl_mimepart, name *ubyte) CURLcode
+foreign curl_mime_subparts(part *curl_mimepart, subparts *curl_mime) CURLcode
+foreign curl_mime_type(part *curl_mimepart, mimetype *ubyte) CURLcode
+foreign curl_mprintf(format *ubyte, ...) int
+foreign curl_msnprintf(buffer *ubyte, maxlength usize, format *ubyte, ...) int
+foreign curl_msprintf(buffer *ubyte, format *ubyte, ...) int
+foreign curl_multi_add_handle(multi_handle *CURLM, curl_handle *CURL) CURLMcode
+foreign curl_multi_assign(multi_handle *CURLM, sockfd curl_socket_t, sockp ptr) CURLMcode
+foreign curl_multi_cleanup(multi_handle *CURLM) CURLMcode
+foreign curl_multi_fdset(multi_handle *CURLM, read_fd_set *fd_set, write_fd_set *fd_set, exc_fd_set *fd_set, max_fd *int) CURLMcode
+foreign curl_multi_info_read(multi_handle *CURLM, msgs_in_queue *int) *CURLMsg
+foreign curl_multi_init() *CURLM
+foreign curl_multi_perform(multi_handle *CURLM, running_handles *int) CURLMcode
+foreign curl_multi_poll(multi_handle *CURLM, extra_fds *curl_waitfd, extra_nfds uint, timeout_ms int, ret *int) CURLMcode
+foreign curl_multi_remove_handle(multi_handle *CURLM, curl_handle *CURL) CURLMcode
+foreign curl_multi_setopt(multi_handle *CURLM, option CURLMoption, ...) CURLMcode
+foreign curl_multi_socket(multi_handle *CURLM, s curl_socket_t, running_handles *int) CURLMcode
+foreign curl_multi_socket_action(multi_handle *CURLM, s curl_socket_t, ev_bitmask int, running_handles *int) CURLMcode
+foreign curl_multi_socket_all(multi_handle *CURLM, running_handles *int) CURLMcode
+foreign curl_multi_strerror(code CURLMcode) *ubyte
+foreign curl_multi_timeout(multi_handle *CURLM, milliseconds *int) CURLMcode
+foreign curl_multi_wait(multi_handle *CURLM, extra_fds *curl_waitfd, extra_nfds uint, timeout_ms int, ret *int) CURLMcode
+foreign curl_multi_wakeup(multi_handle *CURLM) CURLMcode
+foreign curl_mvaprintf(format *ubyte, args va_list) *ubyte
+foreign curl_mvfprintf(fd *FILE, format *ubyte, args va_list) int
+foreign curl_mvprintf(format *ubyte, args va_list) int
+foreign curl_mvsnprintf(buffer *ubyte, maxlength usize, format *ubyte, args va_list) int
+foreign curl_mvsprintf(buffer *ubyte, format *ubyte, args va_list) int
+foreign curl_pushheader_byname(h *curl_pushheaders, name *ubyte) *ubyte
+foreign curl_pushheader_bynum(h *curl_pushheaders, num usize) *ubyte
+foreign curl_share_cleanup(curlsh *CURLSH) CURLSHcode
+foreign curl_share_init() *CURLSH
+foreign curl_share_setopt(curlsh *CURLSH, option *CURLSHoption, ...) CURLSHcode
+foreign curl_share_strerror(code CURLSHcode) *ubyte
+foreign curl_slist_append(list *curl_slist, string *ubyte) *curl_slist
+foreign curl_slist_free_all(list *curl_slist) void
+foreign curl_strequal(s1 *ubyte, s2 *ubyte) int
+foreign curl_strnequal(s1 *ubyte, s2 *ubyte, n usize) int
+foreign curl_unescape(string *ubyte, length int) *ubyte
+foreign curl_url() *CURLU
+foreign curl_url_cleanup(handle *CURLU) void
+foreign curl_url_dup(original *CURLU) *CURLU
+foreign curl_url_get(handle *CURLU, what CURLUPart, part **ubyte, flags uint) CURLUcode
+foreign curl_url_set(handle *CURLU, what CURLUPart, part *ubyte, flags uint) CURLUcode
+foreign curl_url_strerror(code CURLUcode) *ubyte
+foreign curl_version() *ubyte
+foreign curl_version_info(version CURLversion) *curl_version_info_data 
