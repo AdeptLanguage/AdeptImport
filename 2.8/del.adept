@@ -1,5 +1,5 @@
 
-func cleanup(value *$T){
+func del(value *$T){
     if value {
         value.__defer__()
         delete value
