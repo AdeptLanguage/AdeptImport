@@ -171,7 +171,7 @@ record <$T> Grid (data *$T, w, h int, ownership Ownership) {
 
 func __pass__(grid POD <$T> Grid) <$T> Grid {
     #if Grid_error_on_donor_usage
-        this.assertNotDonor('__pass__', false)
+        grid.assertNotDonor('__pass__', false)
     #end
 
     if grid.ownership == Ownership::OWN {
