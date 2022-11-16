@@ -1,1 +1,5 @@
 import '2.7/Optional.adept'
+
+func equals(this *<$T> Optional, other *<$T> Optional) bool {
+    return this.has == other.has && (!this.has || this.value == other.value)
+}

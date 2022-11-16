@@ -1,0 +1,7 @@
+
+func cleanup(value *$T){
+    if value {
+        value.__defer__()
+        delete value
+    }
+}

@@ -49,7 +49,7 @@ func toString(fixed_array $#N $T) String {
 }
 
 func asList(this *<$T> Array) <$T> List {
-    return list(this.items, this.length, Ownership::REFERENCE)
+    return List(this.items, this.length, Ownership::REFERENCE)
 }
 
 func map(this *<$T> Array, function func($~T) $S) <$S> List {
