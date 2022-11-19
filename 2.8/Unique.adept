@@ -1,1 +1,68 @@
-import '2.5/Unique.adept'
+
+import del
+import String
+import Ownership
+import 'sys/cstdio.adept'
+
+struct <$T> Unique (pointer *$T, ownership Ownership) {
+    constructor(pointer *$T){
+        this.pointer = pointer
+        this.ownership = Ownership::GIVEN
+    }
+
+    verbatim func __defer__ {
+        unless (this.ownership == Ownership::OWN || this.ownership == Ownership::GIVEN) && this.pointer, return
+        del(this.pointer)
+        this.pointer = null
+        this.ownership = Ownership::REFERENCE
+    }
+
+    func ref() *$T = this.pointer
+    
+    func get() $T = *this.pointer
+
+    func setValue(other POD $T) {
+        *this.pointer = other
+    }
+
+    func setPointer(new_pointer *$T) {
+        this.__defer__()
+        this.pointer = new_pointer
+        this.ownership = Ownership::OWN
+    }
+
+    func __assign__(other POD <$T> Unique) {
+        if other.ownership == Ownership::GIVEN {
+            this.setPointer(other.pointer)
+            return
+        }
+        
+        // Don't use this!!!!!!!
+        printf('RUNTIME ERROR: <%s> Unique.__assign__() was called when ownership of new value wasn\'t given\n', typenameof $T)
+        printf('    (The only cases when assigning \'Unique\' values is valid, is for example: u <int> Unique = Unique(new int), or u1 <int> Unique = u2.donate())\n')
+        this.clear()
+    }
+
+    func donate() <$T> Unique {
+        donated POD <$T> Unique = undef
+        donated.pointer = this.pointer
+        donated.ownership = Ownership::GIVEN
+
+        this.pointer = null
+        this.ownership = Ownership::REFERENCE
+        return donated
+    }
+
+    func clear {
+        this.__defer__()
+    }
+}
+
+func __pass__(unique POD <$T> Unique) <$T> Unique {
+    unique.ownership = Ownership::REFERENCE
+    return unique
+}
+
+func toString(unique POD <$T> Unique) String {
+    return unique.pointer ? toString(*unique.pointer) : "(null)"
+}
