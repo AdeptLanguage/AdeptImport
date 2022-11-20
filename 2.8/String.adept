@@ -1,1 +1,1230 @@
-import '2.7/String.adept'
+
+#default String_log_deletion false
+#default String_error_on_donor_usage true
+#default String_include_deprecated_modulus_formatting true
+#default String_include_deprecated_equals true
+
+#if String_error_on_donor_usage
+    func assertNotDonor(this *String, function_name *ubyte, is_method bool) {
+        if this.ownership == ::DONOR {
+            error_message *ubyte = is_method ? 'RUNTIME ERROR: String.adept: Cannot use String.%s method on string that was previously donated\n'
+                                             : 'RUNTIME ERROR: String.adept: Cannot use %s function with string that was previously donated\n'
+            fprintf(stderr, error_message, function_name)
+            abort()
+        }
+    }
+#end
+
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'sys/cstring.adept'
+import parse
+
+// 'StringOwnership' is defined separately from normal 'Ownership', since it's
+// a special type known about by the compiler
+enum StringOwnership (REFERENCE, OWN, GIVEN, DONOR)
+
+// StringViews are just Strings
+alias StringView = String
+
+func String(cstr *ubyte) {
+    length usize = strlen(null_terminated)
+    
+    return String(
+        cast *ubyte memcpy(malloc(length), null_terminated, length),
+        length,
+        length,
+        ::GIVEN
+    )
+}
+
+func String(array *ubyte, length usize) {
+    return String(
+        cast *ubyte memcpy(malloc(length), array, length),
+        length,
+        length,
+        ::GIVEN
+    )
+}
+
+func String(capacity usize) {
+    result POD String
+    result.ownership = ::GIVEN
+    result.reserve(capacity)
+    return result
+}
+
+record String (array *ubyte, length, capacity usize, ownership StringOwnership) {
+    func __defer__ {        
+        if this.ownership == ::OWN || this.ownership == ::GIVEN {
+            #if String_log_deletion
+                printf('[String Deletion] "')
+                repeat static this.length, putchar(this.array[idx])
+                putchar('"'ub)
+                putchar(0x0A)
+            #end
+            
+            delete this.array
+            memset(this, 0, sizeof String)
+        }
+    }
+
+    func __assign__(other POD String) {
+        exhaustive switch other.ownership {
+        case ::OWN
+            this.__defer__()
+            this.ownership = ::REFERENCE
+        case ::DONOR
+            #if String_error_on_donor_usage
+                this.assertNotDonor('__assign__', true)
+            #end
+            abort()
+        case ::GIVEN
+            this.__defer__()
+            this.ownership = ::OWN
+        case ::REFERENCE
+            if (this.ownership == ::OWN) && (other.array >= this.array) && (other.array < this.array + this.capacity as ptr) {
+                array *ubyte = memcpy(malloc(other.length), other.array, other.length)
+
+                delete this.array
+                *this = POD String(array, other.length, other.capacity, ::OWN)
+                return
+            }
+            
+            this.__defer__()
+            this.ownership = ::REFERENCE
+        }
+
+        this.array = other.array
+        this.length = other.length
+        this.capacity = other.capacity
+    }
+
+    func __array__() *ubyte {
+        #if String_error_on_donor_usage
+            this.assertNotDonor('__array__', true)
+        #end
+
+        return this.array
+    } 
+
+    func __length__() usize {
+        #if String_error_on_donor_usage
+            this.assertNotDonor('__length__', true)
+        #end
+
+        return this.length
+    }
+
+    func __access__(index usize) *ubyte {
+        #if String_error_on_donor_usage
+            this.assertNotDonor('__access__', true)
+        #end
+
+        return this.array at index
+    }
+
+    func commit() String {
+        if this.ownership != ::OWN {
+            #if String_error_on_donor_usage
+                this.assertNotDonor('commit', true)
+            #end
+
+            return *this
+        }
+
+        this.ownership = ::REFERENCE
+        return String(this.array, this.length, this.capacity, ::GIVEN)
+    }
+
+    func donate() String {
+        if this.ownership != ::OWN {
+            #if String_error_on_donor_usage
+                this.assertNotDonor('donate', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: String.adept: Cannot donate() string that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+        }
+
+        result POD String = POD String(this.array, this.length, this.capacity, ::GIVEN)
+        *this = POD "<DONATED>"
+        this.ownership = ::DONOR
+        return result
+    }
+    
+    func give() String {
+        if this.ownership != ::OWN {
+            #if String_error_on_donor_usage
+                this.assertNotDonor('give', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: String.adept: Cannot give() string that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+        }
+
+        this.ownership = ::REFERENCE
+        return String(this.array, this.length, this.capacity, ::GIVEN)
+    }
+
+    func clone() String {
+        #if String_error_on_donor_usage
+            this.assertNotDonor('clone', true)
+        #end
+
+        return String(
+            cast *ubyte memcpy(malloc(this.capacity), this.array, this.length),
+            this.length,
+            this.capacity,
+            ::GIVEN
+        )
+    }
+
+    func reserve(capacity usize) {
+        #if String_error_on_donor_usage
+            this.assertNotDonor('reserve', true)
+        #end
+
+        unless this.ownership == ::OWN || this.ownership == ::GIVEN {
+            return
+        }
+
+        if this.capacity < capacity {
+            this.array = realloc(this.array, capacity)
+            this.capacity = capacity
+        }
+    }
+}
+
+func __pass__(string POD String) String {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('__pass__', false)
+    #end
+
+    switch string.ownership {
+    case ::OWN,   string.ownership = ::REFERENCE
+    case ::GIVEN, string.ownership = ::OWN
+    }
+    
+    return string
+}
+
+func __equals__(lhs String, rhs String) bool {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__equals__', false)
+        rhs.assertNotDonor('__equals__', false)
+    #end
+
+    if lhs.length != rhs.length, return false
+    repeat static lhs.length, if lhs.array[idx] != rhs.array[idx], return false
+    return true
+}
+
+func __not_equals__(lhs String, rhs String) bool {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__not_equals__', false)
+        rhs.assertNotDonor('__not_equals__', false)
+    #end
+
+    return !__equals__(lhs, rhs)
+}
+
+func __add__(lhs String, rhs String) String {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__add__', false)
+        rhs.assertNotDonor('__add__', false)
+    #end
+
+    result_length usize = lhs.length + rhs.length
+    
+    together POD String = POD String(
+        malloc(result_length),
+        result_length,
+        result_length,
+        ::GIVEN
+    )
+
+    memcpy(together.array, lhs.array, lhs.length)
+    memcpy(together.array at lhs.length, rhs.array, rhs.length)
+    return together
+}
+
+func __add__(lhs String, rhs ubyte) String {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__add__', false)
+    #end
+
+    result_length usize = lhs.length + 1
+    
+    together POD String = POD String(
+        cast *ubyte memcpy(malloc(result_length), lhs.array, lhs.length),
+        result_length,
+        result_length,
+        ::GIVEN
+    )
+
+    together.array[lhs.length] = rhs
+    return together
+}
+
+func __add__(lhs POD String, rhs $T~__primitive__) String {
+    return lhs + toString(rhs)
+}
+
+func __multiply__(lhs String, times int) String {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__multiply__', false)
+    #end
+        
+    result POD String = undef
+    
+    if times > 0 {
+        result.length = lhs.length * times
+        result.array = malloc(result.length)
+        
+        repeat static times {
+            memcpy(result.array at (lhs.length * idx), lhs.array, lhs.length)
+        }
+    } else if times < 0 {
+        times = 0 - times
+        result.length = lhs.length * times
+        result.array = malloc(result.length)
+        
+        reversed String = lhs.reversed()
+        
+        repeat static times {
+            memcpy(result.array at (reversed.length * idx), reversed.array, reversed.length)
+        }
+    } else {
+        return String(null, 0, 0, ::REFERENCE)
+    }
+    
+    result.capacity = result.length
+    result.ownership = ::GIVEN
+    return result
+}
+
+func __less_than__(lhs String, rhs String) bool {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__less_than__', false)
+    #end
+    return lhs.compare(rhs) < 0
+}
+
+func __greater_than__(lhs String, rhs String) bool {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__greater_than__', false)
+    #end
+    return lhs.compare(rhs) > 0
+}
+
+func __less_than_or_equal__(lhs String, rhs String) bool {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__less_than_or_equal__', false)
+    #end
+    return lhs.compare(rhs) <= 0
+}
+
+func __greater_than_or_equal__(lhs String, rhs String) bool {
+    #if String_error_on_donor_usage
+        lhs.assertNotDonor('__greater_than_or_equal__', false)
+    #end
+    return lhs.compare(rhs) >= 0
+}
+
+func compare(this *String, other String) int {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('compare', true)
+    #end
+
+    if this.length < other.length, return -1
+    if this.length > other.length, return 1
+    return strncmp(this.array, other.array, this.length)
+}
+
+func first(this *String, character ubyte) long {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('first', true)
+    #end
+
+    repeat static this.length,
+        if this.array[idx] == character,
+            return idx as long
+    return -1
+}
+
+func first(this *String, sub String) long {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('first', true)
+    #end
+    
+    if sub.length > this.length, return -1
+
+    repeat static this.length - sub.length + 1 {
+        if sub.equals(this.span(idx, sub.length)) {
+            return idx as long
+        }
+    }
+
+    return -1
+}
+
+func last(this *String, character ubyte) long {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('last', true)
+    #end
+
+    repeat static this.length {
+        if this.array[this.length - idx - 1] == character {
+            return (this.length - idx - 1) as long
+        }
+    }
+    return -1
+}
+
+func last(this *String, sub String) long {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('last', true)
+    #end
+
+    if sub.length > this.length, return -1
+
+    repeat static this.length - sub.length + 1 {
+        if sub.equals(this.span(this.length - idx - 1, sub.length)) {
+            return (this.length - idx - 1) as long
+        }
+    }
+
+    return -1
+}
+
+func reverse(this *String) void {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('reverse', true)
+    #end
+
+    repeat static this.length / 2 {
+        preserved ubyte = this.array[idx]
+        this.array[idx] = this.array[this.length - idx - 1]
+        this.array[this.length - idx - 1] = preserved
+    }
+}
+
+func reversed(this *String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('reversed', true)
+    #end
+
+    reversed POD String = POD String(malloc(this.length), this.length, this.length, ::GIVEN)
+    
+    repeat static this.length {
+        reversed.array[this.length - idx - 1] = this.array[idx]
+    }
+    
+    return reversed
+}
+
+func sub(this *String, a, n usize) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('sub', true)
+    #end
+
+    span String = this.span(a, n)
+    return span.clone()
+}
+
+func segment(this *String, a, b usize) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('segment', true)
+    #end
+
+    span String = this.range(a, b)
+    return span.clone()
+}
+
+func span(this *String, a, n usize) StringView {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('span', true)
+    #end
+
+    return String(this.array at a, n, this.capacity - a, ::REFERENCE)
+}
+
+func range(this *String, a, b usize) StringView {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('range', true)
+    #end
+
+    return String(this.array at a, b - a, this.capacity - a, ::REFERENCE)
+}
+
+func reduce(this *String, amount usize) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('reduce', true)
+    #end
+
+    this.length = (amount > this.length) ? 0uz : this.length - amount
+}
+
+func reduced(this *String, amount usize) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('reduced', true)
+    #end
+
+    unless amount < this.length, return ""
+
+    result_length usize = this.length - amount
+
+    return String(
+        cast *ubyte memcpy(malloc(result_length), this.array, result_length),
+        result_length,
+        result_length,
+        ::GIVEN
+    )
+}
+
+func reducedView(this *String, amount usize) StringView {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('reducedView', true)
+    #end
+
+    unless amount < this.length, return ""
+
+    return String(
+        this.array,
+        this.length - amount,
+        this.capacity,
+        ::REFERENCE
+    )
+}
+
+func decapitate(this *String, amount usize) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('decapitate', true)
+    #end
+
+    if amount >= this.length, *this = ""; return
+    
+    if this.ownership == ::OWN || this.ownership == ::GIVEN {
+        memmove(this.array, this.array at amount, this.length - amount)
+        this.length -= amount
+    } else if this.ownership == ::REFERENCE {
+        *this = this.clone()
+        memmove(this.array, this.array at amount, this.length - amount)
+        this.length -= amount
+    }
+}
+
+func decapitated(this *String, amount usize) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('decapitated', true)
+    #end
+
+    unless amount < this.length, return ""
+
+    result_length usize = this.length - amount
+
+    return String(
+        cast *ubyte memcpy(malloc(result_length), this.array at amount, result_length),
+        result_length,
+        result_length,
+        ::GIVEN
+    )
+}
+
+func decapitatedView(this *String, amount usize) StringView {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('decapitatedView', true)
+    #end
+
+    unless amount < this.length, return ""
+
+    return String(
+        this.array at amount,
+        this.length - amount,
+        this.capacity,
+        ::REFERENCE
+    )
+}
+
+func remove(this *String, index usize) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('remove', true)
+    #end
+
+    this.remove(index, 1)
+}
+
+func remove(this *String, a, n usize) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('remove', true)
+    #end
+
+    unless this.ownership == ::OWN || this.ownership == ::GIVEN {
+        *this = this.clone()
+    }
+
+    if a > this.length, return // Don't do anything if index is out of bounds
+
+    if a + n >= this.length {
+        // Remove everything after index 'a'
+        this.reduce(this.length - a)
+        return
+    }
+
+    if a == 0 {
+        // Remove everything before 'n'
+        this.decapitate(n)
+        return
+    }
+
+    // Join two non-removed sections together
+    *this = this.range(0, a) + this.range(a + n, this.length)
+}
+
+func removed(this *String, index usize) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('removed', true)
+    #end
+
+    return this.removed(index, 1)
+}
+
+func removed(this *String, a, n usize) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('removed', true)
+    #end
+
+    return this.range(0, a) + this.range(a + n, this.length)
+}
+
+func omit(this *String, a, b usize) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('omit', true)
+    #end
+
+    this.remove(a, b - a)
+}
+
+func omitted(this *String, a, b usize) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('omitted', true)
+    #end
+
+    return this.removed(a, b - a)
+}
+
+func append(this *String, other String) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('append', true)
+        other.assertNotDonor('append', false)
+    #end
+
+    unless this.ownership == ::OWN || this.ownership == ::GIVEN {
+        *this = *this + other
+        return
+    }
+
+    if this.length + other.length > this.capacity {
+        this.capacity = this.length + other.length
+
+        new_array *ubyte = cast *ubyte memcpy(malloc(this.capacity), this.array, this.length)
+
+        delete this.array
+        this.array = new_array
+    }
+    
+    memcpy(this.array at this.length, other.array, other.length)
+    this.length += other.length
+}
+
+func append(this *String, other ubyte) {
+    this.append(StringView(&other, 1))
+}
+
+func append(this *String, other *ubyte) {
+    this.append(StringView(other))
+}
+
+func append(this *String, other $T~__primitive__) {
+    this.append(toString(other))
+}
+
+func appendOnce(this *String, other String) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('appendOnce', true)
+        other.assertNotDonor('appendOnce', false)
+    #end
+
+    unless this.endsWith(other), this.append(other)
+}
+
+func prepend(this *String, other String) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('prepend', true)
+        other.assertNotDonor('prepend', false)
+    #end
+
+    unless this.ownership == ::OWN || this.ownership == ::GIVEN {
+        *this = other + *this
+        return
+    }
+
+    if this.length + other.length > this.capacity {
+        this.capacity = this.length + other.length
+        new_array *ubyte = memcpy(malloc(this.capacity), this.array, this.length)
+
+        delete this.array
+        this.array = new_array
+    }
+    
+    memmove(this.array at other.length, this.array, this.length)
+    memcpy(this.array, other.array, other.length)
+    this.length += other.length
+}
+
+func prependOnce(this *String, other String) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('prependOnce', true)
+        other.assertNotDonor('prependOnce', false)
+    #end
+
+    unless this.startsWith(other), this.prepend(other)
+}
+
+func make(this *String) void {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('make', true)
+    #end
+        
+    unless this.ownership == ::OWN || this.ownership == ::GIVEN {
+        *this = this.clone()
+    }
+}
+
+func toOwned(this *String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('toOwned', true)
+    #end
+
+    if this.ownership == ::GIVEN {
+        return *this
+    }
+
+    return this.clone()
+}
+
+func reference(this *String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('reference', true)
+    #end
+
+    return String(this.array, this.length, this.capacity, ::REFERENCE)
+}
+
+func replaceOnce(this *String, from ubyte, to String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('replaceOnce', true)
+        to.assertNotDonor('replaceOnce', false)
+    #end
+
+    pos long = this.first(from)
+
+    if pos < 0 {
+        return this.reference()
+    }
+
+    return this.range(0, pos) + to + this.range(pos + 1, this.length)
+}
+
+func replaceOnce(this *String, from, to String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('replaceOnce', true)
+        from.assertNotDonor('replaceOnce', false)
+        to.assertNotDonor('replaceOnce', false)
+    #end
+
+    pos long = this.first(from)
+
+    if pos < 0 {
+        return this.reference()
+    }
+
+    return this.range(0, pos) + to + this.range(pos + from.length, this.length)
+}
+
+func replace(this *String, from ubyte, to String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('replace', true)
+        to.assertNotDonor('replace', false)
+    #end
+
+    result String = this.reference()
+    
+    until break {
+        pos long = result.first(from)
+
+        if pos < 0 {
+            break
+        }
+
+        result = result.range(0, pos) + to + result.range(pos + 1, result.length)
+    }
+    
+    return result.commit()
+}
+
+func replace(this *String, from, to String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('replace', true)
+        from.assertNotDonor('replace', false)
+        to.assertNotDonor('replace', false)
+    #end
+
+    result String = this.reference()
+    
+    until break {
+        pos long = result.first(from)
+
+        if pos < 0 {
+            break
+        }
+
+        result = result.range(0, pos) + to + result.range(pos + from.length, result.length)
+    }
+    
+    return result.commit()
+}
+
+func cstr(this *String) *ubyte {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('cstr', true)
+    #end
+
+    str *ubyte = memcpy(malloc(this.length + 1), this.array, this.length)
+    str[this.length] = '\0'ub
+    return str
+}
+
+func StringView(null_terminated *ubyte) String {
+    return StringView(null_terminated, strlen(null_terminated))
+}
+
+func StringView(array *ubyte, length usize) String {
+    return String(array, length, length, ::REFERENCE)
+}
+
+func alias stringConstant(*ubyte) => StringView
+
+func stringTake(null_terminated *ubyte) String {
+    length usize = strlen(null_terminated)
+
+    return String(
+        null_terminated,
+        length,
+        length + 1,
+        ::GIVEN
+    )
+}
+
+func stringTake(null_terminated *ubyte, capacity usize) String {
+    return String(
+        null_terminated,
+        strlen(null_terminated),
+        capacity,
+        ::GIVEN
+    )
+}
+
+// --------------------------------------------------------
+
+func startsWith(this *String, other String) bool {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('startsWith', true)
+        other.assertNotDonor('startsWith', false)
+    #end
+
+    if this.length < other.length {
+        return false
+    }
+
+    repeat static other.length {
+        if this.array[idx] != other.array[idx] {
+            return false
+        }
+    }
+
+    return true
+}
+
+func endsWith(this *String, other String) bool {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('endsWith', true)
+        other.assertNotDonor('endsWith', false)
+    #end
+
+    if this.length < other.length {
+        return false
+    }
+
+    repeat static other.length {
+        if this.array[this.length - other.length + idx] != other.array[idx] {
+            return false
+        }
+    }
+
+    return true
+}
+
+func longestLength(this *String) usize {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('longestLength', true)
+    #end
+
+    max, count usize = 0
+
+    each ubyte in static *this {
+        if it == '\n'ub {
+            if count > max {
+                max = count
+            }
+
+            count = 0
+            continue
+        }
+        count++
+    }
+    
+    return count > max ? count : max
+}
+
+func count(this *String, character ubyte) usize {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('count', true)
+    #end
+
+    count usize = 0
+
+    each ubyte in static *this {
+        if it == character {
+            count++
+        }
+    }
+
+    return count
+}
+
+func count(this *String, substring String) usize {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('count', true)
+        substring.assertNotDonor('count', false)
+    #end
+
+    if substring.length > this.length || substring.length == 0 {
+        return 0
+    }
+
+    count usize = 0
+    
+    repeat static (this.length - substring.length + 1) {
+        if this.span(idx, substring.length) == substring {
+            count++
+        }
+    }
+    
+    return count
+}
+
+func clear(this *String) {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('clear', true)
+    #end
+
+    this.length = 0
+}
+
+func clean(this *String) {
+    this.__defer__()
+    memset(this, 0, sizeof String)
+}
+
+func empty(this *String) bool {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('empty', true)
+    #end
+
+    return this.length == 0
+}
+
+func contains(this *String, needle String) bool {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('contains', true)
+        needle.assertNotDonor('contains', false)
+    #end
+
+    return this.first(needle) != -1sl
+} 
+
+func contains(haystack String, needle String) bool {
+    #if String_error_on_donor_usage
+        haystack.assertNotDonor('contains', false)
+        needle.assertNotDonor('contains', false)
+    #end
+    
+    return haystack.first(needle) != -1sl
+}
+
+func contains(this *String, needle ubyte) bool {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('contains', true)
+    #end
+
+    return this.first(needle) != -1sl
+}
+
+func contains(haystack String, needle ubyte) bool {
+    #if String_error_on_donor_usage
+        haystack.assertNotDonor('contains', false)
+    #end
+
+    return haystack.first(needle) != -1sl
+}
+
+func startsWith(string String, other POD String) bool {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('startsWith', false)
+        other.assertNotDonor('startsWith', false)
+    #end
+
+    return string.startsWith(other)
+}
+
+func endsWith(string String, other POD String) bool {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('endsWith', false)
+        other.assertNotDonor('endsWith', false)
+    #end
+
+    return string.endsWith(other)
+}
+
+func longestLength(string String) usize {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('longestLength', false)
+    #end
+
+    return string.longestLength()
+}
+
+func count(string String, character ubyte) usize {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('count', false)
+    #end
+
+    return string.count(character)
+}
+
+func count(string String, substring String) usize {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('count', false)
+    #end
+
+    return string.count(substring)
+}
+
+func uppercase(string String) String {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('uppercase', false)
+    #end
+
+    return string.uppercase()
+}
+
+func lowercase(string String) String {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('lowercase', false)
+    #end
+
+    return string.lowercase()
+}
+
+func trim(string String) String {
+    #if String_error_on_donor_usage
+        string.assertNotDonor('trim', false)
+    #end
+
+    return string.trimmed()
+}
+
+func uppercase(this *String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('uppercase', true)
+    #end
+
+    result POD String = POD String(malloc(this.length), this.length, this.capacity, ::GIVEN)
+    
+    each ubyte in static *this {
+        result.array[idx] = 'a'ub <= it && it <= 'z'ub ? it - 32ub : it
+    }
+    
+    return result
+}
+
+func lowercase(this *String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('lowercase', true)
+    #end
+
+    result POD String = POD String(malloc(this.length), this.length, this.capacity, ::GIVEN)
+    
+    each ubyte in static *this {
+        result.array[idx] = 'A'ub <= it && it <= 'Z'ub ? it + 32ub : it
+    }
+    
+    return result
+}
+
+func trim(this *String) void {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('lowercase', true)
+    #end
+
+    a *ubyte = this.array
+    len usize = this.length
+    
+    start usize = 0
+    end usize = len
+    
+    while start < len && (a[start]   == ' 'ub || a[start]   == '\n'ub || a[start]   == '\t'ub), start++
+    while end   > 1   && (a[end - 1] == ' 'ub || a[end - 1] == '\n'ub || a[end - 1] == '\t'ub), end--
+    
+    // All whitespace
+    if start >= end, *this = ""; return
+    
+    if len != end, this.reduce(len - end)
+    if start != 0, this.decapitate(start)
+}
+
+func trimmed(this *String) String {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('trimmed', true)
+    #end
+
+    a *ubyte = this.array
+    len usize = this.length
+    
+    start usize = 0
+    end usize = len
+    
+    while start < len && (a[start]   == ' 'ub || a[start]   == '\n'ub || a[start]   == '\t'ub), start++
+    while end   > 1   && (a[end - 1] == ' 'ub || a[end - 1] == '\n'ub || a[end - 1] == '\t'ub), end--
+    
+    return start >= end ? "" : this.segment(start, end)
+}
+
+func trimmedView(this *String) StringView {
+    #if String_error_on_donor_usage
+        this.assertNotDonor('trimmedView', true)
+    #end
+
+    a *ubyte = this.array
+    len usize = this.length
+    
+    start usize = 0
+    end usize = len
+    
+    while start < len && (a[start]   == ' 'ub || a[start]   == '\n'ub || a[start]   == '\t'ub), start++
+    while end   > 1   && (a[end - 1] == ' 'ub || a[end - 1] == '\n'ub || a[end - 1] == '\t'ub), end--
+    
+    return start >= end ? "" : this.range(start, end)
+}
+
+func toString(value POD String) String {
+    return value
+}
+
+// Deprecated '%' operator on String
+#if String_include_deprecated_modulus_formatting
+    func __modulus__(lhs POD String, rhs String) String {
+        #if String_error_on_donor_usage
+            lhs.assertNotDonor('__modulus__', false)
+            rhs.assertNotDonor('__modulus__', false)
+        #end
+
+        formatted POD String = undef
+        percent long = lhs.first('%'ub)
+        
+        if percent == -1, return lhs
+        
+        formatted.length = lhs.length + rhs.length - 1
+        formatted.capacity = formatted.length
+        formatted.ownership = ::GIVEN
+        
+        formatted.array = new undef ubyte * formatted.length
+        
+        memcpy(formatted.array, lhs.array, percent)
+        memcpy(formatted.array at percent, rhs.array, rhs.length)
+        memcpy(formatted.array at (percent + rhs.length), lhs.array at (percent + 1), lhs.length - percent - 1)
+        lhs = POD __pass__(lhs)
+        lhs.__defer__()
+        return formatted
+    }
+
+    func __modulus__(lhs POD String, rhs int) String {
+        #if String_error_on_donor_usage
+            lhs.assertNotDonor('__modulus__', false)
+        #end
+
+        formatted POD String = undef
+        percent long = lhs.first('%'ub)
+        
+        if percent == -1, return lhs
+        
+        int_string 12 ubyte = undef
+        sprintf(&int_string as *ubyte, '%d', rhs)
+        int_string_length usize = strlen(&int_string as *ubyte)
+        
+        formatted.length = lhs.length + int_string_length - 1
+        formatted.capacity = formatted.length
+        formatted.ownership = ::GIVEN
+        
+        formatted.array = new undef ubyte * formatted.length
+        
+        memcpy(formatted.array, lhs.array, percent)
+        memcpy(formatted.array at percent, &int_string as *ubyte, int_string_length)
+        memcpy(formatted.array at (percent + int_string_length), lhs.array at (percent + 1), lhs.length - percent - 1)
+        lhs = POD __pass__(lhs)
+        lhs.__defer__()
+        return formatted
+    }
+
+    func __modulus__(lhs POD String, rhs ptr) String {
+        return lhs % toString(rhs)
+    }
+
+    func __modulus__(lhs POD String, rhs bool) String {
+        return lhs % (rhs ? "true" : "false")
+    }
+
+    func __modulus__(lhs POD String, rhs $T~__primitive__) String {
+        // Catch all for lesser used cases
+        return lhs % toString(rhs)
+    }
+#end
+
+// Deprecated '.equals()' method on String
+#if String_include_deprecated_equals
+    func equals(this *String, other POD String) bool {
+        #if String_error_on_donor_usage
+            this.assertNotDonor('equals', true)
+        #end
+
+        if this.length != other.length, return false
+        repeat static this.length, if this.array[idx] != other.array[idx], return false
+        return true
+    }
+#end
