@@ -27,7 +27,7 @@ enum StringOwnership (REFERENCE, OWN, GIVEN, DONOR)
 // StringViews are just Strings
 alias StringView = String
 
-func String(cstr *ubyte) {
+func String(cstr *ubyte) String {
     length usize = strlen(cstr)
     
     return String(
@@ -38,7 +38,7 @@ func String(cstr *ubyte) {
     )
 }
 
-func String(array *ubyte, length usize) {
+func String(array *ubyte, length usize) String {
     return String(
         cast *ubyte memcpy(malloc(length), array, length),
         length,
@@ -47,7 +47,7 @@ func String(array *ubyte, length usize) {
     )
 }
 
-func String(capacity usize) {
+func String(capacity usize) String {
     result POD String
     result.ownership = ::GIVEN
     result.reserve(capacity)
