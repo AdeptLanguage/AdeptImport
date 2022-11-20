@@ -28,10 +28,10 @@ enum StringOwnership (REFERENCE, OWN, GIVEN, DONOR)
 alias StringView = String
 
 func String(cstr *ubyte) {
-    length usize = strlen(null_terminated)
+    length usize = strlen(cstr)
     
     return String(
-        cast *ubyte memcpy(malloc(length), null_terminated, length),
+        cast *ubyte memcpy(malloc(length), cstr, length),
         length,
         length,
         ::GIVEN
