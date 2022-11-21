@@ -55,6 +55,18 @@ func String(capacity usize) String {
 }
 
 record String (array *ubyte, length, capacity usize, ownership StringOwnership) {
+    in constructor(cstr *ubyte){
+        *this = String(cstr)
+    }
+
+    in constructor(array *ubyte, length usize){
+        *this = String(array, length)
+    }
+
+    in constructor(capacity usize){
+        *this = String(capacity)
+    }
+
     func __defer__ {        
         if this.ownership == ::OWN || this.ownership == ::GIVEN {
             #if String_log_deletion
@@ -185,17 +197,24 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
     }
 
     func reserve(capacity usize) {
-        #if String_error_on_donor_usage
-            this.assertNotDonor('reserve', true)
-        #end
-
-        unless this.ownership == ::OWN || this.ownership == ::GIVEN {
+        switch this.ownership {
+        case ::DONOR
+            #if String_error_on_donor_usage
+                this.assertNotDonor('reserve', true)
+            #end
             return
-        }
+        case ::REFERENCE
+            if this.array != null {
+                return
+            }
 
-        if this.capacity < capacity {
-            this.array = realloc(this.array, capacity)
-            this.capacity = capacity
+            this.ownership = ::OWN
+            fallthrough
+        default
+            if this.capacity < capacity {
+                this.array = realloc(this.array, capacity)
+                this.capacity = capacity
+            }
         }
     }
 }
