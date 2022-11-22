@@ -55,6 +55,10 @@ func String(capacity usize) String {
 }
 
 record String (array *ubyte, length, capacity usize, ownership StringOwnership) {
+    in constructor(string String){
+        *this = string.toOwned()
+    }
+
     in constructor(cstr *ubyte){
         *this = String(cstr)
     }
@@ -67,7 +71,7 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
         *this = String(capacity)
     }
 
-    func __defer__ {        
+    func __defer__ {
         if this.ownership == ::OWN || this.ownership == ::GIVEN {
             #if String_log_deletion
                 printf('[String Deletion] "')
