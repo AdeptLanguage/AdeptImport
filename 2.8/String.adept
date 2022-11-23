@@ -770,7 +770,7 @@ func replaceOnce(this *String, from ubyte, to String, nothing_behavior StringRep
     pos long = this.first(from)
 
     if pos < 0 {
-        return this.nothingBehavior(nothing_behavior)
+        return this.doNothingBehavior(nothing_behavior)
     }
 
     return this.range(0, pos) + to + this.range(pos + 1, this.length)
@@ -786,7 +786,7 @@ func replaceOnce(this *String, from, to String, nothing_behavior StringReplaceNo
     pos long = this.first(from)
 
     if pos < 0 {
-        return this.nothingBehavior(nothing_behavior)
+        return this.doNothingBehavior(nothing_behavior)
     }
 
     return this.range(0, pos) + to + this.range(pos + from.length, this.length)
