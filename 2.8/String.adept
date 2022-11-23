@@ -833,10 +833,10 @@ func replace(this *String, from, to String, nothing_behavior StringReplaceNothin
 
     repeat static this.length {
         if idx + from.length < this.length && this.span(idx, from.length) == from {
-            result += to
+            result.append(to)
             idx += from.length - 1
         } else {
-            result += (*this)[idx]
+            result.append((*this)[idx])
         }
     }
 
