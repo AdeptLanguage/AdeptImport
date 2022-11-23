@@ -749,6 +749,8 @@ func reference(this *String) String {
     return String(this.array, this.length, this.capacity, ::REFERENCE)
 }
 
+// Whether to return a clone or a view of the original string if the result of a `replace`-like call
+// is known to be the same as the original (without additional processing)
 enum StringReplaceNothingBehavior (OR_CLONE, OR_VIEW)
 
 func doNothingBehavior(this *String, nothing_behavior StringReplaceNothingBehavior) String {
