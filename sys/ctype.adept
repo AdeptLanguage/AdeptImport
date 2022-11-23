@@ -1,2 +1,3 @@
 
 foreign isdigit(int) int
+foreign isalnum(int) int
