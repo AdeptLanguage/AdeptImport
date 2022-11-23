@@ -811,10 +811,10 @@ func replace(this *String, from ubyte, to String, nothing_behavior StringReplace
 
     if last_found == 0 {
         return this.doNothingBehavior(nothing_behavior)
+    } else {
+        result.append(this.range(last_found, this.length))
+        return result.commit()
     }
-
-    result.append(this.range(last_found, this.length))
-    return result.commit()
 }
 
 func replace(this *String, from, to String, nothing_behavior StringReplaceNothingBehavior = ::OR_CLONE) String {
@@ -829,17 +829,24 @@ func replace(this *String, from, to String, nothing_behavior StringReplaceNothin
     }
 
     result String
+    last_found usize = 0
 
-    repeat static this.length {
-        if idx + from.length < this.length && this.span(idx, from.length) == from {
+    repeat static this.length - from.length + 1 {
+        if this.span(idx, from.length) == from {
+            result.append(this.range(last_found, idx))
             result.append(to)
+
+            last_found = idx + to.length
             idx += from.length - 1
-        } else {
-            result.append((*this)[idx])
         }
     }
 
-    return result.commit()
+    if last_found == 0 {
+        return this.doNothingBehavior(nothing_behavior)
+    } else {
+        result.append(this.range(last_found, this.length))
+        return result.commit()
+    }
 }
 
 func cstr(this *String) *ubyte {
