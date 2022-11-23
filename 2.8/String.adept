@@ -758,7 +758,8 @@ func replaceOnce(this *String, from ubyte, to String) String {
     pos long = this.first(from)
 
     if pos < 0 {
-        return this.reference()
+        // For consistency, always return string that has ownership
+        return this.clone()
     }
 
     return this.range(0, pos) + to + this.range(pos + 1, this.length)
@@ -774,7 +775,8 @@ func replaceOnce(this *String, from, to String) String {
     pos long = this.first(from)
 
     if pos < 0 {
-        return this.reference()
+        // For consistency, always return string that has ownership
+        return this.clone()
     }
 
     return this.range(0, pos) + to + this.range(pos + from.length, this.length)
@@ -786,18 +788,18 @@ func replace(this *String, from ubyte, to String) String {
         to.assertNotDonor('replace', false)
     #end
 
-    result String = this.reference()
-    
-    until break {
-        pos long = result.first(from)
+    result String
 
-        if pos < 0 {
-            break
+    each ubyte in static *this {
+        if it == from {
+            result.append(this.range(0, idx))
+            result.append(to)
+            result.append(this.range(idx + 1, this.length))
+        } else {
+            result.append(it)
         }
-
-        result = result.range(0, pos) + to + result.range(pos + 1, result.length)
     }
-    
+
     return result.commit()
 }
 
@@ -808,19 +810,23 @@ func replace(this *String, from, to String) String {
         to.assertNotDonor('replace', false)
     #end
 
-    result String = this.reference()
-    
-    until break {
-        pos long = result.first(from)
-
-        if pos < 0 {
-            break
-        }
-
-        result = result.range(0, pos) + to + result.range(pos + from.length, result.length)
+    if this.length < from.length || from.length == 0 {
+        // For consistency, always return string that has ownership
+        return this.clone()
     }
-    
-    return result.commit()
+
+    result String
+
+    repeat static this.length {
+        if idx + from.length < this.length && this.span(idx, from.length) == from {
+            result += to
+            idx += from.length - 1
+        } else {
+            result += (*this)[idx]
+        }
+    }
+
+    return result
 }
 
 func cstr(this *String) *ubyte {
