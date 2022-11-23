@@ -817,7 +817,7 @@ func replace(this *String, from ubyte, to String, nothing_behavior StringReplace
     return result.commit()
 }
 
-func replace(this *String, from, to String, nothing_behavior StringReplaceNothingBehavior = ::CLONE) String {
+func replace(this *String, from, to String, nothing_behavior StringReplaceNothingBehavior = ::OR_CLONE) String {
     #if String_error_on_donor_usage
         this.assertNotDonor('replace', true)
         from.assertNotDonor('replace', false)
