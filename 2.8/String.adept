@@ -749,7 +749,19 @@ func reference(this *String) String {
     return String(this.array, this.length, this.capacity, ::REFERENCE)
 }
 
-func replaceOnce(this *String, from ubyte, to String) String {
+enum StringReplaceNothingBehavior (OR_CLONE, OR_VIEW)
+
+func doNothingBehavior(this *String, nothing_behavior StringReplaceNothingBehavior) String {
+    exhaustive switch nothing_behavior {
+    case ::OR_CLONE, return this.clone()
+    case ::OR_VIEW,  return this.reference()
+    }
+
+    // unreachable
+    return this.reference()
+}
+
+func replaceOnce(this *String, from ubyte, to String, nothing_behavior StringReplaceNothingBehavior = ::OR_CLONE) String {
     #if String_error_on_donor_usage
         this.assertNotDonor('replaceOnce', true)
         to.assertNotDonor('replaceOnce', false)
@@ -758,14 +770,13 @@ func replaceOnce(this *String, from ubyte, to String) String {
     pos long = this.first(from)
 
     if pos < 0 {
-        // For consistency, always return string that has ownership
-        return this.clone()
+        return this.nothingBehavior(nothing_behavior)
     }
 
     return this.range(0, pos) + to + this.range(pos + 1, this.length)
 }
 
-func replaceOnce(this *String, from, to String) String {
+func replaceOnce(this *String, from, to String, nothing_behavior StringReplaceNothingBehavior = ::OR_CLONE) String {
     #if String_error_on_donor_usage
         this.assertNotDonor('replaceOnce', true)
         from.assertNotDonor('replaceOnce', false)
@@ -775,35 +786,38 @@ func replaceOnce(this *String, from, to String) String {
     pos long = this.first(from)
 
     if pos < 0 {
-        // For consistency, always return string that has ownership
-        return this.clone()
+        return this.nothingBehavior(nothing_behavior)
     }
 
     return this.range(0, pos) + to + this.range(pos + from.length, this.length)
 }
 
-func replace(this *String, from ubyte, to String) String {
+func replace(this *String, from ubyte, to String, nothing_behavior StringReplaceNothingBehavior = ::OR_CLONE) String {
     #if String_error_on_donor_usage
         this.assertNotDonor('replace', true)
         to.assertNotDonor('replace', false)
     #end
 
     result String
+    last_found usize = 0
 
     each ubyte in static *this {
         if it == from {
-            result.append(this.range(0, idx))
+            result.append(this.range(last_found, idx))
             result.append(to)
-            result.append(this.range(idx + 1, this.length))
-        } else {
-            result.append(it)
+            last_found = idx + 1
         }
     }
 
+    if last_found == 0 {
+        return this.doNothingBehavior(nothing_behavior)
+    }
+
+    result.append(this.range(last_found, this.length))
     return result.commit()
 }
 
-func replace(this *String, from, to String) String {
+func replace(this *String, from, to String, nothing_behavior StringReplaceNothingBehavior = ::CLONE) String {
     #if String_error_on_donor_usage
         this.assertNotDonor('replace', true)
         from.assertNotDonor('replace', false)
@@ -812,7 +826,7 @@ func replace(this *String, from, to String) String {
 
     if this.length < from.length || from.length == 0 {
         // For consistency, always return string that has ownership
-        return this.clone()
+        return this.doNothingBehavior(nothing_behavior)
     }
 
     result String
