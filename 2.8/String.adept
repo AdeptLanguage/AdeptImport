@@ -836,7 +836,7 @@ func replace(this *String, from, to String, nothing_behavior StringReplaceNothin
             result.append(this.range(last_found, idx))
             result.append(to)
 
-            last_found = idx + to.length
+            last_found = idx + from.length
             idx += from.length - 1
         }
     }
