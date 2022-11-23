@@ -825,7 +825,6 @@ func replace(this *String, from, to String, nothing_behavior StringReplaceNothin
     #end
 
     if this.length < from.length || from.length == 0 {
-        // For consistency, always return string that has ownership
         return this.doNothingBehavior(nothing_behavior)
     }
 
@@ -840,7 +839,7 @@ func replace(this *String, from, to String, nothing_behavior StringReplaceNothin
         }
     }
 
-    return result
+    return result.commit()
 }
 
 func cstr(this *String) *ubyte {
