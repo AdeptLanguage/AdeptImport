@@ -102,7 +102,23 @@ struct <$T> Optional (value $T, has bool) {
 
     func map(method func(*$T) $S) <$S> Optional {
         if this.has {
-           return some(method(this.value))
+           return some(method(&this.value))
+        } else {
+            return none() ~> <$S> Optional
+        }
+    }
+
+    func mapPOD(function func($~T) $S) <$S> Optional {
+        if this.has {
+           return somePOD(function(this.value))
+        } else {
+            return none() ~> <$S> Optional
+        }
+    }
+
+    func mapPOD(method func(*$T) $S) <$S> Optional {
+        if this.has {
+           return somePOD(method(&this.value))
         } else {
             return none() ~> <$S> Optional
         }
@@ -143,6 +159,13 @@ func some(contained POD $T) <$T> Optional {
     return o
 }
 
+func somePOD(contained POD $T) <$T> Optional {
+    o POD <$T> Optional
+    o.value = POD contained
+    o.has = true
+    return o
+}
+
 func toString(optional <$T> Optional) String {
     if optional.has {
         return sprintf("some(%S)", toString(optional.value))
@@ -150,3 +173,8 @@ func toString(optional <$T> Optional) String {
         return "none()"
     }
 }
+
+func commit(this *<$Commit> Optional) <$Commit> Optional = this.mapPOD(func &commit(*$Commit))
+func give(this *<$Give> Optional) <$Give> Optional = this.mapPOD(func &give(*$Give))
+func donate(this *<$Donate> Optional) <$Donate> Optional = this.mapPOD(func &donate(*$Donate))
+func toOwned(this *<$ToOwned> Optional) <$ToOwned> Optional = this.mapPOD(func &toOwned(*$ToOwned))
