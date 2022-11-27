@@ -1,3 +1,4 @@
 
 foreign isdigit(int) int
 foreign isalnum(int) int
+foreign isalpha(int) int
