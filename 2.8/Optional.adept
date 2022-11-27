@@ -50,17 +50,6 @@ struct <$T> Optional (value $T, has bool) {
         return this.value
     }
 
-    func getPointer() *$T {
-        #if Optional_error_no_value
-            unless this.has {
-                fprintf(stderr, 'RUNTIME ERROR: <%s> Optional.getPointer() called when no value exists\n', typenameof $T)
-                abort()
-            }
-        #end
-
-        return &this.value
-    }
-
     func ref() *$T {
         #if Optional_error_no_value
             unless this.has {
