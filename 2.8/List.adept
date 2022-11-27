@@ -191,12 +191,14 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         return added
     }
 
-    func add(item POD $~T) {
+    func add(item POD $~T) *$T {
         added *$T = this.add()
 
         if added != null {
             *added = item
         }
+
+        return added
     }
 
     func insert(index usize) *$T {
