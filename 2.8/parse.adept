@@ -104,7 +104,7 @@ func toLong(this *String, is_from_hex bool = false) long {
     data *ubyte = this.array
     i usize = this.length - 1
     result long = 0
-    sign bool = s[0] == '-'ub
+    sign bool = data[0] == '-'ub
     base ulong = is_from_hex ? 16 : 10
     
     while true {
