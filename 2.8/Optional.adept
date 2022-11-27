@@ -14,7 +14,7 @@ struct <$T> Optional (value $T, has bool) {
         if this.has, this.value.?__defer__()
     }
 
-    func __assign__(other <$T> Optional) {
+    func __assign__(other POD <$T> Optional) {
         this.__defer__()
 
         if other.has {
@@ -160,7 +160,7 @@ func some(contained POD $T) <$T> Optional {
 }
 
 func somePOD(contained POD $T) <$T> Optional {
-    o POD <$T> Optional
+    o POD <$T> Optional = undef
     o.value = POD contained
     o.has = true
     return o
