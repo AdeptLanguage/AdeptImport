@@ -55,7 +55,7 @@ func String(capacity usize) String {
 }
 
 record String (array *ubyte, length, capacity usize, ownership StringOwnership) {
-    in constructor(string String){
+    in constructor(string POD String){
         *this = string.toOwned()
     }
 
