@@ -146,6 +146,12 @@ func __pass__(optional POD <$T> Optional) <$T> Optional {
 func __equals__(a, b <$T> Optional) bool = a.equals(&b)
 func __not_equals__(a, b <$T> Optional) bool = !a.equals(&b)
 
+record none ()
+
+implicit func __as__(_ POD none) <$T> Optional {
+    return none() ~> <$T> Optional
+}
+
 func none() <$T> Optional {
     o POD <$T> Optional = undef
     o.has = false
