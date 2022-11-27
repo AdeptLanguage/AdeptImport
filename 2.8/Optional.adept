@@ -1,5 +1,152 @@
-import '2.7/Optional.adept'
 
-func equals(this *<$T> Optional, other *<$T> Optional) bool {
-    return this.has == other.has && (!this.has || this.value == other.value)
+#default Optional_error_no_value true
+
+#if Optional_error_no_value
+    import 'sys/cstdio.adept'
+    import 'sys/cstdlib.adept'
+#end
+
+import String
+import 'sys/cstring.adept'
+
+struct <$T> Optional (value $T, has bool) {
+    verbatim func __defer__ {
+        if this.has, this.value.?__defer__()
+    }
+
+    func __assign__(other <$T> Optional) {
+        this.__defer__()
+
+        if other.has {
+            memset(&this.value, 0, sizeof $T)
+            this.value = other.value
+            this.has = true
+        } else {
+            this.has = false
+        }
+    }
+
+    func assign(value POD $T) {
+        this.__defer__()
+        memset(&this.value, 0, sizeof $T)
+        this.value = value
+        this.has = true
+    }
+
+    func assignPOD(value POD $T) {
+        this.__defer__()
+        this.value = POD value
+        this.has = true
+    }
+
+    func get() $T {
+        #if Optional_error_no_value
+            unless this.has {
+                fprintf(stderr, 'RUNTIME ERROR: <%s> Optional.get() called when no value exists\n', typenameof $T)
+                abort()
+            }
+        #end
+
+        return this.value
+    }
+
+    func getPointer() *$T {
+        #if Optional_error_no_value
+            unless this.has {
+                fprintf(stderr, 'RUNTIME ERROR: <%s> Optional.getPointer() called when no value exists\n', typenameof $T)
+                abort()
+            }
+        #end
+
+        return &this.value
+    }
+
+    func ref() *$T {
+        #if Optional_error_no_value
+            unless this.has {
+                fprintf(stderr, 'RUNTIME ERROR: <%s> Optional.ref() called when no value exists\n', typenameof $T)
+                abort()
+            }
+        #end
+
+        return &this.value
+    }
+
+    func rid {
+        if this.has {
+            this.__defer__()
+            this.has = false
+        }
+    }
+
+    func isSome bool = this.has
+    func isNone bool = !this.has
+
+    func take(out captured *$T) bool {
+        if this.has {
+            *captured = POD this.value
+            this.has = false
+            return true
+        } else {
+            return false
+        }
+    }
+
+    func map(function func($~T) $S) <$S> Optional {
+        if this.has {
+           return some(function(this.value))
+        } else {
+            return none() ~> <$S> Optional
+        }
+    }
+
+    func map(method func(*$T) $S) <$S> Optional {
+        if this.has {
+           return some(method(this.value))
+        } else {
+            return none() ~> <$S> Optional
+        }
+    }
+
+    func orElse(or_else POD $T) $T {
+        if this.has {
+            return this.value
+        } else {
+            return or_else
+        }
+    }
+
+    func equals(other *<$T> Optional) bool {
+        return this.has == other.has && (!this.has || this.value == other.value)
+    }
+}
+
+func __pass__(optional POD <$T> Optional) <$T> Optional {
+    if optional.has {
+        this.value = POD __pass__(optional.value)
+    }
+}
+
+func __equals__(a, b <$T> Optional) bool = a.equals(&b)
+func __not_equals__(a, b <$T> Optional) bool = !a.equals(&b)
+
+func none() <$T> Optional {
+    o POD <$T> Optional = undef
+    o.has = false
+    return o
+}
+
+func some(contained $T) <$T> Optional {
+    o POD <$T> Optional
+    o.value = contained
+    o.has = true
+    return o
+}
+
+func toString(optional <$T> Optional) String {
+    if optional.has {
+        return sprintf("some(%S)", toString(optional.value))
+    } else {
+        return "none()"
+    }
 }
