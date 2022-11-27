@@ -123,7 +123,7 @@ struct <$T> Optional (value $T, has bool) {
 
 func __pass__(optional POD <$T> Optional) <$T> Optional {
     if optional.has {
-        this.value = POD __pass__(optional.value)
+        optional.value = POD __pass__(optional.value)
     }
 }
 
