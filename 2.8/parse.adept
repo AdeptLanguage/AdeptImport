@@ -101,7 +101,7 @@ func toLong(this *String, is_from_hex bool = false) long {
     if this.length == 0, return 0
     
     power long = 1
-    s *ubyte = this.array
+    data *ubyte = this.array
     i usize = this.length - 1
     result long = 0
     sign bool = s[0] == '-'ub
