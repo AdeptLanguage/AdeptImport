@@ -136,7 +136,7 @@ func none() <$T> Optional {
     return o
 }
 
-func some(contained $T) <$T> Optional {
+func some(contained POD $T) <$T> Optional {
     o POD <$T> Optional
     o.value = contained
     o.has = true
