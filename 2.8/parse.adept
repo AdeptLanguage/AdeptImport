@@ -71,7 +71,7 @@ func toUlong(this *String, is_from_hex bool = false) ulong {
         } elif is_from_hex {
             if 'A'ub <= c && c <= 'F'ub {
                 result += (c + 10 - 'A'ub) as ulong * power
-            } elif 'a'ub <= c && c <= 'f' {
+            } elif 'a'ub <= c && c <= 'f'ub {
                 result += (c + 10 - 'a'ub) as ulong * power
             } else {
                 return 0
@@ -115,7 +115,7 @@ func toLong(this *String, is_from_hex bool = false) long {
         } elif is_from_hex {
             if 'A'ub <= c && c <= 'F'ub {
                 result += (c + 10 - 'A'ub) as ulong * power
-            } elif 'a'ub <= c && c <= 'f' {
+            } elif 'a'ub <= c && c <= 'f'ub {
                 result += (c + 10 - 'a'ub) as ulong * power
             } else {
                 return 0
