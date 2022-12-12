@@ -2,6 +2,7 @@
 #default List_bounds_checks true
 #default List_error_with_type true
 #default List_error_on_donor_usage true
+#default List_error_on_empty true
 #default List_ownership_checks true
 #default List_disable_safety false
 
@@ -34,6 +35,17 @@
         if this.ownership == ::DONOR {
             error_message *ubyte = is_method ? 'RUNTIME ERROR: List.adept: Cannot use List.%s method on <%s> List that was previously donated\n'
                                              : 'RUNTIME ERROR: List.adept: Cannot use %s function with <%s> List that was previously donated\n'
+            fprintf(stderr, error_message, function_name, typenameof $T)
+            abort()
+        }
+    }
+#end
+
+#if List_error_on_empty
+    func assertNotEmpty(this *<$T> List, function_name *ubyte, is_method bool) {
+        if this.length == 0 {
+            error_message *ubyte = is_method ? 'RUNTIME ERROR: List.adept: Cannot use List.%s method on <%s> List that is empty\n'
+                                             : 'RUNTIME ERROR: List.adept: Cannot use %s function with <%s> List that is empty\n'
             fprintf(stderr, error_message, function_name, typenameof $T)
             abort()
         }
@@ -300,6 +312,22 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         #end
         
         return this.items at index
+    }
+
+    func getLast() $T {
+        #if List_error_on_empty
+            this.assertNotEmpty('getLast', true)
+        #end
+
+        return this.get(this.length - 1)
+    }
+
+    func getPointerLast() *$T {
+        #if List_error_on_empty
+            this.assertNotEmpty('getPointerLast', true)
+        #end
+
+        return this.getPointer(this.length - 1)
     }
 
     func clear() {
