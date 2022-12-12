@@ -330,6 +330,15 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         return this.getPointer(this.length - 1)
     }
 
+    func resize(new_size usize) {
+        while new_size < this.length {
+            this.remove(this.length - 1)
+        }
+        while new_size > this.length {
+            this.add()
+        }
+    }
+
     func clear() {
         if this.ownership == ::OWN || this.ownership == ::GIVEN {
             each $T in static [this.items, this.length], it.?__defer__()
