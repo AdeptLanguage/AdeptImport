@@ -1,0 +1,20 @@
+
+// Standard failed assertion handler that accepts String messages
+// Note that as `message` is NULL for assertions without a message, an additional handler such as `assertions/libc.adept` is required if you want to also use messageless assertions
+
+import String
+
+func __assertion_failed__(message String, expression, filename, function_signature *ubyte, line, column int) {
+    printf('===== RUNTIME ERROR: ASSERTION FAILED! =====\n')
+
+    message_cstr *ubyte = message.cstr()
+    defer delete message_cstr
+    printf('Message:\t%s\n', message_cstr)
+
+    printf('Expression:\t`%s`\n', expression)
+    printf('In file:\t%s\n', filename)
+    printf('In function:\t%s\n', function_signature)
+    printf('Line:\t%d\n', line)
+    printf('Column:\t%d\n', column)
+    abort()
+}

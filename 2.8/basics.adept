@@ -1,6 +1,7 @@
 
 pragma compiler_supports '2.8'
 
+import 'assertions.adept'
 import 'cmath.adept'
 import 'cstdio.adept'
 import 'cstdlib.adept'

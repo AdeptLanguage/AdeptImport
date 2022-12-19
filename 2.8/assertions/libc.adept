@@ -1,0 +1,20 @@
+
+// Standard failed assertion handler that only relies on libc
+
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+
+func __assertion_failed__(message, expression, filename, function_signature *ubyte, line, column int) {
+    printf('===== RUNTIME ERROR: ASSERTION FAILED! =====\n')
+
+    if message {
+        printf('Message:\t%s\n', message)
+    }
+
+    printf('Expression:\t`%s`\n', expression)
+    printf('In file:\t%s\n', filename)
+    printf('In function:\t%s\n', function_signature)
+    printf('Line:\t%d\n', line)
+    printf('Column:\t%d\n', column)
+    abort()
+}

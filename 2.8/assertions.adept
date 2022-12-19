@@ -1,0 +1,5 @@
+
+// Commonly-used standard failed assertions handlers
+
+import '2.8/assertions/libc.adept'
+import '2.8/assertions/string.adept'
