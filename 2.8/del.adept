@@ -1,7 +1,7 @@
 
 func del(value *$T){
     if value {
-        value.__defer__()
+        value.?__defer__()
         delete value
     }
 }
