@@ -574,7 +574,7 @@ func vsprintf(out result *String, format String, arguments VariadicArray) int {
 func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_modifier *int, arguments *VariadicArray) bool {
     // Returns whether this format specifier stacks
     
-    define WARNING_STUB = 'WARNING: vsprintf(*String, String, VariadicArray)'
+    define warning_stub = 'WARNING: vsprintf(*String, String, VariadicArray)'
     
     #if variadic_array_use_typeinfo
     next_type *AnyType = arguments.getNextType()
@@ -585,7 +585,7 @@ func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_
     case 'S'ub
         #if vsprintf_type_checks
         if next_type != typeinfo String,
-            printf('%s expected String value for %%S, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+            printf('%s expected String value for %%S, got \'%s\' instead\n', warning_stub, next_type.name)
         #end
         
         result.append(arguments.readString())
@@ -593,38 +593,38 @@ func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_
     case 'B'ub
         #if vsprintf_type_checks
         unless next_type == typeinfo bool || next_type == typeinfo successful,
-            printf('%s expected bool value for %%%c, got \'%s\' instead\n', WARNING_STUB, **pptr, next_type.name)
+            printf('%s expected bool value for %%%c, got \'%s\' instead\n', warning_stub, **pptr, next_type.name)
         #end
         result.append(toString(arguments.readBool()))
     case 'y'ub
         #if vsprintf_type_checks
         unless next_type == typeinfo bool || next_type == typeinfo successful,
-            printf('%s expected bool value for %%%c, got \'%s\' instead\n', WARNING_STUB, **pptr, next_type.name)
+            printf('%s expected bool value for %%%c, got \'%s\' instead\n', warning_stub, **pptr, next_type.name)
         #end
         result.append(arguments.readBool() ? "yes" : "no")
     case 'Y'ub
         #if vsprintf_type_checks
         unless next_type == typeinfo bool || next_type == typeinfo successful,
-            printf('%s expected bool value for %%%c, got \'%s\' instead\n', WARNING_STUB, **pptr, next_type.name)
+            printf('%s expected bool value for %%%c, got \'%s\' instead\n', warning_stub, **pptr, next_type.name)
         #end
         result.append(arguments.readBool() ? "Yes" : "No")
     case 'c'ub
         #if vsprintf_type_checks
         unless next_type == typeinfo ubyte,
-            printf('%s expected ubyte value for %%c, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+            printf('%s expected ubyte value for %%c, got \'%s\' instead\n', warning_stub, next_type.name)
         #end
         v ubyte = arguments.readUbyte()
         result.append(v)
     case 'z'ub
         *pptr = (*pptr) at 1
         if *pptr == end || **pptr != 'u'ub {
-            printf('%s expected \'u\' after \'%%z\' in format string\n', WARNING_STUB)
+            printf('%s expected \'u\' after \'%%z\' in format string\n', warning_stub)
             *pptr -= sizeof ubyte as ptr
         }
         
         #if vsprintf_type_checks
         unless next_type == typeinfo usize,
-            printf('%s expected ubyte value for %%c, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+            printf('%s expected ubyte value for %%c, got \'%s\' instead\n', warning_stub, next_type.name)
         #end
         result.append(arguments.readUsize())
     case 'i'ub, fallthrough
@@ -644,7 +644,7 @@ func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_
             else if next_type == typeinfo successful, value = toString(arguments.readBool()) // successful == bool
             else {
                 #if vsprintf_type_checks
-                    printf('%s got unknown type for %%%c\n', WARNING_STUB, 'd'ub)
+                    printf('%s got unknown type for %%%c\n', warning_stub, 'd'ub)
                 #end
                 value = toString(arguments.readInt())
             }
@@ -673,7 +673,7 @@ func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_
             else if next_type == typeinfo successful, value = toString(arguments.readBool()) // successful == bool
             else {
                 #if vsprintf_type_checks
-                    printf('%s got unknown type for %%%c\n', WARNING_STUB, 'u'ub)
+                    printf('%s got unknown type for %%%c\n', warning_stub, 'u'ub)
                 #end
                 value = toString(arguments.readUint())
             }
@@ -714,7 +714,7 @@ func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_
             else if next_type == typeinfo successful, value = cast double arguments.readBool() // successful == bool
             else {
                 #if vsprintf_type_checks
-                    printf('%s got unknown type for %%%c\n', WARNING_STUB, 'f'ub)
+                    printf('%s got unknown type for %%%c\n', warning_stub, 'f'ub)
                 #end
                 value = arguments.readDouble()
             }
@@ -728,14 +728,14 @@ func vsprintfFormatSpecifier(out result *String, pptr **ubyte, end *ubyte, size_
     case 's'ub,
         #if vsprintf_type_checks
         if next_type != typeinfo *ubyte,
-            printf('%s expected *ubyte value for %%s, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+            printf('%s expected *ubyte value for %%s, got \'%s\' instead\n', warning_stub, next_type.name)
         #end
         
         result.append(arguments.readCString())
     case 'p'ub
         #if vsprintf_type_checks
         if next_type.kind != AnyTypeKind::PTR,
-            printf('%s expected pointer value for %%p, got \'%s\' instead\n', WARNING_STUB, next_type.name)
+            printf('%s expected pointer value for %%p, got \'%s\' instead\n', warning_stub, next_type.name)
         #end
         
         result.append(toString(arguments.readPtr()))
