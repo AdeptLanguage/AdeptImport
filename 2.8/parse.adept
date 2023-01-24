@@ -533,6 +533,18 @@ func toString(value double) String {
     return result
 }
 
+#if __typeinfo__
+    func toString(enum_value $E~__flat_enum__) String {
+        ty *AnyEnumType = typeinfo $E as *AnyEnumType
+        
+        if ty.kind == ::ENUM && enum_value as usize < ty.length {
+            return toString(ty.members[enum_value as usize])
+        } else {
+            return "[invalid enum value]"
+        }
+    }
+#end
+
 pragma __builtin_warn_bad_printf_format
 func sprintf(out result *String, format String, arguments ...) int {
     return vsprintf(result, format, arguments)
