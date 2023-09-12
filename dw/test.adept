@@ -1,0 +1,14 @@
+import 'dw.adept'
+
+// Ported from https://github.com/dbsoft/dwindows-fb-win32/blob/main/test.bas
+
+func dwmain(argc int, argv **ubyte) int {
+	dw_init(true, argc, argv)
+	flStyle ulong = DW_FCF_SYSMENU | DW_FCF_TITLEBAR | DW_FCF_TASKLIST | DW_FCF_DLGBORDER
+	mainwindow HWND = dw_window_new(HWND_DESKTOP, 'dwindows test UTF8 中国語 (繁体) cañón', flStyle | DW_FCF_SIZEBORDER | DW_FCF_MINMAX)
+	dw_signal_connect(mainwindow, DW_SIGNAL_DELETE as *ubyte, func &dw_main_quit, &mainwindow)
+	dw_window_set_size(mainwindow, 640, 550)
+	dw_window_show(mainwindow)
+	dw_main()
+	return 0
+}
