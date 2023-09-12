@@ -1116,7 +1116,7 @@ func uppercase(this *String) String {
         this.assertNotDonor('uppercase', true)
     #end
 
-    result POD String = POD String(malloc(this.length), this.length, this.capacity, ::GIVEN)
+    result POD String = POD String(malloc(this.length), this.length, this.length, ::GIVEN)
     
     each ubyte in static *this {
         result.array[idx] = 'a'ub <= it && it <= 'z'ub ? it - 32ub : it
@@ -1130,7 +1130,7 @@ func lowercase(this *String) String {
         this.assertNotDonor('lowercase', true)
     #end
 
-    result POD String = POD String(malloc(this.length), this.length, this.capacity, ::GIVEN)
+    result POD String = POD String(malloc(this.length), this.length, this.length, ::GIVEN)
     
     each ubyte in static *this {
         result.array[idx] = 'A'ub <= it && it <= 'Z'ub ? it + 32ub : it
