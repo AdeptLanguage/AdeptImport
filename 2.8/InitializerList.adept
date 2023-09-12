@@ -1,1 +1,2 @@
 import '2.6/InitializerList.adept'
+import 'sys/cstring.adept' // Requires 'sys/cstring.adept'
