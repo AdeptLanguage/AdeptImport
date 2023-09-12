@@ -171,7 +171,7 @@ define DW_MINOR_VERSION = 3
 define DW_SUB_VERSION = 0
 
 /* General application type defines */
-define DW_HOME_URL = "http://dwindows.netlabs.org"
+define DW_HOME_URL = 'http://dwindows.netlabs.org'
 
 /* These corespond to the entries in the color
  * arrays in the Win32 dw.c, they are also the
@@ -196,25 +196,25 @@ define DW_CLR_WHITE = 15
 define DW_CLR_DEFAULT = 16
 
 /* Signal handler defines */
-define DW_SIGNAL_CONFIGURE = "configure_event"
-define DW_SIGNAL_KEY_PRESS = "key_press_event"
-define DW_SIGNAL_BUTTON_PRESS = "button_press_event"
-define DW_SIGNAL_BUTTON_RELEASE = "button_release_event"
-define DW_SIGNAL_MOTION_NOTIFY = "motion_notify_event"
-define DW_SIGNAL_DELETE = "delete_event"
-define DW_SIGNAL_EXPOSE = "expose_event"
-define DW_SIGNAL_CLICKED = "clicked"
-define DW_SIGNAL_ITEM_ENTER = "container-select"
-define DW_SIGNAL_ITEM_CONTEXT = "container-context"
-define DW_SIGNAL_ITEM_SELECT = "tree-select"
-define DW_SIGNAL_LIST_SELECT = "item-select"
-define DW_SIGNAL_SET_FOCUS = "set-focus"
-define DW_SIGNAL_VALUE_CHANGED = "value_changed"
-define DW_SIGNAL_SWITCH_PAGE = "switch-page"
-define DW_SIGNAL_COLUMN_CLICK = "click-column"
-define DW_SIGNAL_TREE_EXPAND = "tree-expand"
-define DW_SIGNAL_HTML_CHANGED = "html-changed"
-define DW_SIGNAL_HTML_RESULT = "html-result"
+define DW_SIGNAL_CONFIGURE = 'configure_event'
+define DW_SIGNAL_KEY_PRESS = 'key_press_event'
+define DW_SIGNAL_BUTTON_PRESS = 'button_press_event'
+define DW_SIGNAL_BUTTON_RELEASE = 'button_release_event'
+define DW_SIGNAL_MOTION_NOTIFY = 'motion_notify_event'
+define DW_SIGNAL_DELETE = 'delete_event'
+define DW_SIGNAL_EXPOSE = 'expose_event'
+define DW_SIGNAL_CLICKED = 'clicked'
+define DW_SIGNAL_ITEM_ENTER = 'container-select'
+define DW_SIGNAL_ITEM_CONTEXT = 'container-context'
+define DW_SIGNAL_ITEM_SELECT = 'tree-select'
+define DW_SIGNAL_LIST_SELECT = 'item-select'
+define DW_SIGNAL_SET_FOCUS = 'set-focus'
+define DW_SIGNAL_VALUE_CHANGED = 'value_changed'
+define DW_SIGNAL_SWITCH_PAGE = 'switch-page'
+define DW_SIGNAL_COLUMN_CLICK = 'click-column'
+define DW_SIGNAL_TREE_EXPAND = 'tree-expand'
+define DW_SIGNAL_HTML_CHANGED = 'html-changed'
+define DW_SIGNAL_HTML_RESULT = 'html-result'
 
 /* status of menu items */
 define DW_MIS_ENABLED = 1
@@ -420,7 +420,7 @@ func DW_BLUE_VALUE(a $T) $T = ((a & DW_BLUE_MASK) >> 16)
 func DW_RGB(a, b, c $T) $T = 0xF0000000 | a | (b << 8) | (c << 16)
 
 /* Menu convenience paramaters */
-define DW_MENU_SEPARATOR = ""
+define DW_MENU_SEPARATOR = ''
 define DW_NOMENU = 0
 define DW_MENU_AUTO = 0
 define DW_MENU_POPUP = (-1 as ulong)
@@ -484,7 +484,7 @@ define _DW_SCROLLED_MAX_WIDTH = 500
 define _DW_SCROLLED_MAX_HEIGHT = 400
 
 /* Use the dbsoft.org application domain by default if not specified */
-define DW_APP_DOMAIN_DEFAULT = "org.dbsoft.dwindows"
+define DW_APP_DOMAIN_DEFAULT = 'org.dbsoft.dwindows'
 
 /* Forwarder macros to the future names of these functions */
 //dw_pointer_get_pos func(*long, *long) void = func &dw_pointer_query_pos
