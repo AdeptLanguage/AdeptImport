@@ -708,7 +708,7 @@ func uppercase(this *String) String {
     result POD String
     result.array = new undef ubyte * this.length
     result.length = this.length
-    result.capacity = this.capacity
+    result.capacity = this.length
     result.ownership = StringOwnership::GIVEN
     
     each ubyte in static *this {
@@ -722,7 +722,7 @@ func lowercase(this *String) String {
     result POD String
     result.array = new undef ubyte * this.length
     result.length = this.length
-    result.capacity = this.capacity
+    result.capacity = this.length
     result.ownership = StringOwnership::GIVEN
     
     each ubyte in static *this {
