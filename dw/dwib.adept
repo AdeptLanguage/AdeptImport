@@ -1,0 +1,13 @@
+import 'dw.adept'
+
+alias DWIB = ptr
+
+foreign dwib_load(handle DWIB, name *ubyte) HWND
+foreign dwib_load_at_index(handle DWIB, name *ubyte, dataname *ubyte, window HWND, box HWND, index int) int
+foreign dwib_show(window HWND) void
+foreign dwib_open_from_data(buffer *ubyte, size int) DWIB
+foreign dwib_open(filename *ubyte) DWIB
+foreign dwib_close(handle DWIB) void
+foreign dwib_image_root_set(path *ubyte) int
+foreign dwib_locale_set(loc *ubyte) int
+foreign dwib_window_get_handle(handle HWND, dataname *ubyte) HWND
