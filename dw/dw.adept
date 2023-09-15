@@ -1,502 +1,495 @@
 #pragma windows_only
 
 #if __windows__
-
-foreign 'dw.dll'
-
-alias HWND = ptr
-alias HMTX = ptr
-alias HEV = ptr
-alias HMOD = ptr
-alias HSHM = ptr
-alias HICN = ptr
-alias HMENUI = ptr
-alias DWTID = ulong
-alias HTIMER = int
-alias HPRINT = ptr
-alias HINSTANCE = ptr
-
-alias HBRUSH = ptr
-alias HFONT = ptr
-alias HMENU = ptr
-alias HBITMAP = ptr
-alias HDC = ptr
-
-alias UINT = uint
-alias WPARAM = *uint
-alias LPARAM = long
-alias LRESULT = ptr
-
-alias DWORD = uint
-alias LPSTR = *ubyte
-
-alias COLORREF = DWORD
-
-struct HTREEITEM () // opaque struct
-
-struct UserData (next *UserData, data ptr, varname *ubyte)
-
-struct RECT (left long, top long, right long, bottom long)
-
-alias WNDPROC = func(HWND, UINT, WPARAM, LPARAM) LRESULT
-
-struct ColorInfo (
-    fore int,
-    back int,
-    combo HWND,
-    buddy HWND,
-    style ulong,
-    rect RECT,
-    clickdefault HWND,
-    hbrush HBRUSH,
-    hfont HFONT,
-    hmenu HMENU,
-    fontname [128] ubyte,
-    pOldProc WNDPROC,
-    root *UserData
-)
-
-struct TC_ITEM (
-    mask UINT,
-    dwState DWORD,
-    dwStateMask DWORD,
-    pszText LPSTR,
-    cchTextMax int,
-    iImage int,
-    lParam LPARAM
-)
-
-struct NotebookPage (info ColorInfo, item TC_ITEM, hwnd HWND, realid int)
-
-struct ContainerInfo (info ColorInfo, flags *ulong, columns ulong, odd COLORREF, even COLORREF)
-
-struct HPIXMAP (
-    width ulong,
-    height ulong,
-    hbm HBITMAP,
-    hdc HDC,
-    transcolor ulong,
-    handle HWND,
-    bits ptr,
-    depth ulong,
-    font HFONT
-)
-
-struct Item (
-    type int,
-    hwnd HWND,
-    width int,
-    height int,
-    origwidth int,
-    origheight int,
-    hsize int,
-    vsize int,
-    pad int
-)
-
-struct Box (
-    cinfo ColorInfo,
-    fullscreen int,
-    count int,
-    type int,
-    hsize int,
-    vsize int,
-    pad int,
-    grouppadx int,
-    grouppady int,
-    grouphwnd HWND,
-    defaultitem HWND,
-    usedpadx int,
-    usedpady int,
-    minheight int,
-    minwidth int,
-    width int,
-    height int,
-    flags ulong,
-    items *Item
-)
-
-struct CDATE (day ubyte, month ubyte, year ushort)
-
-alias PCDATE = *CDATE
-
-struct CTIME (hours ubyte, minutes ubyte, seconds ubyte, ucReserved ubyte)
-
-alias PCTIME = *CTIME
-
-define _DW_ENV_STRING_SIZE = 257
-
-struct DWEnv (
-    osName [_DW_ENV_STRING_SIZE] ubyte,
-    buildDate [_DW_ENV_STRING_SIZE] ubyte,
-    buildTime [_DW_ENV_STRING_SIZE] ubyte,
-    MajorVersion short,
-    MinorVersion short,
-    MajorBuild short,
-    MinorBuild short,
-    DWMajorVersion short,
-    DWMinorVersion short,
-    DWSubVersion short,
-    htmlEngine [_DW_ENV_STRING_SIZE] ubyte
-)
-
-struct DWDialog (eve HEV, done int, method int, data ptr, result ptr)
-
-struct DWExpose (x int, y int, width int, height int)
-
-foreign enum DWFEATURE (
-    DW_FEATURE_HTML,                    /* Supports the HTML Widget */
-    DW_FEATURE_HTML_RESULT,             /* Supports the DW_SIGNAL_HTML_RESULT callback */
-    DW_FEATURE_WINDOW_BORDER,           /* Supports custom window border sizes */
-    DW_FEATURE_WINDOW_TRANSPARENCY,     /* Supports window frame transparency */
-    DW_FEATURE_DARK_MODE,               /* Supports Dark Mode user interface */
-    DW_FEATURE_MLE_AUTO_COMPLETE,       /* Supports auto completion in Multi-line Edit boxes */
-    DW_FEATURE_MLE_WORD_WRAP,           /* Supports word wrapping in Multi-line Edit boxes */
-    DW_FEATURE_CONTAINER_STRIPE,        /* Supports striped line display in container widgets */
-    DW_FEATURE_MDI,                     /* Supports Multiple Document Interface window frame */
-    DW_FEATURE_NOTEBOOK_STATUS_TEXT,    /* Supports status text area on notebook/tabbed controls */
-    DW_FEATURE_NOTIFICATION,            /* Supports sending system notifications */
-    DW_FEATURE_UTF8_UNICODE,            /* Supports UTF8 encoded Unicode text */
-    DW_FEATURE_MLE_RICH_EDIT,           /* Supports Rich Edit based MLE control (Windows) */
-    DW_FEATURE_TASK_BAR,                /* Supports icons in the taskbar or similar system widget */
-    DW_FEATURE_TREE,                    /* Supports the Tree Widget */
-    DW_FEATURE_WINDOW_PLACEMENT,        /* Supports arbitrary window placement */
-    DW_FEATURE_CONTAINER_MODE,          /* Supports alternate container view modes */
-    DW_FEATURE_MAX
-)
-
-/* Dynamic Windows version numbers */
-define DW_MAJOR_VERSION = 3
-define DW_MINOR_VERSION = 3
-define DW_SUB_VERSION = 0
-
-/* General application type defines */
-define DW_HOME_URL = 'http://dwindows.netlabs.org'
-
-/* These corespond to the entries in the color
- * arrays in the Win32 dw.c, they are also the
- * same as DOS ANSI colors.
- */
-define DW_CLR_BLACK = 0
-define DW_CLR_DARKRED = 1
-define DW_CLR_DARKGREEN = 2
-define DW_CLR_BROWN = 3
-define DW_CLR_DARKBLUE = 4
-define DW_CLR_DARKPINK = 5
-define DW_CLR_DARKCYAN = 6
-define DW_CLR_PALEGRAY = 7
-define DW_CLR_DARKGRAY = 8
-define DW_CLR_RED = 9
-define DW_CLR_GREEN = 10
-define DW_CLR_YELLOW = 11
-define DW_CLR_BLUE = 12
-define DW_CLR_PINK = 13
-define DW_CLR_CYAN = 14
-define DW_CLR_WHITE = 15
-define DW_CLR_DEFAULT = 16
-
-/* Signal handler defines */
-define DW_SIGNAL_CONFIGURE = 'configure_event'
-define DW_SIGNAL_KEY_PRESS = 'key_press_event'
-define DW_SIGNAL_BUTTON_PRESS = 'button_press_event'
-define DW_SIGNAL_BUTTON_RELEASE = 'button_release_event'
-define DW_SIGNAL_MOTION_NOTIFY = 'motion_notify_event'
-define DW_SIGNAL_DELETE = 'delete_event'
-define DW_SIGNAL_EXPOSE = 'expose_event'
-define DW_SIGNAL_CLICKED = 'clicked'
-define DW_SIGNAL_ITEM_ENTER = 'container-select'
-define DW_SIGNAL_ITEM_CONTEXT = 'container-context'
-define DW_SIGNAL_ITEM_SELECT = 'tree-select'
-define DW_SIGNAL_LIST_SELECT = 'item-select'
-define DW_SIGNAL_SET_FOCUS = 'set-focus'
-define DW_SIGNAL_VALUE_CHANGED = 'value_changed'
-define DW_SIGNAL_SWITCH_PAGE = 'switch-page'
-define DW_SIGNAL_COLUMN_CLICK = 'click-column'
-define DW_SIGNAL_TREE_EXPAND = 'tree-expand'
-define DW_SIGNAL_HTML_CHANGED = 'html-changed'
-define DW_SIGNAL_HTML_RESULT = 'html-result'
-
-/* status of menu items */
-define DW_MIS_ENABLED = 1
-define DW_MIS_DISABLED = (1 << 1)
-define DW_MIS_CHECKED = (1 << 2)
-define DW_MIS_UNCHECKED = (1 << 3)
-
-/* Gravity */
-define DW_GRAV_TOP = 0
-define DW_GRAV_LEFT = 0
-define DW_GRAV_CENTER = 1
-define DW_GRAV_RIGHT = 2
-define DW_GRAV_BOTTOM = 2
-define DW_GRAV_OBSTACLES = (1 << 10)
-
-/* Control size constants */
-define DW_SIZE_AUTO = -1
-
-define SS_LEFTNOWORDWRAP = 0x0000000C
-define DW_DT_LEFT = SS_LEFTNOWORDWRAP
-define DW_DT_QUERYEXTENT = 0
-define DW_DT_UNDERSCORE = 0
-define DW_DT_STRIKEOUT= 0
-define DW_DT_TEXTATTRS = 0
-define DW_DT_EXTERNALLEADING = 0
-
-define SS_CENTER = 0x00000001
-define DW_DT_CENTER = SS_CENTER
-define SS_RIGHT = 0x00000002
-define DW_DT_RIGHT = SS_RIGHT
-define DW_DT_TOP = 0
-define DW_DT_VCENTER = (1 << 29)
-define DW_DT_BOTTOM = 0
-define DW_DT_HALFTONE = 0
-define DW_DT_MNEMONIC = 0
-define DW_DT_WORDBREAK = (1 << 28)
-define DW_DT_ERASERECT = 0
-
-define DW_FCF_CLOSEBUTTON = 0
-define WS_CAPTION = 0x00C00000
-define DW_FCF_TITLEBAR = WS_CAPTION
-define WS_SYSMENU = 0x00080000
-define DW_FCF_SYSMENU = WS_SYSMENU
-define DW_FCF_MENU = 0
-define WS_THICKFRAME = 0x00040000
-define DW_FCF_SIZEBORDER = WS_THICKFRAME
-define WS_MINIMIZEBOX = 0x00020000
-define DW_FCF_MINBUTTON = WS_MINIMIZEBOX
-define WS_MAXIMIZEBOX = 0x00010000
-define DW_FCF_MAXBUTTON = WS_MAXIMIZEBOX
-define DW_FCF_MINMAX = (WS_MINIMIZEBOX|WS_MAXIMIZEBOX)
-define WS_DLGFRAME = 0x00400000
-define DW_FCF_DLGBORDER = WS_DLGFRAME
-define WS_BORDER = 0x00800000
-define DW_FCF_BORDER = WS_BORDER
-define DW_FCF_TASKLIST = (1 << 1)
-define DW_FCF_NOMOVEWITHOWNER = 0
-define DW_FCF_SYSMODAL = 0
-define DW_FCF_HIDEBUTTON = WS_MINIMIZEBOX
-define DW_FCF_HIDEMAX = (WS_MINIMIZEBOX|WS_MAXIMIZEBOX)
-define DW_FCF_AUTOICON= 0
-define WS_MAXIMIZE = 0x01000000
-define DW_FCF_MAXIMIZE = WS_MAXIMIZE
-define WS_MINIMIZE = 0x20000000
-define DW_FCF_MINIMIZE = WS_MINIMIZE
-define DW_FCF_COMPOSITED = 1
-define DW_FCF_TEXTURED = 0
-define DW_FCF_FULLSCREEN = (1 << 2)
-
-define DW_CFA_BITMAPORICON = 1
-define DW_CFA_STRING = (1 << 1)
-define DW_CFA_ULONG = (1 << 2)
-define DW_CFA_TIME = (1 << 3)
-define DW_CFA_DATE = (1 << 4)
-define DW_CFA_CENTER = (1 << 5)
-define DW_CFA_LEFT = (1 << 6)
-define DW_CFA_RIGHT = (1 << 7)
-define DW_CFA_STRINGANDICON = (1 << 8)
-define DW_CFA_HORZSEPARATOR = 0
-define DW_CFA_SEPARATOR = 0
-
-define LVNI_SELECTED = 0x2
-define DW_CRA_SELECTED = LVNI_SELECTED
-define LVNI_FOCUSED = 0x1
-define DW_CRA_CURSORED = LVNI_FOCUSED
-
-define DW_CR_RETDATA = (1 << 10)
-
-define LBS_MULTIPLESEL = 0x0008
-define DW_LS_MULTIPLESEL = LBS_MULTIPLESEL
-
-define DW_LIT_NONE = -1
-
-define DW_MLE_CASESENSITIVE = 1
-
-define BS_FLAT = 0x00008000
-define DW_BS_NOBORDER = BS_FLAT
-
-define DW_POINTER_DEFAULT = 0
-define DW_POINTER_ARROW = 32512
-define DW_POINTER_CLOCK = 32514
-define DW_POINTER_QUESTION = 32651
-
-/* flag values for dw_messagebox() */
-define MB_OK = 0x00000000
-define DW_MB_OK = MB_OK
-define MB_OKCANCEL = 0x00000001
-define DW_MB_OKCANCEL = MB_OKCANCEL
-define MB_YESNO = 0x00000004
-define DW_MB_YESNO = MB_YESNO
-define MB_YESNOCANCEL = 0x00000003
-define DW_MB_YESNOCANCEL = MB_YESNOCANCEL
-
-define MB_ICONEXCLAMATION = 0x00000030
-define MB_ICONWARNING = MB_ICONEXCLAMATION
-define DW_MB_WARNING = MB_ICONWARNING
-define MB_ICONHAND = 0x00000010
-define MB_ICONERROR = MB_ICONHAND
-define DW_MB_ERROR = MB_ICONERROR
-define MB_ICONASTERISK = 0x00000040
-define MB_ICONINFORMATION = MB_ICONASTERISK
-define DW_MB_INFORMATION = MB_ICONINFORMATION
-define MB_ICONQUESTION = 0x00000020
-define DW_MB_QUESTION = MB_ICONQUESTION
-
-/* Key Modifiers */
-define KC_CTRL = (1)
-define KC_SHIFT = (1 << 1)
-define KC_ALT = (1 << 2)
-
-define DW_DIR_SEPARATOR = '\\'ub
-
-/* Some dark mode constants for supported platforms */
-define DW_DARK_MODE_DISABLED = 0
-define DW_DARK_MODE_BASIC = 1
-define DW_DARK_MODE_FULL = 2
-define DW_DARK_MODE_FORCED = 3
-
-/* Mobile alternate container modes */
-define DW_CONTAINER_MODE_DEFAULT = 0    /* Displays only the main column on mobile platforms */
-define DW_CONTAINER_MODE_EXTRA = 1    /* Displays the main column, and the rest on a second line */
-define DW_CONTAINER_MODE_MULTI = 2    /* Displays every display column on a separate line plus buttons */
-define DW_CONTAINER_MODE_MAX = 3
-
-func DW_SIGNAL_FUNC(a $T) ptr = (a as ptr)
-
-define HWND_DESKTOP = (0 as HWND)
-define DW_DESKTOP = HWND_DESKTOP
-define DW_MINIMIZED = 1
-
-define DW_BUTTON1_MASK = 1
-define DW_BUTTON2_MASK = (1 << 1)
-define DW_BUTTON3_MASK = (1 << 2)
-
-define DW_EXEC_CON = 0
-define DW_EXEC_GUI = 1
-
-define DW_FILE_OPEN = 0
-define DW_FILE_SAVE = 1
-define DW_DIRECTORY_OPEN = 2
-
-define DW_FILE_PATH = 0
-
-define DW_FILE_MASK = (0x0000FFFF)
-
-define DW_HORZ = 0
-define DW_VERT = 1
-
-define DW_TIMEOUT_INFINITE = (-1 as ulong)
-
-/* Obsolete, should disappear sometime */
-define BOXHORZ = DW_HORZ
-define BOXVERT = DW_VERT
-define DW_FCF_SHELLPOSITION = 0
-define DW_FCF_NOBYTEALIGN = 0
-define DW_FCF_VERTSCROLL = 0
-define DW_FCF_HORZSCROLL = 0
-
-/* Scrolling constants */
-define DW_SCROLL_UP = 0
-define DW_SCROLL_DOWN = 1
-define DW_SCROLL_TOP = 2
-define DW_SCROLL_BOTTOM = 3
-
-/* return values for dw_messagebox() */
-define DW_MB_RETURN_OK = 0
-define DW_MB_RETURN_YES = 1
-define DW_MB_RETURN_NO = 0
-define DW_MB_RETURN_CANCEL = 2
-
-func DW_PIXMAP_WIDTH(x *HPIXMAP) ulong = x ? x.width : 0ul
-func DW_PIXMAP_HEIGHT(x *HPIXMAP) ulong = x ? x.height : 0ul
-
-define DW_RGB_COLOR = (0xF0000000)
-define DW_RGB_TRANSPARENT = (0x0F000000)
-define DW_RGB_MASK = (0x00FFFFFF)
-define DW_RED_MASK = (0x000000FF)
-define DW_GREEN_MASK = (0x0000FF00)
-define DW_BLUE_MASK = (0x00FF0000)
-func DW_RED_VALUE(a $T) $T = (a & DW_RED_MASK)
-func DW_GREEN_VALUE(a $T) $T = ((a & DW_GREEN_MASK) >> 8)
-func DW_BLUE_VALUE(a $T) $T = ((a & DW_BLUE_MASK) >> 16)
-func DW_RGB(a, b, c $T) $T = 0xF0000000 | a | (b << 8) | (c << 16)
-
-/* Menu convenience paramaters */
-define DW_MENU_SEPARATOR = ''
-define DW_NOMENU = 0
-define DW_MENU_AUTO = 0
-define DW_MENU_POPUP = (-1 as ulong)
-
-/* Convenience parameters for various types */
-define DW_NOHWND = 0
-define DW_NOHTIMER = 0
-define DW_NOHPRINT = 0
-define DW_NOHPIXMAP = 0
-define DW_NOHICN = 0
-
-define DW_PERCENT_INDETERMINATE = (-1 as uint)
-
-/* Return value error codes */
-define DW_ERROR_NONE = 0
-define DW_ERROR_GENERAL = 1
-define DW_ERROR_TIMEOUT = 2
-define DW_ERROR_NON_INIT = 3
-define DW_ERROR_NO_MEM = 4
-define DW_ERROR_INTERRUPT = 5
-define DW_ERROR_UNKNOWN = -1
-
-/* Embedded HTML actions */
-define DW_HTML_GOBACK = 0
-define DW_HTML_GOFORWARD = 1
-define DW_HTML_GOHOME = 2
-define DW_HTML_SEARCH = 3
-define DW_HTML_RELOAD = 4
-define DW_HTML_STOP = 5
-define DW_HTML_PRINT = 6
-
-/* Embedded HTML notifcations */
-define DW_HTML_CHANGE_STARTED = 1
-define DW_HTML_CHANGE_REDIRECT = 2
-define DW_HTML_CHANGE_LOADING = 3
-define DW_HTML_CHANGE_COMPLETE = 4
-
-/* Drawing flags  */
-define DW_DRAW_DEFAULT = 0
-define DW_DRAW_FILL = 1
-define DW_DRAW_FULL = (1 << 1)
-define DW_DRAW_NOAA = (1 << 2)
-
-/* MLE Completion flags */
-define DW_MLE_COMPLETE_TEXT = 1
-define DW_MLE_COMPLETE_DASH = (1 << 1)
-define DW_MLE_COMPLETE_QUOTE = (1 << 2)
-
-/* Library feature constants */
-define DW_FEATURE_UNSUPPORTED = -1
-define DW_FEATURE_DISABLED = 0
-define DW_FEATURE_ENABLED = 1
-
-/* Macro for casting resource IDs to HICN */
-func DW_RESOURCE(a $T) HICN = (a < 65536 ? a as HICN : 0 as HICN)
-
-/* Constants for sizing scrolled widgets */
-define _DW_SCROLLED_MIN_WIDTH = 100
-define _DW_SCROLLED_MIN_HEIGHT = 75
-define _DW_SCROLLED_MAX_WIDTH = 500
-define _DW_SCROLLED_MAX_HEIGHT = 400
-
-/* Use the dbsoft.org application domain by default if not specified */
-define DW_APP_DOMAIN_DEFAULT = 'org.dbsoft.dwindows'
-
-/* Forwarder macros to the future names of these functions */
-//dw_pointer_get_pos func(*long, *long) void = func &dw_pointer_query_pos
-//dw_environment_get func(*DWEnv) void = func &dw_environment_query
-//dw_container_get_start func(HWND, ulong) *ubyte = func &dw_container_query_start
-//dw_container_get_next func(HWND, ulong) *ubyte = func &dw_container_query_next
-
-func alias dw_pointer_get_pos(*long, *long) => dw_pointer_query_pos
-func alias dw_environment_get(*DWEnv) => dw_environment_query
-func alias dw_container_get_start(HWND, ulong) => dw_container_query_start
-func alias dw_container_get_next(HWND, ulong) => dw_container_query_next
-
+    foreign 'dw.dll'
+
+    alias HWND = ptr
+    alias HMTX = ptr
+    alias HEV = ptr
+    alias HMOD = ptr
+    alias HSHM = ptr
+    alias HICN = ptr
+    alias HMENUI = ptr
+    alias DWTID = ulong
+    alias HTIMER = int
+    alias HPRINT = ptr
+    alias HINSTANCE = ptr
+
+    alias HBRUSH = ptr
+    alias HFONT = ptr
+    alias HMENU = ptr
+    alias HBITMAP = ptr
+    alias HDC = ptr
+
+    alias UINT = uint
+    alias WPARAM = *uint
+    alias LPARAM = long
+    alias LRESULT = ptr
+
+    alias DWORD = uint
+    alias LPSTR = *ubyte
+
+    alias COLORREF = DWORD
+
+    struct HTREEITEM () // opaque struct
+
+    struct UserData (next *UserData, data ptr, varname *ubyte)
+
+    struct RECT (left long, top long, right long, bottom long)
+
+    alias WNDPROC = func(HWND, UINT, WPARAM, LPARAM) LRESULT
+
+    struct ColorInfo (
+        fore int,
+        back int,
+        combo HWND,
+        buddy HWND,
+        style ulong,
+        rect RECT,
+        clickdefault HWND,
+        hbrush HBRUSH,
+        hfont HFONT,
+        hmenu HMENU,
+        fontname [128] ubyte,
+        pOldProc WNDPROC,
+        root *UserData
+    )
+
+    struct TC_ITEM (
+        mask UINT,
+        dwState DWORD,
+        dwStateMask DWORD,
+        pszText LPSTR,
+        cchTextMax int,
+        iImage int,
+        lParam LPARAM
+    )
+
+    struct NotebookPage (info ColorInfo, item TC_ITEM, hwnd HWND, realid int)
+
+    struct ContainerInfo (info ColorInfo, flags *ulong, columns ulong, odd COLORREF, even COLORREF)
+
+    struct HPIXMAP (
+        width ulong,
+        height ulong,
+        hbm HBITMAP,
+        hdc HDC,
+        transcolor ulong,
+        handle HWND,
+        bits ptr,
+        depth ulong,
+        font HFONT
+    )
+
+    struct Item (
+        type int,
+        hwnd HWND,
+        width int,
+        height int,
+        origwidth int,
+        origheight int,
+        hsize int,
+        vsize int,
+        pad int
+    )
+
+    struct Box (
+        cinfo ColorInfo,
+        fullscreen int,
+        count int,
+        type int,
+        hsize int,
+        vsize int,
+        pad int,
+        grouppadx int,
+        grouppady int,
+        grouphwnd HWND,
+        defaultitem HWND,
+        usedpadx int,
+        usedpady int,
+        minheight int,
+        minwidth int,
+        width int,
+        height int,
+        flags ulong,
+        items *Item
+    )
+
+    struct CDATE (day ubyte, month ubyte, year ushort)
+
+    alias PCDATE = *CDATE
+
+    struct CTIME (hours ubyte, minutes ubyte, seconds ubyte, ucReserved ubyte)
+
+    alias PCTIME = *CTIME
+
+    define _DW_ENV_STRING_SIZE = 257
+
+    struct DWEnv (
+        osName [_DW_ENV_STRING_SIZE] ubyte,
+        buildDate [_DW_ENV_STRING_SIZE] ubyte,
+        buildTime [_DW_ENV_STRING_SIZE] ubyte,
+        MajorVersion short,
+        MinorVersion short,
+        MajorBuild short,
+        MinorBuild short,
+        DWMajorVersion short,
+        DWMinorVersion short,
+        DWSubVersion short,
+        htmlEngine [_DW_ENV_STRING_SIZE] ubyte
+    )
+
+    struct DWDialog (eve HEV, done int, method int, data ptr, result ptr)
+
+    struct DWExpose (x int, y int, width int, height int)
+
+    foreign enum DWFEATURE (
+        DW_FEATURE_HTML,                    /* Supports the HTML Widget */
+        DW_FEATURE_HTML_RESULT,             /* Supports the DW_SIGNAL_HTML_RESULT callback */
+        DW_FEATURE_WINDOW_BORDER,           /* Supports custom window border sizes */
+        DW_FEATURE_WINDOW_TRANSPARENCY,     /* Supports window frame transparency */
+        DW_FEATURE_DARK_MODE,               /* Supports Dark Mode user interface */
+        DW_FEATURE_MLE_AUTO_COMPLETE,       /* Supports auto completion in Multi-line Edit boxes */
+        DW_FEATURE_MLE_WORD_WRAP,           /* Supports word wrapping in Multi-line Edit boxes */
+        DW_FEATURE_CONTAINER_STRIPE,        /* Supports striped line display in container widgets */
+        DW_FEATURE_MDI,                     /* Supports Multiple Document Interface window frame */
+        DW_FEATURE_NOTEBOOK_STATUS_TEXT,    /* Supports status text area on notebook/tabbed controls */
+        DW_FEATURE_NOTIFICATION,            /* Supports sending system notifications */
+        DW_FEATURE_UTF8_UNICODE,            /* Supports UTF8 encoded Unicode text */
+        DW_FEATURE_MLE_RICH_EDIT,           /* Supports Rich Edit based MLE control (Windows) */
+        DW_FEATURE_TASK_BAR,                /* Supports icons in the taskbar or similar system widget */
+        DW_FEATURE_TREE,                    /* Supports the Tree Widget */
+        DW_FEATURE_WINDOW_PLACEMENT,        /* Supports arbitrary window placement */
+        DW_FEATURE_CONTAINER_MODE,          /* Supports alternate container view modes */
+        DW_FEATURE_MAX
+    )
+
+    /* Dynamic Windows version numbers */
+    define DW_MAJOR_VERSION = 3
+    define DW_MINOR_VERSION = 3
+    define DW_SUB_VERSION = 0
+
+    /* General application type defines */
+    define DW_HOME_URL = 'http://dwindows.netlabs.org'
+
+    /* These corespond to the entries in the color
+     * arrays in the Win32 dw.c, they are also the
+     * same as DOS ANSI colors.
+     */
+    define DW_CLR_BLACK = 0
+    define DW_CLR_DARKRED = 1
+    define DW_CLR_DARKGREEN = 2
+    define DW_CLR_BROWN = 3
+    define DW_CLR_DARKBLUE = 4
+    define DW_CLR_DARKPINK = 5
+    define DW_CLR_DARKCYAN = 6
+    define DW_CLR_PALEGRAY = 7
+    define DW_CLR_DARKGRAY = 8
+    define DW_CLR_RED = 9
+    define DW_CLR_GREEN = 10
+    define DW_CLR_YELLOW = 11
+    define DW_CLR_BLUE = 12
+    define DW_CLR_PINK = 13
+    define DW_CLR_CYAN = 14
+    define DW_CLR_WHITE = 15
+    define DW_CLR_DEFAULT = 16
+
+    /* Signal handler defines */
+    define DW_SIGNAL_CONFIGURE = 'configure_event'
+    define DW_SIGNAL_KEY_PRESS = 'key_press_event'
+    define DW_SIGNAL_BUTTON_PRESS = 'button_press_event'
+    define DW_SIGNAL_BUTTON_RELEASE = 'button_release_event'
+    define DW_SIGNAL_MOTION_NOTIFY = 'motion_notify_event'
+    define DW_SIGNAL_DELETE = 'delete_event'
+    define DW_SIGNAL_EXPOSE = 'expose_event'
+    define DW_SIGNAL_CLICKED = 'clicked'
+    define DW_SIGNAL_ITEM_ENTER = 'container-select'
+    define DW_SIGNAL_ITEM_CONTEXT = 'container-context'
+    define DW_SIGNAL_ITEM_SELECT = 'tree-select'
+    define DW_SIGNAL_LIST_SELECT = 'item-select'
+    define DW_SIGNAL_SET_FOCUS = 'set-focus'
+    define DW_SIGNAL_VALUE_CHANGED = 'value_changed'
+    define DW_SIGNAL_SWITCH_PAGE = 'switch-page'
+    define DW_SIGNAL_COLUMN_CLICK = 'click-column'
+    define DW_SIGNAL_TREE_EXPAND = 'tree-expand'
+    define DW_SIGNAL_HTML_CHANGED = 'html-changed'
+    define DW_SIGNAL_HTML_RESULT = 'html-result'
+
+    /* status of menu items */
+    define DW_MIS_ENABLED = 1
+    define DW_MIS_DISABLED = (1 << 1)
+    define DW_MIS_CHECKED = (1 << 2)
+    define DW_MIS_UNCHECKED = (1 << 3)
+
+    /* Gravity */
+    define DW_GRAV_TOP = 0
+    define DW_GRAV_LEFT = 0
+    define DW_GRAV_CENTER = 1
+    define DW_GRAV_RIGHT = 2
+    define DW_GRAV_BOTTOM = 2
+    define DW_GRAV_OBSTACLES = (1 << 10)
+
+    /* Control size constants */
+    define DW_SIZE_AUTO = -1
+
+    define SS_LEFTNOWORDWRAP = 0x0000000C
+    define DW_DT_LEFT = SS_LEFTNOWORDWRAP
+    define DW_DT_QUERYEXTENT = 0
+    define DW_DT_UNDERSCORE = 0
+    define DW_DT_STRIKEOUT= 0
+    define DW_DT_TEXTATTRS = 0
+    define DW_DT_EXTERNALLEADING = 0
+
+    define SS_CENTER = 0x00000001
+    define DW_DT_CENTER = SS_CENTER
+    define SS_RIGHT = 0x00000002
+    define DW_DT_RIGHT = SS_RIGHT
+    define DW_DT_TOP = 0
+    define DW_DT_VCENTER = (1 << 29)
+    define DW_DT_BOTTOM = 0
+    define DW_DT_HALFTONE = 0
+    define DW_DT_MNEMONIC = 0
+    define DW_DT_WORDBREAK = (1 << 28)
+    define DW_DT_ERASERECT = 0
+
+    define DW_FCF_CLOSEBUTTON = 0
+    define WS_CAPTION = 0x00C00000
+    define DW_FCF_TITLEBAR = WS_CAPTION
+    define WS_SYSMENU = 0x00080000
+    define DW_FCF_SYSMENU = WS_SYSMENU
+    define DW_FCF_MENU = 0
+    define WS_THICKFRAME = 0x00040000
+    define DW_FCF_SIZEBORDER = WS_THICKFRAME
+    define WS_MINIMIZEBOX = 0x00020000
+    define DW_FCF_MINBUTTON = WS_MINIMIZEBOX
+    define WS_MAXIMIZEBOX = 0x00010000
+    define DW_FCF_MAXBUTTON = WS_MAXIMIZEBOX
+    define DW_FCF_MINMAX = (WS_MINIMIZEBOX|WS_MAXIMIZEBOX)
+    define WS_DLGFRAME = 0x00400000
+    define DW_FCF_DLGBORDER = WS_DLGFRAME
+    define WS_BORDER = 0x00800000
+    define DW_FCF_BORDER = WS_BORDER
+    define DW_FCF_TASKLIST = (1 << 1)
+    define DW_FCF_NOMOVEWITHOWNER = 0
+    define DW_FCF_SYSMODAL = 0
+    define DW_FCF_HIDEBUTTON = WS_MINIMIZEBOX
+    define DW_FCF_HIDEMAX = (WS_MINIMIZEBOX|WS_MAXIMIZEBOX)
+    define DW_FCF_AUTOICON= 0
+    define WS_MAXIMIZE = 0x01000000
+    define DW_FCF_MAXIMIZE = WS_MAXIMIZE
+    define WS_MINIMIZE = 0x20000000
+    define DW_FCF_MINIMIZE = WS_MINIMIZE
+    define DW_FCF_COMPOSITED = 1
+    define DW_FCF_TEXTURED = 0
+    define DW_FCF_FULLSCREEN = (1 << 2)
+
+    define DW_CFA_BITMAPORICON = 1
+    define DW_CFA_STRING = (1 << 1)
+    define DW_CFA_ULONG = (1 << 2)
+    define DW_CFA_TIME = (1 << 3)
+    define DW_CFA_DATE = (1 << 4)
+    define DW_CFA_CENTER = (1 << 5)
+    define DW_CFA_LEFT = (1 << 6)
+    define DW_CFA_RIGHT = (1 << 7)
+    define DW_CFA_STRINGANDICON = (1 << 8)
+    define DW_CFA_HORZSEPARATOR = 0
+    define DW_CFA_SEPARATOR = 0
+
+    define LVNI_SELECTED = 0x2
+    define DW_CRA_SELECTED = LVNI_SELECTED
+    define LVNI_FOCUSED = 0x1
+    define DW_CRA_CURSORED = LVNI_FOCUSED
+
+    define DW_CR_RETDATA = (1 << 10)
+
+    define LBS_MULTIPLESEL = 0x0008
+    define DW_LS_MULTIPLESEL = LBS_MULTIPLESEL
+
+    define DW_LIT_NONE = -1
+
+    define DW_MLE_CASESENSITIVE = 1
+
+    define BS_FLAT = 0x00008000
+    define DW_BS_NOBORDER = BS_FLAT
+
+    define DW_POINTER_DEFAULT = 0
+    define DW_POINTER_ARROW = 32512
+    define DW_POINTER_CLOCK = 32514
+    define DW_POINTER_QUESTION = 32651
+
+    /* flag values for dw_messagebox() */
+    define MB_OK = 0x00000000
+    define DW_MB_OK = MB_OK
+    define MB_OKCANCEL = 0x00000001
+    define DW_MB_OKCANCEL = MB_OKCANCEL
+    define MB_YESNO = 0x00000004
+    define DW_MB_YESNO = MB_YESNO
+    define MB_YESNOCANCEL = 0x00000003
+    define DW_MB_YESNOCANCEL = MB_YESNOCANCEL
+
+    define MB_ICONEXCLAMATION = 0x00000030
+    define MB_ICONWARNING = MB_ICONEXCLAMATION
+    define DW_MB_WARNING = MB_ICONWARNING
+    define MB_ICONHAND = 0x00000010
+    define MB_ICONERROR = MB_ICONHAND
+    define DW_MB_ERROR = MB_ICONERROR
+    define MB_ICONASTERISK = 0x00000040
+    define MB_ICONINFORMATION = MB_ICONASTERISK
+    define DW_MB_INFORMATION = MB_ICONINFORMATION
+    define MB_ICONQUESTION = 0x00000020
+    define DW_MB_QUESTION = MB_ICONQUESTION
+
+    /* Key Modifiers */
+    define KC_CTRL = (1)
+    define KC_SHIFT = (1 << 1)
+    define KC_ALT = (1 << 2)
+
+    define DW_DIR_SEPARATOR = '\\'ub
+
+    /* Some dark mode constants for supported platforms */
+    define DW_DARK_MODE_DISABLED = 0
+    define DW_DARK_MODE_BASIC = 1
+    define DW_DARK_MODE_FULL = 2
+    define DW_DARK_MODE_FORCED = 3
+
+    /* Mobile alternate container modes */
+    define DW_CONTAINER_MODE_DEFAULT = 0  /* Displays only the main column on mobile platforms */
+    define DW_CONTAINER_MODE_EXTRA = 1    /* Displays the main column, and the rest on a second line */
+    define DW_CONTAINER_MODE_MULTI = 2    /* Displays every display column on a separate line plus buttons */
+    define DW_CONTAINER_MODE_MAX = 3
+
+    func DW_SIGNAL_FUNC(a $T) ptr = (a as ptr)
+
+    define HWND_DESKTOP = (0 as HWND)
+    define DW_DESKTOP = HWND_DESKTOP
+    define DW_MINIMIZED = 1
+
+    define DW_BUTTON1_MASK = 1
+    define DW_BUTTON2_MASK = (1 << 1)
+    define DW_BUTTON3_MASK = (1 << 2)
+
+    define DW_EXEC_CON = 0
+    define DW_EXEC_GUI = 1
+
+    define DW_FILE_OPEN = 0
+    define DW_FILE_SAVE = 1
+    define DW_DIRECTORY_OPEN = 2
+
+    define DW_FILE_PATH = 0
+
+    define DW_FILE_MASK = (0x0000FFFF)
+
+    define DW_HORZ = 0
+    define DW_VERT = 1
+
+    define DW_TIMEOUT_INFINITE = (-1 as ulong)
+
+    /* Obsolete, should disappear sometime */
+    define BOXHORZ = DW_HORZ
+    define BOXVERT = DW_VERT
+    define DW_FCF_SHELLPOSITION = 0
+    define DW_FCF_NOBYTEALIGN = 0
+    define DW_FCF_VERTSCROLL = 0
+    define DW_FCF_HORZSCROLL = 0
+
+    /* Scrolling constants */
+    define DW_SCROLL_UP = 0
+    define DW_SCROLL_DOWN = 1
+    define DW_SCROLL_TOP = 2
+    define DW_SCROLL_BOTTOM = 3
+
+    /* return values for dw_messagebox() */
+    define DW_MB_RETURN_OK = 0
+    define DW_MB_RETURN_YES = 1
+    define DW_MB_RETURN_NO = 0
+    define DW_MB_RETURN_CANCEL = 2
+
+    func DW_PIXMAP_WIDTH(x *HPIXMAP) ulong = x ? x.width : 0ul
+    func DW_PIXMAP_HEIGHT(x *HPIXMAP) ulong = x ? x.height : 0ul
+
+    define DW_RGB_COLOR = (0xF0000000)
+    define DW_RGB_TRANSPARENT = (0x0F000000)
+    define DW_RGB_MASK = (0x00FFFFFF)
+    define DW_RED_MASK = (0x000000FF)
+    define DW_GREEN_MASK = (0x0000FF00)
+    define DW_BLUE_MASK = (0x00FF0000)
+    func DW_RED_VALUE(a $T) $T = (a & DW_RED_MASK)
+    func DW_GREEN_VALUE(a $T) $T = ((a & DW_GREEN_MASK) >> 8)
+    func DW_BLUE_VALUE(a $T) $T = ((a & DW_BLUE_MASK) >> 16)
+    func DW_RGB(a, b, c $T) $T = 0xF0000000 | a | (b << 8) | (c << 16)
+
+    /* Menu convenience paramaters */
+    define DW_MENU_SEPARATOR = ''
+    define DW_NOMENU = 0
+    define DW_MENU_AUTO = 0
+    define DW_MENU_POPUP = (-1 as ulong)
+
+    /* Convenience parameters for various types */
+    define DW_NOHWND = 0
+    define DW_NOHTIMER = 0
+    define DW_NOHPRINT = 0
+    define DW_NOHPIXMAP = 0
+    define DW_NOHICN = 0
+
+    define DW_PERCENT_INDETERMINATE = (-1 as uint)
+
+    /* Return value error codes */
+    define DW_ERROR_NONE = 0
+    define DW_ERROR_GENERAL = 1
+    define DW_ERROR_TIMEOUT = 2
+    define DW_ERROR_NON_INIT = 3
+    define DW_ERROR_NO_MEM = 4
+    define DW_ERROR_INTERRUPT = 5
+    define DW_ERROR_UNKNOWN = -1
+
+    /* Embedded HTML actions */
+    define DW_HTML_GOBACK = 0
+    define DW_HTML_GOFORWARD = 1
+    define DW_HTML_GOHOME = 2
+    define DW_HTML_SEARCH = 3
+    define DW_HTML_RELOAD = 4
+    define DW_HTML_STOP = 5
+    define DW_HTML_PRINT = 6
+
+    /* Embedded HTML notifcations */
+    define DW_HTML_CHANGE_STARTED = 1
+    define DW_HTML_CHANGE_REDIRECT = 2
+    define DW_HTML_CHANGE_LOADING = 3
+    define DW_HTML_CHANGE_COMPLETE = 4
+
+    /* Drawing flags  */
+    define DW_DRAW_DEFAULT = 0
+    define DW_DRAW_FILL = 1
+    define DW_DRAW_FULL = (1 << 1)
+    define DW_DRAW_NOAA = (1 << 2)
+
+    /* MLE Completion flags */
+    define DW_MLE_COMPLETE_TEXT = 1
+    define DW_MLE_COMPLETE_DASH = (1 << 1)
+    define DW_MLE_COMPLETE_QUOTE = (1 << 2)
+
+    /* Library feature constants */
+    define DW_FEATURE_UNSUPPORTED = -1
+    define DW_FEATURE_DISABLED = 0
+    define DW_FEATURE_ENABLED = 1
+
+    /* Macro for casting resource IDs to HICN */
+    func DW_RESOURCE(a $T) HICN = (a < 65536 ? a as HICN : 0 as HICN)
+
+    /* Constants for sizing scrolled widgets */
+    define _DW_SCROLLED_MIN_WIDTH = 100
+    define _DW_SCROLLED_MIN_HEIGHT = 75
+    define _DW_SCROLLED_MAX_WIDTH = 500
+    define _DW_SCROLLED_MAX_HEIGHT = 400
+
+    /* Use the dbsoft.org application domain by default if not specified */
+    define DW_APP_DOMAIN_DEFAULT = 'org.dbsoft.dwindows'
+
+    /* Forwarder macros to the future names of these functions */
+    func alias dw_pointer_get_pos(*long, *long) => dw_pointer_query_pos
+    func alias dw_environment_get(*DWEnv) => dw_environment_query
+    func alias dw_container_get_start(HWND, ulong) => dw_container_query_start
+    func alias dw_container_get_next(HWND, ulong) => dw_container_query_next
 #end
 
 foreign dw_box_pack_start(box HWND, item HWND, width int, height int, hsize int, vsize int, pad int) void
@@ -772,92 +765,89 @@ foreign dw_print_run(print HPRINT, flags ulong) int
 foreign dw_print_cancel(print HPRINT) void
 foreign dw_notification_new(title *ubyte, imagepath *ubyte, description *ubyte, ...) HWND
 foreign dw_notification_send(notification HWND) int
+
 #if __windows__
-foreign dw_utf8_to_wchar(utf8string *ubyte) *ushort
-foreign dw_wchar_to_utf8(wstring *ushort) *ubyte
+    foreign dw_utf8_to_wchar(utf8string *ubyte) *ushort
+    foreign dw_wchar_to_utf8(wstring *ushort) *ubyte
 #else
-foreign dw_utf8_to_wchar(utf8string *ubyte) *uint
-foreign dw_wchar_to_utf8(wstring *uint) *ubyte
+    foreign dw_utf8_to_wchar(utf8string *ubyte) *uint
+    foreign dw_wchar_to_utf8(wstring *uint) *ubyte
 #end
+
 foreign dw_feature_get(feature DWFEATURE) int
 foreign dw_feature_set(feature DWFEATURE, state int) int
 foreign _dw_init_thread() void
 foreign _dw_deinit_thread() void
-#if __windows__
-foreign _dw_convertargs(count *int, start *ubyte, hInstance HINSTANCE) **ubyte
-#end
 
 #if __windows__
-// _O Globals constants acquired from https://github.com/pilight/windows-cli/blob/master/include/fcntl.h
+    foreign _dw_convertargs(count *int, start *ubyte, hInstance HINSTANCE) **ubyte
 
-/* Specifiy one of these flags to define the access mode. */
-define _O_RDONLY = 0
-define _O_WRONLY = 1
-define _O_RDWR = 2
+    // _O Globals constants acquired from https://github.com/pilight/windows-cli/blob/master/include/fcntl.h
 
-/* Mask for access mode bits in the _open flags. */
-define _O_ACCMODE = _O_RDONLY | _O_WRONLY | _O_RDWR
+    /* Specifiy one of these flags to define the access mode. */
+    define _O_RDONLY = 0
+    define _O_WRONLY = 1
+    define _O_RDWR = 2
 
-define _O_APPEND = 0x0008 /* Writes will add to the end of the file. */
+    /* Mask for access mode bits in the _open flags. */
+    define _O_ACCMODE = _O_RDONLY | _O_WRONLY | _O_RDWR
 
-define _O_RANDOM = 0x0010
-define _O_SEQUENTIAL = 0x0020
-define _O_TEMPORARY = 0x0040 /* Make the file dissappear after closing. * WARNING: Even if not created by _open! */
-define _O_NOINHERIT = 0x0080
+    define _O_APPEND = 0x0008 /* Writes will add to the end of the file. */
 
-define _O_CREAT = 0x0100 /* Create the file if it does not exist. */
-define _O_TRUNC = 0x0200 /* Truncate the file if it does exist. */
-define _O_EXCL = 0x0400 /* Open only if the file does not exist. */
+    define _O_RANDOM = 0x0010
+    define _O_SEQUENTIAL = 0x0020
+    define _O_TEMPORARY = 0x0040 /* Make the file dissappear after closing. * WARNING: Even if not created by _open! */
+    define _O_NOINHERIT = 0x0080
 
-define _O_SHORT_LIVED = 0x1000
+    define _O_CREAT = 0x0100 /* Create the file if it does not exist. */
+    define _O_TRUNC = 0x0200 /* Truncate the file if it does exist. */
+    define _O_EXCL = 0x0400 /* Open only if the file does not exist. */
 
-/* NOTE: Text is the default even if the given _O_TEXT bit is not on. */
-define _O_TEXT = 0x4000 /* CR-LF in file becomes LF in memory. */
-define _O_BINARY = 0x8000 /* Input and output is not translated. */
-define _O_RAW = _O_BINARY
-define _O_WTEXT = 0x10000
-define _O_U16TEXT = 0x20000
-define _O_U8TEXT = 0x40000
+    define _O_SHORT_LIVED = 0x1000
 
-// From https://github.com/pilight/windows-cli/blob/24d3eb30ca5d1ddeacf02e1ae0491daf2dff6f93/include/io.h#L365
-/* Optional third argument is unsigned unPermissions. */
-foreign _open(*ubyte, int, ...) int
-func alias open(*ubyte, int, ...) => _open
-foreign _close(int) int
-func alias close(int) => _close
+    /* NOTE: Text is the default even if the given _O_TEXT bit is not on. */
+    define _O_TEXT = 0x4000 /* CR-LF in file becomes LF in memory. */
+    define _O_BINARY = 0x8000 /* Input and output is not translated. */
+    define _O_RAW = _O_BINARY
+    define _O_WTEXT = 0x10000
+    define _O_U16TEXT = 0x20000
+    define _O_U8TEXT = 0x40000
 
-define O_RDONLY = _O_RDONLY
-define O_WRONLY = _O_WRONLY
-define O_RDWR = _O_RDWR
-define O_ACCMODE = _O_ACCMODE
-define O_APPEND = _O_APPEND
-define O_CREAT = _O_CREAT
-define O_TRUNC = _O_TRUNC
-define O_EXCL = _O_EXCL
-define O_TEXT = _O_TEXT
-define O_BINARY = _O_BINARY
-define O_TEMPORARY = _O_TEMPORARY
-define O_NOINHERIT = _O_NOINHERIT
-define O_SEQUENTIAL = _O_SEQUENTIAL
-define O_RANDOM = _O_RANDOM
+    // From https://github.com/pilight/windows-cli/blob/24d3eb30ca5d1ddeacf02e1ae0491daf2dff6f93/include/io.h#L365
+    /* Optional third argument is unsigned unPermissions. */
+    foreign _open(*ubyte, int, ...) int
+    func alias open(*ubyte, int, ...) => _open
+    foreign _close(int) int
+    func alias close(int) => _close
 
-// _S Global Constants from https://github.com/pilight/windows-cli/blob/master/include/sys/stat.h
-define _S_IEXEC = 0x0040
-define _S_IWRITE = 0x0080
-define _S_IREAD = 0x0100
+    define O_RDONLY = _O_RDONLY
+    define O_WRONLY = _O_WRONLY
+    define O_RDWR = _O_RDWR
+    define O_ACCMODE = _O_ACCMODE
+    define O_APPEND = _O_APPEND
+    define O_CREAT = _O_CREAT
+    define O_TRUNC = _O_TRUNC
+    define O_EXCL = _O_EXCL
+    define O_TEXT = _O_TEXT
+    define O_BINARY = _O_BINARY
+    define O_TEMPORARY = _O_TEMPORARY
+    define O_NOINHERIT = _O_NOINHERIT
+    define O_SEQUENTIAL = _O_SEQUENTIAL
+    define O_RANDOM = _O_RANDOM
 
-//func dw_file_open func(*ubyte, int, ...) int = func &open
+    // _S Global Constants from https://github.com/pilight/windows-cli/blob/master/include/sys/stat.h
+    define _S_IEXEC = 0x0040
+    define _S_IWRITE = 0x0080
+    define _S_IREAD = 0x0100
 
-func alias dw_file_open(*ubyte, int, ...) => open
+    func alias dw_file_open(*ubyte, int, ...) => open
 
+    external func WinMain(hInstance HINSTANCE, hPrevInstance HINSTANCE, lpCmdLine LPSTR, nCmdShow int) int {
+       argc int
+       argv **ubyte = _dw_convertargs(&argc, lpCmdLine, hInstance)
+       return dwmain(argc, argv)
+    }
 #end
 
-#if __windows__
-external func WinMain(hInstance HINSTANCE, hPrevInstance HINSTANCE, lpCmdLine LPSTR, nCmdShow int) int {
-   argc int
-   argv **ubyte = _dw_convertargs(&argc, lpCmdLine, hInstance)
-   return dwmain(argc, argv)
-}
+/* `func dwmain(argc int, argv **ubyte) int` will be defined by the user */
 
-//func dwmain(argc int, argv **ubyte) int
-#end
