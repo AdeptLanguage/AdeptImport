@@ -1,4 +1,4 @@
-#pragma windows_only
+pragma windows_only
 
 #if __windows__
     foreign 'dw.dll'
