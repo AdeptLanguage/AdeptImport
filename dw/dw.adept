@@ -476,6 +476,20 @@ pragma windows_only
     /* Macro for casting resource IDs to HICN */
     func DW_RESOURCE(a $T) HICN = (a < 65536 ? a as HICN : 0 as HICN)
 
+    func DW_INT_TO_POINTER(a int) ptr = a as ptr
+    func DW_POINTER_TO_INT(a ptr) int = a as int
+    
+    func DW_UINT_TO_POINTER(a uint) ptr = a as ptr
+    func DW_POINTER_TO_UINT(a ptr) uint = a as uint
+    
+    func DW_LONGLONG_TO_POINTER(a long) ptr = a as ptr
+    func DW_POINTER_TO_LONGLONG(a ptr) long = a as long
+    
+    func DW_ULONGLONG_TO_POINTER(a ulong) ptr = a as ptr
+    func DW_POINTER_TO_ULONGLONG(a ptr) ulong = a as ulong
+    
+    func DW_POINTER(a $T) ptr = a as ptr
+
     /* Constants for sizing scrolled widgets */
     define _DW_SCROLLED_MIN_WIDTH = 100
     define _DW_SCROLLED_MIN_HEIGHT = 75
