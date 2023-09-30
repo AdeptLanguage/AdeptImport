@@ -22,7 +22,7 @@ record GridCoord (x, y int)
 func GridCoord(index usize, w, _h int) GridCoord {
     #if Grid_bounds_checks
         if index > w * _h {
-            fprintf(stderr, 'RUNTIME ERROR: Grid.adept: gridCoord(usize, int, int) got bad index %zu into grid of size (%d, %d)\n', index, w, _h)
+            fprintf(stderr, 'RUNTIME ERROR: Grid.adept: GridCoord(usize, int, int) got bad index %zu into grid of size (%d, %d)\n', index, w, _h)
             abort()
         }
     #end
