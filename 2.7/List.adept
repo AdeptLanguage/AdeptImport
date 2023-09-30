@@ -73,7 +73,7 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
             define other_items_left_of_self_items = other.items < this.items + cast ptr (this.capacity * sizeof $T)
 
             if self_has_ownership && other_items_right_of_self_items && other_items_left_of_self_items {
-                downsized *$T = memcpy(malloc(other.length * sizeof $T), other.items, other.length * sizeof $T)
+                downsized *$T = memcpy(new undef $T * other.length, other.items, other.length * sizeof $T)
 
                 delete this.items
                 *this = POD List(downsized, other.length, other.length, Ownership::OWN)
@@ -173,14 +173,14 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         
         if this.items == null {
             *this = POD List(
-                cast *$T malloc(sizeof $T * 4),
+                new undef $T * 4,
                 0,
                 4,
                 Ownership::OWN
             )
         } else if this.length == this.capacity {
             this.capacity *= 2
-            resized *$T = malloc(sizeof $T * this.capacity)
+            resized *$T = new undef $T * this.capacity
             memcpy(resized, this.items, sizeof $T * this.length)
             delete this.items
             this.items = resized
@@ -266,9 +266,9 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         #end
         
         if this.items == null {
-            *this = POD List(malloc(sizeof $T * count), 0, count, Ownership::OWN)
+            *this = POD List(new undef $T * count, 0, count, Ownership::OWN)
         } else if this.capacity < count {
-            resized *$T = memcpy(malloc(sizeof $T * count), this.items, sizeof $T * this.length)
+            resized *$T = memcpy(new undef $T * count, this.items, sizeof $T * this.length)
             delete this.items
             this.items = resized
             this.capacity = count
