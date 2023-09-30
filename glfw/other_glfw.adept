@@ -346,3 +346,5 @@ foreign glfwGetProcAddress(*ubyte) GLFWglproc
 foreign glfwVulkanSupported() int
 foreign glfwGetRequiredInstanceExtensions(*uint) **ubyte
 
+
+foreign glfwGetMonitorContentScale(monitor *GLFWmonitor, xscale *float, yscale *float) void

@@ -185,7 +185,7 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         
         if this.items == null {
             *this = POD List(
-                new undef $T * 4
+                new undef $T * 4,
                 0,
                 4,
                 ::OWN
