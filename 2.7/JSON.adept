@@ -439,35 +439,48 @@ func JSONFileContents(filename String, out contents *String) successful {
     // NOTE: Only works for files smaller than ~4GB
     // NOTE: Might work with files larger than ~4GB now, haven't tested yet
 
-    buffer *ubyte = null
     filename_cstr *ubyte = filename.cstr()
     f *FILE = fopen(filename_cstr, 'r')
     delete filename_cstr
-    unless f, return false
+
+    if f == null {
+        return false
+    }
+
     defer fclose(f)
 
     #if __windows__
         fseeko64(f, 0, SEEK_END)
-        length long = ftello64(f)
+        capacity long = ftello64(f)
         fseeko64(f, 0, SEEK_SET)
     #else
         fseeko(f, 0, SEEK_END)
-        length off_t = ftello(f)
+        capacity off_t = ftello(f)
         fseeko(f, 0, SEEK_SET)
     #end
 
-    if length <= 0, return false
-    buffer = new undef ubyte * length
-    unless buffer, return false
+    if capacity <= 0 {
+        return false
+    }
 
-    if buffer {
-        if fread(buffer, 1, length as usize, f) != length as usize, delete buffer; return false
+    buffer *ubyte = new undef ubyte * capacity
+
+    if buffer == null {
+        return false
+    }
+
+    read usize = fread(buffer, 1, capacity, f) 
+
+    if fgetc(f) != EOF {
+        delete buffer
+        return false
     }
     
     contents.__defer__()
     contents.array = buffer
-    contents.length = length
-    contents.capacity = length
+    contents.length = read
+    contents.capacity = capacity
     contents.ownership = StringOwnership::OWN
     return true
 }
+
