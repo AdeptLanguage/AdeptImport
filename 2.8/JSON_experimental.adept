@@ -91,6 +91,41 @@ func JSON\undefined() JSON {
 }
 
 struct JSON (internals *JSONData, ownership Ownership) {
+    constructor(_null_pointer ptr) {
+        this.internals = new JSONData(::NULL)
+        this.ownership = ::OWN
+    }
+
+    constructor(value $T~__number__) {
+        this.internals = new JSONNumber(value as double) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(value String) {
+        this.internals = new JSONString(value.toOwned()) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(value bool) {
+        this.internals = new JSONBoolean(value) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(elements <JSON> List) {
+        this.internals = new JSONArray(elements.toOwned()) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(fields <<String, JSON> AsymmetricPair> List) {
+        this.internals = new JSONObject(LinearMap(fields.toOwned())) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(fields <String, JSON> LinearMap) {
+        this.internals = new JSONObject(fields.toOwned()) as *JSONData
+        this.ownership = ::OWN
+    }
+
     verbatim func __defer__ {
         if (this.ownership == ::OWN || this.ownership == ::GIVEN) && this.internals != null {
             exhaustive switch this.internals.kind {
@@ -112,6 +147,27 @@ struct JSON (internals *JSONData, ownership Ownership) {
 
             delete this.internals
         }
+    }
+
+    func clone JSON {
+        exhaustive switch this.internals.kind {
+        case ::UNDEFINED
+            return JSON\undefined()
+        case ::NULL
+            return JSON\unsafeFromRaw(new JSONData(::NULL), ::OWN)
+        case ::BOOLEAN
+            return JSON\unsafeFromRaw(new JSONBoolean(this.internals as *JSONBoolean.value) as *JSONData, ::OWN)
+        case ::STRING
+            return JSON\unsafeFromRaw(new JSONString(this.internals as *JSONString.value.clone()) as *JSONData, ::OWN)
+        case ::NUMBER
+            return JSON\unsafeFromRaw(new JSONNumber(this.internals as *JSONNumber.value) as *JSONData, ::OWN)
+        case ::ARRAY
+            return JSON\unsafeFromRaw(new JSONArray(this.internals as *JSONArray.elements.clone()) as *JSONData, ::OWN)
+        case ::OBJECT
+            return JSON\unsafeFromRaw(new JSONObject(this.internals as *JSONObject.fields.clone()) as *JSONData, ::OWN)
+        }
+
+        return JSON\undefined()
     }
 
     func __assign__(other POD JSON) {
@@ -367,7 +423,7 @@ func toString(this *JSON) String {
 
 func toString(json JSON) String = json.toString()
 
-func JSON(content String, out stride *usize = null) JSON {
+func JSONFromString(content String, out stride *usize = null) JSON {
     content = content.trimmedView()
 
     first_character ubyte = content[0]
@@ -530,7 +586,7 @@ func JSON\parseArray(content String, out stride *usize = null) JSON {
     }
 
     until i >= content.length || content[i] == ']'ub {
-        element JSON = JSON(content.range(i, content.length), def element_stride usize)
+        element JSON = JSONFromString(content.range(i, content.length), def element_stride usize)
 
         if element.kind() == ::UNDEFINED {
             return element
@@ -605,7 +661,7 @@ func JSON\parseObject(content String, out stride *usize = null) JSON {
             return JSON\undefined()
         }
 
-        value JSON = JSON(content.range(i, content.length), undef element_stride usize)
+        value JSON = JSONFromString(content.range(i, content.length), undef element_stride usize)
 
         if value.kind() == ::UNDEFINED {
             return JSON\undefined()
@@ -652,7 +708,7 @@ func JSON\isWhitespace(c ubyte) bool {
 
 func JSONFromFile(filename String) JSON {
     if JSONFileContents(filename, def content String) {
-        return JSON(content)
+        return JSONFromString(content)
     } else {
         return JSON\undefined()
     }

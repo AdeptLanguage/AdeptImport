@@ -736,9 +736,11 @@ func toOwned(this *String) String {
 
     if this.ownership == ::GIVEN {
         return *this
+    } else if this.ownership == ::OWN {
+        return this.commit()
+    } else {
+        return this.clone()
     }
-
-    return this.clone()
 }
 
 func reference(this *String) String {

@@ -63,6 +63,24 @@ record <$K, $V> LinearMap (elements <<$K, $V> AsymmetricPair> List) {
     func donate <$K, $V> LinearMap = LinearMap\unsafeFromPOD(this.elements.donate())
     func give <$K, $V> LinearMap = LinearMap\unsafeFromPOD(this.elements.give())
 
+    func clone <$K, $V> LinearMap {
+        cloned <$K, $V> LinearMap
+
+        each <$K, $V> AsymmetricPair in static this.elements {
+            element *<$K, $V> AsymmetricPair = cloned.elements.add()
+            element.first = it.first.clone()
+            element.second = it.second.clone()
+        }
+
+        return cloned.commit()
+    }
+
+    func toOwned <$K, $V> LinearMap {
+        result <$K, $V> LinearMap
+        result.elements = this.elements.clone()
+        return result.commit()
+    }
+
     func __assign__(other POD <$K, $V> LinearMap) {
         this.elements = other.elements
     }
