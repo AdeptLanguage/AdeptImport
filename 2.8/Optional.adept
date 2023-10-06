@@ -115,6 +115,8 @@ struct <$T> Optional (value $T, has bool) {
 
     func orElse(or_else POD $T) $T {
         if this.has {
+            or_else = POD __pass__(or_else)
+            or_else.?__defer__()
             return this.value
         } else {
             return or_else

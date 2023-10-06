@@ -1,0 +1,95 @@
+
+import Ownership
+import Pair
+import List
+import Optional
+
+record <$K, $V> LinearMap (elements <<$K, $V> AsymmetricPair> List) {
+    constructor {}
+    
+    func __access__(index usize) *<$K, $V> AsymmetricPair = this.elements at index
+    func __array__ *<$K, $V> AsymmetricPair = this.elements.__array__()
+    func __length__ usize = this.elements.__length__()
+
+    func get(key $K) <$V> Optional {
+        each <$K, $V> AsymmetricPair in static this.elements {
+            if it.first == key {
+                return some(it.second)
+            }
+        }
+        return none()
+    }
+
+    func set(key POD $K, value POD $V) {
+        key = POD __pass__(key)
+
+        each <$K, $V> AsymmetricPair in static this.elements {
+            if it.first == key {
+                it.second = value
+                key.?__defer__()
+                return
+            }
+        }
+
+        element *<$K, $V> AsymmetricPair = this.elements.add()
+        element.first = POD key
+        element.second = POD __pass__(value)
+    }
+
+    func has(key $K) bool {
+        each <$K, $V> AsymmetricPair in static this.elements {
+            if it.first == key {
+                return true
+            }
+        }
+        return false
+    }
+
+    func remove(key $K) bool {
+        each <$K, $V> AsymmetricPair in static this.elements {
+            if it.first == key {
+                this.elements.remove(idx)
+                return true
+            }
+        }
+        return false
+    }
+
+    func clear {
+        this.elements.clear()
+    }
+
+    func commit <$K, $V> LinearMap = LinearMap\unsafeFromPOD(this.elements.commit())
+    func donate <$K, $V> LinearMap = LinearMap\unsafeFromPOD(this.elements.donate())
+    func give <$K, $V> LinearMap = LinearMap\unsafeFromPOD(this.elements.give())
+
+    func __assign__(other POD <$K, $V> LinearMap) {
+        this.elements = other.elements
+    }
+}
+
+func toString(map <$K, $V> LinearMap, quote String = "") String {
+    result String = "{ ";
+
+    each <$K, $V> AsymmetricPair in static map.elements {
+        result.append(quote)
+        result.append(toString(it.first))
+        result.append(quote)
+        result.append(": ")
+
+        result.append(toString(it.second))
+
+        if idx + 1 < map.elements.length {
+            result.append(", ");
+        }
+    }
+
+    result.append(" }");
+    return result.commit()
+}
+
+func LinearMap\unsafeFromPOD(elements POD <<$K, $V> AsymmetricPair> List) <$K, $V> LinearMap {
+    result POD <$K, $V> LinearMap
+    result.elements = POD elements
+    return result
+}
