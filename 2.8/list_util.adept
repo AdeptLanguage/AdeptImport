@@ -31,13 +31,13 @@ func asArray(this *<$T> List) <$T> Array {
     return Array(this.items, this.length)
 }
 
-func clone(this *<$T~__primitive__> List) <*$T> List {
+func clone(this *<$T~__primitive__> List) <$T> List {
     #if List_error_on_donor_usage
         this.assertNotDonor('clone()', true)
     #end
 
     return List(
-        cast **$P memcpy(malloc(sizeof $T * this.length), this.items, sizeof $T * this.length),
+        cast *$T memcpy(malloc(sizeof $T * this.length), this.items, sizeof $T * this.length),
         this.length,
         this.length,
         Ownership::OWN
