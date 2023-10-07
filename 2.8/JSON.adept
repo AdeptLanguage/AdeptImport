@@ -1,1 +1,860 @@
-import '2.7/JSON.adept'
+
+#define JSON_error_on_donor_usage true
+
+import basics
+import LinearMap
+
+#if __windows__
+    foreign fseeko64(*FILE, long, int) int
+    foreign ftello64(*FILE) long
+#else
+    import 'unix/off_t.adept'
+    foreign fseeko(*FILE, off_t, int) int
+    foreign ftello(*FILE) off_t
+#end
+
+#if JSON_error_on_donor_usage
+    func assertNotDonor(this *JSON, function_name *ubyte, is_method bool) {
+        if this.ownership == ::DONOR {
+            error_message *ubyte = is_method ? 'RUNTIME ERROR: JSON.adept: Cannot use JSON.%s method on JSON that was previously donated\n'
+                                             : 'RUNTIME ERROR: JSON.adept: Cannot use %s function with JSON that was previously donated\n'
+            fprintf(stderr, error_message, function_name)
+            abort()
+        }
+    }
+#end
+
+enum JSONKind (UNDEFINED, NULL, BOOLEAN, STRING, NUMBER, ARRAY, OBJECT)
+
+struct JSONData (kind JSONKind) {
+    constructor(kind JSONKind) {
+        this.kind = kind
+    }
+}
+
+struct JSONBoolean (struct JSONData, value bool) {
+    constructor(value bool) {
+        this.kind = ::BOOLEAN
+        this.value = value
+    }
+}
+
+struct JSONString (struct JSONData, value String) {
+    constructor(value POD String) {
+        this.kind = ::STRING
+        this.value = value
+    }
+}
+
+struct JSONNumber (struct JSONData, value double) {
+    constructor(value double) {
+        this.kind = ::NUMBER
+        this.value = value
+    }
+}
+
+struct JSONArray (struct JSONData, elements <JSON> List) {
+    constructor(elements POD <JSON> List) {
+        this.kind = ::ARRAY
+        this.elements = elements
+    }
+
+    func add(value POD JSON){
+        this.elements.add(value)
+    }
+}
+
+struct JSONObject (struct JSONData, fields <String, JSON> LinearMap) {
+    constructor(fields POD <String, JSON> LinearMap) {
+        this.kind = ::OBJECT
+        this.fields = fields
+    }
+    
+    func set(key POD String, value POD JSON) {
+        this.fields.set(key, value)
+    }
+
+    func get(key String) <JSON> Optional {
+        return this.fields.get(key)
+    }
+}
+
+func JSON\unsafeFromRaw(internals *JSONData, ownership Ownership) JSON {
+    json POD JSON
+    json.internals = internals
+    json.ownership = ownership
+    return json
+}
+
+func JSON\undefined() JSON {
+    return JSON\unsafeFromRaw(new JSONData(::UNDEFINED), ::OWN)
+}
+
+func JSON\null() JSON {
+    return JSON(null)
+}
+
+func JSON\boolean(value bool) JSON {
+    return JSON(value)
+}
+
+func JSON\number(value double) JSON {
+    return JSON(value)
+}
+
+func JSON\string(value POD String) JSON {
+    return JSON(value)
+}
+
+func JSON\array() JSON {
+    elements POD <JSON> List
+    elements.ownership = ::GIVEN
+    return JSON(elements)
+}
+
+func JSON\object() JSON {
+    fields POD <String, JSON> LinearMap
+    fields.elements.ownership = ::GIVEN
+    return JSON(fields)
+}
+
+struct JSON (internals *JSONData, ownership Ownership) {
+    constructor(_null_pointer ptr) {
+        this.internals = new JSONData(::NULL)
+        this.ownership = ::OWN
+    }
+
+    constructor(value $T~__number__) {
+        this.internals = new JSONNumber(value as double) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(value String) {
+        this.internals = new JSONString(value.toOwned()) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(value bool) {
+        this.internals = new JSONBoolean(value) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(elements <JSON> List) {
+        this.internals = new JSONArray(elements.toOwned()) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(numbers <$T~__number__> List) {
+        elements <JSON> List = numbers.map(func &JSON($T))
+        this.internals = new JSONArray(elements.commit()) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(fields POD <<String, JSON> AsymmetricPair> List) {
+        this.internals = new JSONObject(LinearMap(fields.toOwned())) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    constructor(fields POD <String, JSON> LinearMap) {
+        this.internals = new JSONObject(fields.toOwned()) as *JSONData
+        this.ownership = ::OWN
+    }
+
+    verbatim func __defer__ {
+        if (this.ownership == ::OWN || this.ownership == ::GIVEN) && this.internals != null {
+            exhaustive switch this.internals.kind {
+            case ::UNDEFINED
+                /* nothing to do */
+            case ::NULL
+                /* nothing to do */
+            case ::BOOLEAN
+                /* nothing to do */
+            case ::STRING
+                this.internals as *JSONString.value = ""
+            case ::NUMBER
+                /* nothing to do */
+            case ::ARRAY
+                this.internals as *JSONArray.elements.clear()
+            case ::OBJECT
+                this.internals as *JSONObject.fields.clear()
+            }
+
+            delete this.internals
+        }
+    }
+
+    func clone JSON {
+        exhaustive switch this.internals.kind {
+        case ::UNDEFINED
+            return JSON\undefined()
+        case ::NULL
+            return JSON\unsafeFromRaw(new JSONData(::NULL), ::OWN)
+        case ::BOOLEAN
+            return JSON\unsafeFromRaw(new JSONBoolean(this.internals as *JSONBoolean.value) as *JSONData, ::OWN)
+        case ::STRING
+            return JSON\unsafeFromRaw(new JSONString(this.internals as *JSONString.value.clone()) as *JSONData, ::OWN)
+        case ::NUMBER
+            return JSON\unsafeFromRaw(new JSONNumber(this.internals as *JSONNumber.value) as *JSONData, ::OWN)
+        case ::ARRAY
+            return JSON\unsafeFromRaw(new JSONArray(this.internals as *JSONArray.elements.clone()) as *JSONData, ::OWN)
+        case ::OBJECT
+            return JSON\unsafeFromRaw(new JSONObject(this.internals as *JSONObject.fields.clone()) as *JSONData, ::OWN)
+        }
+
+        return JSON\undefined()
+    }
+
+    func __assign__(other POD JSON) {
+        exhaustive switch other.ownership {
+        case ::OWN
+            this.__defer__()
+            this.internals = other.internals
+            this.ownership = ::REFERENCE
+        case ::DONOR
+            #if JSON_error_on_donor_usage
+                this.assertNotDonor('__assign__', true)
+            #end
+            abort()
+        case ::GIVEN
+            this.__defer__()
+            this.internals = other.internals
+            this.ownership = ::OWN
+        case ::REFERENCE
+            if this.ownership == ::OWN && other.internals == this.internals {
+                return
+            }
+            
+            this.__defer__()
+            this.internals = other.internals
+            this.ownership = ::REFERENCE
+        }
+    }
+
+    func commit() JSON {
+        if this.ownership != ::OWN {
+            #if JSON_error_on_donor_usage
+                this.assertNotDonor('commit', true)
+            #end
+
+            return *this
+        }
+
+        this.ownership = ::REFERENCE
+        
+        result POD JSON = POD *this
+        result.ownership = ::GIVEN
+        return result
+    }
+
+    func donate() JSON {
+        if this.ownership != ::OWN {
+            #if JSON_error_on_donor_usage
+                this.assertNotDonor('donate', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: JSON.adept: Cannot donate() JSON that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+        }
+
+        this.internals = null
+        this.ownership = ::DONOR
+
+        result POD JSON = POD *this
+        result.ownership = ::GIVEN
+        return result
+    }
+
+    func give() JSON {
+        if this.ownership != ::OWN {
+            #if JSON_error_on_donor_usage
+                this.assertNotDonor('give', true)
+            #end
+
+            fprintf(stderr, 'RUNTIME ERROR: JSON.adept: Cannot give() JSON that doesn\'t have ownership\n')
+            abort()
+
+            // (unreachable)
+        }
+
+        this.ownership = ::REFERENCE
+
+        result POD JSON = POD *this
+        result.ownership = ::GIVEN
+        return result
+    }
+
+    func kind() JSONKind {
+        if this.internals != null {
+            return this.internals.kind
+        } else {
+            return ::UNDEFINED
+        }
+    }
+
+    func boolean() <bool> Optional {
+        if this.internals != null and this.internals.kind == ::BOOLEAN {
+            return some(this.internals as *JSONBoolean.value)
+        } else {
+            return none()
+        }
+    }
+
+    func string() <String> Optional {
+        if this.internals != null and this.internals.kind == ::STRING {
+            return some(this.internals as *JSONString.value)
+        } else {
+            return none()
+        }
+    }
+
+    func number() <double> Optional {
+        if this.internals != null and this.internals.kind == ::NUMBER {
+            return some(this.internals as *JSONNumber.value)
+        } else {
+            return none()
+        }
+    }
+
+    func item(index usize) JSON {
+        if this.kind() != ::ARRAY {
+            return JSON\undefined()
+        }
+
+        elements *<JSON> List = &(this.internals as *JSONArray.elements)
+
+        if index < elements.length {
+            return elements.get(index)
+        } else {
+            return JSON\undefined()
+        }
+    }
+
+    func field(name String) JSON {
+        if this.kind() != ::OBJECT {
+            return JSON\unsafeFromRaw(null as *JSONData, ::REFERENCE)
+        }
+
+        data <JSON> Optional = this.internals as *JSONObject.fields.get(name)
+
+        if data.isSome() {
+            return data.value
+        } else {
+            return JSON\undefined()
+        }
+    }
+
+    func array() <<JSON> List> Optional {
+        if this.kind() == ::ARRAY {
+            return some(this.internals as *JSONArray.elements)
+        } else {
+            return none()
+        }
+    }
+
+    func object() <<String, JSON> LinearMap> Optional {
+        if this.kind() == ::OBJECT {
+            return some(this.internals as *JSONObject.fields)
+        } else {
+            return none()
+        }
+    }
+
+    func add(value JSON) bool {
+        if this.kind() != ::ARRAY, return false
+        this.internals as *JSONArray.add(value.commit())
+        return true
+    }
+
+    func add(key String, value JSON) bool {
+        if this.kind() != ::OBJECT, return false
+        this.internals as *JSONObject.set(key.commit(), value.commit())
+        return true
+    }
+}
+
+func __pass__(json POD JSON) JSON {
+    #if JSON_error_on_donor_usage
+        json.assertNotDonor('__pass__', false)
+    #end
+
+    switch json.ownership {
+    case ::OWN,   json.ownership = ::REFERENCE
+    case ::GIVEN, json.ownership = ::OWN
+    }
+    
+    return json
+}
+
+func __equals__(lhs JSON, rhs JSON) bool {
+    #if JSON_error_on_donor_usage
+        lhs.assertNotDonor('__equals__', false)
+        rhs.assertNotDonor('__equals__', false)
+    #end
+
+    if lhs.internals == null || rhs.internals == null {
+        return false
+    }
+
+    if lhs.internals.kind != rhs.internals.kind {
+        return false
+    }
+
+    exhaustive switch lhs.internals.kind {
+    case ::UNDEFINED
+        return false
+    case ::NULL
+        return true
+    case ::BOOLEAN
+        return lhs.internals as *JSONBoolean.value == rhs.internals as *JSONBoolean.value
+    case ::STRING
+        return lhs.internals as *JSONString.value == rhs.internals as *JSONString.value
+    case ::NUMBER
+        return lhs.internals as *JSONNumber.value == rhs.internals as *JSONNumber.value
+    case ::ARRAY
+        a *JSONArray = lhs.internals as *JSONArray
+        b *JSONArray = rhs.internals as *JSONArray
+
+        if a.elements.length != b.elements.length {
+            return false
+        }
+
+        repeat static a.elements.length {
+            unless a.elements[idx] != b.elements[idx] {
+                return false
+            }
+        }
+
+        return true
+    case ::OBJECT
+        a *JSONObject = lhs.internals as *JSONObject
+        b *JSONObject = rhs.internals as *JSONObject
+
+        each <String, JSON> AsymmetricPair in static a.fields {
+            if __not_equals__(some(it.second), b.get(it.first)) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    return false
+}
+
+func __not_equals__(lhs JSON, rhs JSON) bool {
+    #if JSON_error_on_donor_usage
+        lhs.assertNotDonor('__not_equals__', false)
+        rhs.assertNotDonor('__not_equals__', false)
+    #end
+
+    return !__equals__(lhs, rhs)
+}
+
+func JSON\serialize(elements <JSON> List) String {
+    result String = "[".toOwned()
+    
+    each JSON in static elements {
+        result.append(JSON\serialize(it))
+
+        if idx + 1 < elements.length {
+            result.append(',')
+        }
+    }
+
+    result.append(']')
+    return result.commit()
+}
+
+func JSON\serialize(fields <String, JSON> LinearMap) String {
+    elements <<String, JSON> AsymmetricPair> List = fields.elements
+    result String = "{".toOwned()
+    
+    each <String, JSON> AsymmetricPair in static elements {
+        result.append("\"")
+        result.append(it.first)
+        result.append("\":")
+        result.append(it.second.serialize())
+
+        if idx + 1 < elements.length {
+            result.append(",")
+        }
+    }
+
+    result.append('}')
+    return result.commit()
+}
+
+func serialize(this *JSON) String {
+    exhaustive switch this.kind() {
+    case ::UNDEFINED, return "undefined"
+    case ::NULL,      return "null"
+    case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
+    case ::STRING,    return sprintf("\"%S\"", (this.internals as *JSONString).value)
+    case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
+    case ::ARRAY,     return JSON\serialize(this.internals as *JSONArray.elements)
+    case ::OBJECT,    return JSON\serialize(this.internals as *JSONObject.fields)
+    }
+
+    return "undefined"
+}
+
+func JSON\serialize(json JSON) String = json.serialize()
+func JSON\deserialize(content String) JSON = JSONFromString(content)
+
+func toString(this *JSON) String {
+    exhaustive switch this.kind() {
+    case ::NULL,      return "null"
+    case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
+    case ::STRING,    return sprintf("\"%S\"", (this.internals as *JSONString).value)
+    case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
+    case ::ARRAY,     return toString(this.internals as *JSONArray.elements)
+    case ::OBJECT,    return toString(this.internals as *JSONObject.fields, "\"")
+    case ::UNDEFINED, return "undefined"
+    }
+
+    return "<unknown>"
+}
+
+func toString(json JSON) String = json.toString()
+
+func JSONFromString(content String, out stride *usize = null) JSON {
+    content = content.trimmedView()
+
+    first_character ubyte = content[0]
+
+    switch first_character {
+    case 'n'ub
+        // Null
+        return JSON\parseNull(content, stride)
+    case 't'ub, fallthrough
+    case 'f'ub
+        // Boolean
+        return JSON\parseBoolean(content, stride)
+    case '-'ub, fallthrough
+    case '0'ub, fallthrough
+    case '1'ub, fallthrough
+    case '2'ub, fallthrough
+    case '3'ub, fallthrough
+    case '4'ub, fallthrough
+    case '5'ub, fallthrough
+    case '6'ub, fallthrough
+    case '7'ub, fallthrough
+    case '8'ub, fallthrough
+    case '9'ub
+        // Number
+        return JSON\parseNumber(content, stride)
+    case '"'ub
+        // String
+        return JSON\parseString(content, stride)
+    case '['ub
+        // Array
+        return JSON\parseArray(content, stride)
+    case '{'ub
+        // Object
+        return JSON\parseObject(content, stride)
+    }
+
+    return JSON\undefined()
+}
+
+func JSON\parseNull(content String, out stride *usize = null) JSON {
+    content = content.trimmedView()
+
+    if content.startsWith("null") {
+        if stride {
+            *stride = 4
+        }
+        return JSON\unsafeFromRaw(new JSONData(::NULL), ::GIVEN)
+    } else {
+        return JSON\undefined()
+    }
+}
+
+func JSON\parseBoolean(content String, out stride *usize = null) JSON {
+    content = content.trimmedView()
+
+    if content.startsWith("true") {
+        if stride {
+            *stride = 4
+        }
+
+        return JSON\unsafeFromRaw(new JSONBoolean(true) as *JSONData, ::GIVEN)
+    }
+
+    if content.startsWith("false") {
+        if stride {
+            *stride = 5
+        }
+        
+        return JSON\unsafeFromRaw(new JSONBoolean(false) as *JSONData, ::GIVEN)
+    }
+
+    return JSON\undefined()
+}
+
+func JSON\parseNumber(content String, out stride *usize = null) JSON {
+    content = content.trimmedView()
+
+    included usize = 0
+    allowed String = "-0123456789."
+
+    while included < content.length && allowed.contains(content[included]) {
+        included++
+    }
+
+    potential StringView = content.range(0, included)
+
+    if stride {
+        *stride = included
+    }
+
+    return JSON\unsafeFromRaw(new JSONNumber(potential.toDouble()) as *JSONData, ::GIVEN)
+}
+
+func JSON\parseString(content String, out stride *usize = null) JSON {
+    i usize = 0
+
+    unless JSON\skipWhitespace(&content, &i) {
+        return JSON\undefined()
+    }
+
+    if i >= content.length || content[i] != '"'ub {
+        return JSON\undefined()
+    }
+
+    i++
+
+    string String
+    escape_active bool = false
+
+    until i >= content.length || (content[i] == '"'ub && !escape_active) {
+        if escape_active {
+            switch content[i] {
+            case 'n'ub,  string.append('\n'ub)
+            case 't'ub,  string.append('\t'ub)
+            case '"'ub,  string.append('"'ub)
+            case '\\'ub, string.append('\\'ub)
+            }
+            escape_active = false
+            i++
+            continue
+        }
+
+        if content[i] == '\\'ub {
+            escape_active = true
+            i++
+            continue
+        }
+
+        string.append(content[i])
+        i++
+    }
+
+    unless ++i <= content.length {
+        return JSON\undefined()
+    }
+
+    if stride {
+        *stride = i
+    }
+
+    return JSON\unsafeFromRaw(new JSONString(string.commit()) as *JSONData, ::GIVEN)
+}
+
+func JSON\parseArray(content String, out stride *usize = null) JSON {
+    i usize = 0
+    values <JSON> List
+
+    unless JSON\skipWhitespace(&content, &i) {
+        return JSON\undefined()
+    }
+
+    if i >= content.length || content[i] != '['ub {
+        return JSON\undefined()
+    }
+
+    i++
+
+    unless JSON\skipWhitespace(&content, &i) {
+        return JSON\undefined()
+    }
+
+    until i >= content.length || content[i] == ']'ub {
+        element JSON = JSONFromString(content.range(i, content.length), def element_stride usize)
+
+        if element.kind() == ::UNDEFINED {
+            return element
+        }
+
+        i += element_stride
+        values.add(element.commit())
+
+        unless JSON\skipWhitespace(&content, &i) {
+            return JSON\undefined()
+        }
+
+        if content[i] == ','ub {
+            i++
+        }
+
+        unless JSON\skipWhitespace(&content, &i) {
+            return JSON\undefined()
+        }
+    }
+
+    unless ++i <= content.length {
+        return JSON\undefined()
+    }
+
+    if stride {
+        *stride = i
+    }
+
+    return JSON\unsafeFromRaw(new JSONArray(values.commit()) as *JSONData, ::GIVEN)
+}
+
+func JSON\parseObject(content String, out stride *usize = null) JSON {
+    i usize = 0
+    fields <String, JSON> LinearMap
+
+    unless JSON\skipWhitespace(&content, &i) {
+        return JSON\undefined()
+    }
+
+    if i >= content.length || content[i] != '{'ub {
+        return JSON\undefined()
+    }
+
+    i++
+
+    unless JSON\skipWhitespace(&content, &i) {
+        return JSON\undefined()
+    }
+
+    until i >= content.length || content[i] == '}'ub {
+        name_data JSON = JSON\parseString(content.range(i, content.length), undef name_stride usize)
+
+        if name_data.kind() != ::STRING {
+            return JSON\undefined()
+        }
+
+        key String = name_data.internals as *JSONString.value.commit()
+        i += name_stride
+
+        unless JSON\skipWhitespace(&content, &i) {
+            return JSON\undefined()
+        }
+
+        if content[i] == ':'ub {
+            i++
+        } else {
+            return JSON\undefined()
+        }
+
+        unless JSON\skipWhitespace(&content, &i) {
+            return JSON\undefined()
+        }
+
+        value JSON = JSONFromString(content.range(i, content.length), undef element_stride usize)
+
+        if value.kind() == ::UNDEFINED {
+            return JSON\undefined()
+        }
+
+        i += element_stride
+        fields.set(key.commit(), value.commit())
+
+        unless JSON\skipWhitespace(&content, &i) {
+            return JSON\undefined()
+        }
+
+        if content[i] == ','ub {
+            i++
+        }
+
+        unless JSON\skipWhitespace(&content, &i) {
+            return JSON\undefined()
+        }
+    }
+
+    unless ++i <= content.length {
+        return JSON\undefined()
+    }
+
+    if stride {
+        *stride = i
+    }
+
+    return JSON\unsafeFromRaw(new JSONObject(fields.commit()) as *JSONData, ::GIVEN)
+}
+
+func JSON\skipWhitespace(in content *String, inout i *usize) successful {
+    while *i < content.length && JSON\isWhitespace((*content)[*i]) {
+        (*i)++
+    }
+
+    return *i < content.length
+}
+
+func JSON\isWhitespace(c ubyte) bool {
+    return c == ' 'ub || c == '\n'ub || c == '\t'ub
+}
+
+func JSONFromFile(filename String) JSON {
+    if JSONFileContents(filename, def content String) {
+        return JSONFromString(content)
+    } else {
+        return JSON\undefined()
+    }
+}
+
+func JSONFileContents(filename String, out contents *String) successful {
+    // NOTE: Only works for files smaller than ~4GB
+    // NOTE: Might work with files larger than ~4GB now, haven't tested yet
+
+    filename_cstr *ubyte = filename.cstr()
+    f *FILE = fopen(filename_cstr, 'r')
+    delete filename_cstr
+
+    if f == null {
+        return false
+    }
+
+    defer fclose(f)
+
+    #if __windows__
+        fseeko64(f, 0, SEEK_END)
+        capacity long = ftello64(f)
+        fseeko64(f, 0, SEEK_SET)
+    #else
+        fseeko(f, 0, SEEK_END)
+        capacity off_t = ftello(f)
+        fseeko(f, 0, SEEK_SET)
+    #end
+
+    if capacity <= 0 {
+        return false
+    }
+
+    buffer *ubyte = new undef ubyte * capacity
+
+    if buffer == null {
+        return false
+    }
+
+    read usize = fread(buffer, 1, capacity, f) 
+
+    if fgetc(f) != EOF {
+        delete buffer
+        return false
+    }
+    
+    contents.__defer__()
+    contents.array = buffer
+    contents.length = read
+    contents.capacity = capacity
+    contents.ownership = StringOwnership::OWN
+    return true
+}

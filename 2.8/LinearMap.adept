@@ -5,8 +5,6 @@ import List
 import Optional
 
 record <$K, $V> LinearMap (elements <<$K, $V> AsymmetricPair> List) {
-    constructor {}
-    
     func __access__(index usize) *<$K, $V> AsymmetricPair = this.elements at index
     func __array__ *<$K, $V> AsymmetricPair = this.elements.__array__()
     func __length__ usize = this.elements.__length__()
@@ -76,9 +74,13 @@ record <$K, $V> LinearMap (elements <<$K, $V> AsymmetricPair> List) {
     }
 
     func toOwned <$K, $V> LinearMap {
-        result <$K, $V> LinearMap
-        result.elements = this.elements.clone()
-        return result.commit()
+        if this.elements.ownership == ::GIVEN {
+            return *this
+        } else if this.elements.ownership == ::OWN {
+            return this.commit()
+        } else {
+            return this.clone()
+        }
     }
 
     func __assign__(other POD <$K, $V> LinearMap) {
@@ -86,23 +88,34 @@ record <$K, $V> LinearMap (elements <<$K, $V> AsymmetricPair> List) {
     }
 }
 
-func toString(map <$K, $V> LinearMap, quote String = "") String {
-    result String = "{ ";
+func empty() <$K, $V> LinearMap {
+    map POD <$K, $V> LinearMap
+    return map
+}
+
+func toString(map <$K, $V> LinearMap, quote String = "", friendly bool = true) String {
+    result String = "{";
+    spacer String = friendly ? " " : "";
+
+    result.append(spacer);
 
     each <$K, $V> AsymmetricPair in static map.elements {
         result.append(quote)
         result.append(toString(it.first))
         result.append(quote)
-        result.append(": ")
+        result.append(":")
+        result.append(spacer);
 
         result.append(toString(it.second))
 
         if idx + 1 < map.elements.length {
-            result.append(", ");
+            result.append(",");
+            result.append(spacer);
         }
     }
 
-    result.append(" }");
+    result.append(spacer);
+    result.append("}");
     return result.commit()
 }
 
