@@ -1,0 +1,338 @@
+pragma windows_only
+
+alias HWND = ptr
+alias HMTX = ptr
+alias HEV = ptr
+alias HMOD = ptr
+alias HSHM = ptr
+alias HICN = ptr
+alias HMENUI = ptr
+alias DWTID = ulong
+alias HINSTANCE = ptr
+
+alias HBRUSH = ptr
+alias HFONT = ptr
+alias HMENU = ptr
+alias HBITMAP = ptr
+alias HDC = ptr
+
+alias UINT = uint
+alias WPARAM = *uint
+alias LPARAM = long
+alias LRESULT = ptr
+
+alias DWORD = uint
+alias LPSTR = *ubyte
+
+alias COLORREF = DWORD
+
+struct HTREEITEM () // opaque struct
+
+struct UserData (
+    next *UserData,
+    data ptr,
+    varname *ubyte
+)
+
+struct RECT (
+    left long,
+    top long,
+    right long,
+    bottom long
+)
+
+alias WNDPROC = func(HWND, UINT, WPARAM, LPARAM) LRESULT
+
+struct _color (
+    fore int,
+    back int,
+    combo HWND,
+    buddy HWND,
+    style ulong,
+    rect RECT,
+    clickdefault HWND,
+    hbrush HBRUSH,
+    hfont HFONT,
+    hmenu HMENU,
+    fontname [128] ubyte,
+    pOldProc WNDPROC,
+    root *UserData
+)
+
+alias ColorInfo = _color
+
+struct TC_ITEM (
+    mask UINT,
+    dwState DWORD,
+    dwStateMask DWORD,
+    pszText LPSTR,
+    cchTextMax int,
+    iImage int,
+    lParam LPARAM
+)
+
+struct _notebookpage (
+    info ColorInfo,
+    item TC_ITEM,
+    hwnd HWND,
+    realid int
+)
+
+alias NotebookPage = _notebookpage
+
+struct _container (
+    info ColorInfo,
+    flags *ulong,
+    columns ulong,
+    odd COLORREF,
+    even COLORREF
+)
+
+alias ContainerInfo = _container
+
+struct _hpixmap (
+    width ulong,
+    height ulong,
+    hbm HBITMAP,
+    hdc HDC,
+    transcolor ulong,
+    handle HWND,
+    bits ptr,
+    depth ulong,
+    font HFONT
+)
+
+alias HPIXMAP = *_hpixmap
+
+struct _item (
+    type int,
+    hwnd HWND,
+    width int,
+    height int,
+    origwidth int,
+    origheight int,
+    hsize int,
+    vsize int,
+    pad int
+)
+
+alias Item = _item
+
+struct _box (
+    cinfo ColorInfo,
+    fullscreen int,
+    count int,
+    type int,
+    hsize int,
+    vsize int,
+    pad int,
+    grouppadx int,
+    grouppady int,
+    grouphwnd HWND,
+    defaultitem HWND,
+    usedpadx int,
+    usedpady int,
+    minheight int,
+    minwidth int,
+    width int,
+    height int,
+    flags ulong,
+    items *Item
+)
+
+alias Box = _box
+
+define SS_LEFTNOWORDWRAP = 0x0000000C
+define DW_DT_LEFT = SS_LEFTNOWORDWRAP
+define DW_DT_QUERYEXTENT = 0
+define DW_DT_UNDERSCORE = 0
+define DW_DT_STRIKEOUT= 0
+define DW_DT_TEXTATTRS = 0
+define DW_DT_EXTERNALLEADING = 0
+
+define SS_CENTER = 0x00000001
+define DW_DT_CENTER = SS_CENTER
+define SS_RIGHT = 0x00000002
+define DW_DT_RIGHT = SS_RIGHT
+define DW_DT_TOP = 0
+define DW_DT_VCENTER = (1 << 29)
+define DW_DT_BOTTOM = 0
+define DW_DT_HALFTONE = 0
+define DW_DT_MNEMONIC = 0
+define DW_DT_WORDBREAK = (1 << 28)
+define DW_DT_ERASERECT = 0
+
+define DW_FCF_CLOSEBUTTON = 0
+define WS_CAPTION = 0x00C00000
+define DW_FCF_TITLEBAR = WS_CAPTION
+define WS_SYSMENU = 0x00080000
+define DW_FCF_SYSMENU = WS_SYSMENU
+define DW_FCF_MENU = 0
+define WS_THICKFRAME = 0x00040000
+define DW_FCF_SIZEBORDER = WS_THICKFRAME
+define WS_MINIMIZEBOX = 0x00020000
+define DW_FCF_MINBUTTON = WS_MINIMIZEBOX
+define WS_MAXIMIZEBOX = 0x00010000
+define DW_FCF_MAXBUTTON = WS_MAXIMIZEBOX
+define DW_FCF_MINMAX = (WS_MINIMIZEBOX|WS_MAXIMIZEBOX)
+define WS_DLGFRAME = 0x00400000
+define DW_FCF_DLGBORDER = WS_DLGFRAME
+define WS_BORDER = 0x00800000
+define DW_FCF_BORDER = WS_BORDER
+define DW_FCF_TASKLIST = (1 << 1)
+define DW_FCF_NOMOVEWITHOWNER = 0
+define DW_FCF_SYSMODAL = 0
+define DW_FCF_HIDEBUTTON = WS_MINIMIZEBOX
+define DW_FCF_HIDEMAX = (WS_MINIMIZEBOX|WS_MAXIMIZEBOX)
+define DW_FCF_AUTOICON= 0
+define WS_MAXIMIZE = 0x01000000
+define DW_FCF_MAXIMIZE = WS_MAXIMIZE
+define WS_MINIMIZE = 0x20000000
+define DW_FCF_MINIMIZE = WS_MINIMIZE
+define DW_FCF_COMPOSITED = 1
+define DW_FCF_TEXTURED = 0
+define DW_FCF_FULLSCREEN = (1 << 2)
+
+define DW_CFA_BITMAPORICON = 1
+define DW_CFA_STRING = (1 << 1)
+define DW_CFA_ULONG = (1 << 2)
+define DW_CFA_TIME = (1 << 3)
+define DW_CFA_DATE = (1 << 4)
+define DW_CFA_CENTER = (1 << 5)
+define DW_CFA_LEFT = (1 << 6)
+define DW_CFA_RIGHT = (1 << 7)
+define DW_CFA_STRINGANDICON = (1 << 8)
+define DW_CFA_HORZSEPARATOR = 0
+define DW_CFA_SEPARATOR = 0
+
+define LVNI_SELECTED = 0x2
+define DW_CRA_SELECTED = LVNI_SELECTED
+define LVNI_FOCUSED = 0x1
+define DW_CRA_CURSORED = LVNI_FOCUSED
+
+define DW_CR_RETDATA = (1 << 10)
+
+define LBS_MULTIPLESEL = 0x0008
+define DW_LS_MULTIPLESEL = LBS_MULTIPLESEL
+
+define DW_LIT_NONE = -1
+
+define DW_MLE_CASESENSITIVE = 1
+
+define BS_FLAT = 0x00008000
+define DW_BS_NOBORDER = BS_FLAT
+
+define DW_POINTER_DEFAULT = 0
+define DW_POINTER_ARROW = 32512
+define DW_POINTER_CLOCK = 32514
+define DW_POINTER_QUESTION = 32651
+
+define HWND_DESKTOP = (0 as HWND)
+
+/* flag values for dw_messagebox() */
+define MB_OK = 0x00000000
+define DW_MB_OK = MB_OK
+define MB_OKCANCEL = 0x00000001
+define DW_MB_OKCANCEL = MB_OKCANCEL
+define MB_YESNO = 0x00000004
+define DW_MB_YESNO = MB_YESNO
+define MB_YESNOCANCEL = 0x00000003
+define DW_MB_YESNOCANCEL = MB_YESNOCANCEL
+
+define MB_ICONEXCLAMATION = 0x00000030
+define MB_ICONWARNING = MB_ICONEXCLAMATION
+define DW_MB_WARNING = MB_ICONWARNING
+define MB_ICONHAND = 0x00000010
+define MB_ICONERROR = MB_ICONHAND
+define DW_MB_ERROR = MB_ICONERROR
+define MB_ICONASTERISK = 0x00000040
+define MB_ICONINFORMATION = MB_ICONASTERISK
+define DW_MB_INFORMATION = MB_ICONINFORMATION
+define MB_ICONQUESTION = 0x00000020
+define DW_MB_QUESTION = MB_ICONQUESTION
+
+/* Key Modifiers */
+define KC_CTRL = (1)
+define KC_SHIFT = (1 << 1)
+define KC_ALT = (1 << 2)
+
+define DW_DIR_SEPARATOR = '\\'ub
+
+/* For dwtest.c */
+define VK_LBUTTON = 0x01
+define VK_RBUTTON = 0x02
+define VK_CANCEL = 0x03
+define VK_MBUTTON = 0x04
+define VK_BACK = 0x08
+define VK_TAB = 0x09
+define VK_CLEAR = 0x0C
+define VK_RETURN = 0x0D
+define VK_PAUSE = 0x13
+define VK_CAPITAL = 0x14
+define VK_ESCAPE = 0x1B
+define VK_SPACE = 0x20
+define VK_PRIOR = 0x21
+define VK_NEXT = 0x22
+define VK_END = 0x23
+define VK_HOME = 0x24
+define VK_LEFT = 0x25
+define VK_UP = 0x26
+define VK_RIGHT = 0x27
+define VK_DOWN = 0x28
+define VK_SELECT = 0x29
+define VK_PRINT = 0x2A
+define VK_EXECUTE = 0x2B
+define VK_SNAPSHOT = 0x2C
+define VK_INSERT = 0x2D
+define VK_DELETE = 0x2E
+define VK_HELP = 0x2F
+define VK_LWIN = 0x5B
+define VK_RWIN = 0x5C
+define VK_APPS = 0x5D
+define VK_SLEEP = 0x5F
+define VK_NUMPAD0 = 0x60
+define VK_NUMPAD1 = 0x61
+define VK_NUMPAD2 = 0x62
+define VK_NUMPAD3 = 0x63
+define VK_NUMPAD4 = 0x64
+define VK_NUMPAD5 = 0x65
+define VK_NUMPAD6 = 0x66
+define VK_NUMPAD7 = 0x67
+define VK_NUMPAD8 = 0x68
+define VK_NUMPAD9 = 0x69
+define VK_MULTIPLY = 0x6A
+define VK_ADD = 0x6B
+define VK_SEPARATOR = 0x6C
+define VK_SUBTRACT = 0x6D
+define VK_DECIMAL = 0x6E
+define VK_DIVIDE = 0x6F
+define VK_F1 = 0x70
+define VK_F2 = 0x71
+define VK_F3 = 0x72
+define VK_F4 = 0x73
+define VK_F5 = 0x74
+define VK_F6 = 0x75
+define VK_F7 = 0x76
+define VK_F8 = 0x77
+define VK_F9 = 0x78
+define VK_F10 = 0x79
+define VK_F11 = 0x7A
+define VK_F12 = 0x7B
+define VK_F13 = 0x7C
+define VK_F14 = 0x7D
+define VK_F15 = 0x7E
+define VK_F16 = 0x7F
+define VK_F17 = 0x80
+define VK_F18 = 0x81
+define VK_F19 = 0x82
+define VK_F20 = 0x83
+define VK_F21 = 0x84
+define VK_F22 = 0x85
+define VK_F23 = 0x86
+define VK_F24 = 0x87
+define VK_NUMLOCK = 0x90
+define VK_SCROLL = 0x91
+define VK_LSHIFT = 0xA0
+define VK_RSHIFT = 0xA1
+define VK_LCONTROL = 0xA2
+define VK_RCONTROL = 0xA3
