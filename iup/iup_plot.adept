@@ -1,0 +1,46 @@
+/* Initialize IupPlot widget class */
+foreign IupPlotOpen() void
+
+/* Create an IupPlot widget instance */
+foreign IupPlot() *Ihandle
+
+/***********************************************/
+/*           Additional API                    */
+
+foreign IupPlotBegin(ih *Ihandle, strXdata int) void
+foreign IupPlotAdd(ih *Ihandle, x double, y double) void
+foreign IupPlotAddStr(ih *Ihandle, x *ubyte, y double) void
+foreign IupPlotAddSegment(ih *Ihandle, x double, y double) void
+foreign IupPlotEnd(ih *Ihandle) int
+
+foreign IupPlotLoadData(ih *Ihandle, filename *ubyte, strXdata int) int
+
+/* available only when linking with "iupluaplot" */
+foreign IupPlotSetFormula(ih *Ihandle, sample_count int, formula *ubyte, init *ubyte) int
+
+foreign IupPlotInsert(ih *Ihandle, ds_index int, sample_index int, x double, y double) void
+foreign IupPlotInsertStr(ih *Ihandle, ds_index int, sample_index int, x *ubyte, y double) void
+foreign IupPlotInsertSegment(ih *Ihandle, ds_index int, sample_index int, x double, y double) void
+
+foreign IupPlotInsertStrSamples(ih *Ihandle, ds_index int, sample_index int, x **ubyte, y *double, count int) void
+foreign IupPlotInsertSamples(ih *Ihandle, ds_index int, sample_index int, x *double, y *double, count int) void
+
+foreign IupPlotAddSamples(ih *Ihandle, ds_index int, x *double, y *double, count int) void
+foreign IupPlotAddStrSamples(ih *Ihandle, ds_index int, x **ubyte, y *double, count int) void
+
+foreign IupPlotGetSample(ih *Ihandle, ds_index int, sample_index int, x *double, y *double) void
+foreign IupPlotGetSampleStr(ih *Ihandle, ds_index int, sample_index int, x **ubyte, y *double) void
+foreign IupPlotGetSampleSelection(ih *Ihandle, ds_index int, sample_index int) int
+foreign IupPlotGetSampleExtra(ih *Ihandle, ds_index int, sample_index int) double
+foreign IupPlotSetSample(ih *Ihandle, ds_index int, sample_index int, x double, y double) void
+foreign IupPlotSetSampleStr(ih *Ihandle, ds_index int, sample_index int, x *ubyte, y double) void
+foreign IupPlotSetSampleSelection(ih *Ihandle, ds_index int, sample_index int, selected int) void
+foreign IupPlotSetSampleExtra(ih *Ihandle, ds_index int, sample_index int, extra double) void
+
+foreign IupPlotTransform(ih *Ihandle, x double, y double, cnv_x *double, cnv_y *double) void
+foreign IupPlotTransformTo(ih *Ihandle, cnv_x double, cnv_y double, x *double, y *double) void
+
+foreign IupPlotFindSample(ih *Ihandle, cnv_x double, cnv_y double, ds_index *int, sample_index *int) int
+foreign IupPlotFindSegment(ih *Ihandle, cnv_x double, cnv_y double, ds_index *int, sample_index1 *int, sample_index2 *int) int
+
+foreign IupPlotPaintTo(ih *Ihandle, cnv *cdCanvas) void
