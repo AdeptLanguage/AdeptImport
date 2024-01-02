@@ -1,0 +1,70 @@
+struct _cdCanvas()
+
+alias cdCanvas = _cdCanvas
+
+alias IFidle = func() int
+alias IFentry = func() void
+
+alias IFi = func(int) void
+alias IFs = func(*ubyte) void
+alias IFii = func(int, int) void
+alias IFiis = func(int, int, *ubyte) void
+alias IFiiiis = func(int, int, int, int, *ubyte) void
+alias IFfiis = func(float, int, int, *ubyte) void
+alias IFvs = func(ptr, *ubyte) void
+
+alias IFn = func(*Ihandle) int
+alias IFni = func(*Ihandle, int) int
+alias IFnii = func(*Ihandle, int, int) int
+alias IFniii = func(*Ihandle, int, int, int) int
+alias IFniiii = func(*Ihandle, int, int, int, int) int
+alias IFniiiiiiC = func(*Ihandle, int, int, int, int, int, int, *cdCanvas) int
+alias IFniiiiii = func(*Ihandle, int, int, int, int, int, int) int
+alias IFnsidv = func(*Ihandle, *ubyte, int, double, ptr) int
+
+alias IFnff = func(*Ihandle, float, float) int
+alias IFniff = func(*Ihandle, int, float, float) int
+alias IFnfiis = func(*Ihandle, float, int, int, *ubyte) int
+
+alias IFnsVi = func(*Ihandle, *ubyte, ptr, int) int
+alias IFnsViii = func(*Ihandle, *ubyte, ptr, int, int, int) int
+alias IFnsiii = func(*Ihandle, *ubyte, int, int, int) int
+alias IFnssi = func(*Ihandle, *ubyte, *ubyte, int) int
+
+alias IFnnii = func(*Ihandle, *Ihandle, int, int) int
+alias IFnn = func(*Ihandle, *Ihandle) int
+alias IFnnn = func(*Ihandle, *Ihandle, *Ihandle) int
+alias IFnss = func(*Ihandle, *ubyte, *ubyte) int
+alias IFns = func(*Ihandle, *ubyte) int
+alias IFnsi = func(*Ihandle, *ubyte, int) int
+alias IFnis = func(*Ihandle, int, *ubyte) int
+alias IFnsii = func(*Ihandle, *ubyte, int, int) int
+alias IFniis = func(*Ihandle, int, int, *ubyte) int
+alias IFniiis = func(*Ihandle, int, int, int, *ubyte) int
+alias IFniiiis = func(*Ihandle, int, int, int, int, *ubyte) int
+alias IFniiiiiis = func(*Ihandle, int, int, int, int, int, int, *ubyte) int
+
+alias IFnIi = func(*Ihandle, *int, int) int
+alias IFnd = func(*Ihandle, double) int
+alias IFniiIII = func(*Ihandle, int, int, *int, *int, *int) int
+alias IFniinsii = func(*Ihandle, int, int, *Ihandle, *ubyte, int, int) int
+alias IFnccc = func(*Ihandle, ubyte, ubyte, ubyte) int
+alias IFniIIII = func(*Ihandle, int, *int, *int, *int, *int) int
+
+alias IFnC = func(*Ihandle, *cdCanvas) int
+alias IFniidd = func(*Ihandle, int, int, double, double) int
+alias IFniiddi = func(*Ihandle, int, int, double, double, int) int
+alias IFniiddiddi = func(*Ihandle, int, int, double, double, int, double, double, int) int
+alias IFniidds = func(*Ihandle, int, int, double, double, *ubyte) int
+alias IFndds = func(*Ihandle, double, double, *ubyte) int
+alias IFnssds = func(*Ihandle, *ubyte, *ubyte, double, *ubyte) int
+alias IFnni = func(*Ihandle, *Ihandle, int) int
+
+alias sIFnii = func(*Ihandle, int, int) *ubyte
+alias sIFni = func(*Ihandle, int) *ubyte
+alias sIFniis = func(*Ihandle, int, int, *ubyte) *ubyte
+
+alias dIFnii = func(*Ihandle, int, int) double
+alias IFniid = func(*Ihandle, int, int, double) int
+
+alias IFniiv = func(*Ihandle, int, int, ptr) void
