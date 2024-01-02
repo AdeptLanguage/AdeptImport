@@ -1,0 +1,3 @@
+foreign IupWebBrowserOpen() int
+
+foreign IupWebBrowser() *Ihandle
