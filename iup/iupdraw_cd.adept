@@ -1,0 +1,3 @@
+foreign cdContextIupDraw() *cdContext
+
+func alias CD_IUPDRAW() => cdContextIupDraw
