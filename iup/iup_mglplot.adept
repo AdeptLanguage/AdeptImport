@@ -1,0 +1,50 @@
+/* Initialize IupMglPlot widget class */
+foreign IupMglPlotOpen() void
+
+/* Create an IupMglPlot widget instance */
+foreign IupMglPlot() *Ihandle
+
+/***********************************************/
+/*           Additional API                    */
+
+/* Linear Data Only */
+foreign IupMglPlotBegin(ih *Ihandle, dim int) void
+foreign IupMglPlotAdd1D(ih *Ihandle, name *ubyte, y double) void
+foreign IupMglPlotAdd2D(ih *Ihandle, x double, y double) void
+foreign IupMglPlotAdd3D(ih *Ihandle, x double, y double, z double) void
+foreign IupMglPlotEnd(ih *Ihandle) int
+
+/* Linear (dim=1,2,3), Planar (dim=1), Volumetric (dim=1) */
+foreign IupMglPlotNewDataSet(ih *Ihandle, dim int) int
+
+/* Linear Data Only */
+foreign IupMglPlotInsert1D(ih *Ihandle, ds_index int, sample_index int, names **ubyte, y *double, count int) void
+foreign IupMglPlotInsert2D(ih *Ihandle, ds_index int, sample_index int, x *double, y *double, count int) void
+foreign IupMglPlotInsert3D(ih *Ihandle, ds_index int, sample_index int, x *double, y *double, z *double, count int) void
+
+/* Linear Data Only */
+foreign IupMglPlotSet1D(ih *Ihandle, ds_index int, names **ubyte, y *double, count int) void
+foreign IupMglPlotSet2D(ih *Ihandle, ds_index int, x *double, y *double, count int) void
+foreign IupMglPlotSet3D(ih *Ihandle, ds_index int, x *double, y *double, z *double, count int) void
+foreign IupMglPlotSetFormula(ih *Ihandle, ds_index int, formulaX *ubyte, formulaY *ubyte, formulaZ *ubyte, count int) void
+
+/* Linear (dim=1), Planar (dim=1), Volumetric (dim=1) */
+foreign IupMglPlotSetData(ih *Ihandle, ds_index int, data *double, count_x int, count_y int, count_z int) void
+foreign IupMglPlotLoadData(ih *Ihandle, ds_index int, filename *ubyte, count_x int, count_y int, count_z int) void
+foreign IupMglPlotSetFromFormula(ih *Ihandle, ds_index int, formula *ubyte, count_x int, count_y int, count_z int) void
+
+/* Only inside callbacks */
+foreign IupMglPlotTransform(ih *Ihandle, x double, y double, z double, ix *int, iy *int) void
+foreign IupMglPlotTransformTo(ih *Ihandle, ix int, iy int, x *double, y *double, z *double) void
+
+/* Only inside callbacks */
+foreign IupMglPlotDrawMark(ih *Ihandle, x double, y double, z double) void
+foreign IupMglPlotDrawLine(ih *Ihandle, x1 double, y1 double, z1 double, x2 double, y2 double, z2 double) void
+foreign IupMglPlotDrawText(ih *Ihandle, text *ubyte, x double, y double, z double) void
+
+foreign IupMglPlotPaintTo(ih *Ihandle, format *ubyte, w int, h int, dpi double, data ptr) void
+
+/***********************************************/
+
+/* Utility label for showing TeX labels */
+foreign IupMglLabel(title *ubyte) *Ihandle
