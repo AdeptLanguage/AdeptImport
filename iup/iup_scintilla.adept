@@ -1,0 +1,8 @@
+foreign IupScintillaOpen() void
+
+foreign IupScintilla() *Ihandle
+foreign IupScintillaDlg() *Ihandle
+
+#if HAVE_SCINTILLA
+foreign IupScintillaSendMessage(ih *Ihandle, iMessage uint, wParam uptr_t, lParam sptr_t) sptr_t
+#end
