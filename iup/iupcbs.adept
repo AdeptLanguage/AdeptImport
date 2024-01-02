@@ -1,7 +1,3 @@
-struct _cdCanvas()
-
-alias cdCanvas = _cdCanvas
-
 alias IFidle = func() int
 alias IFentry = func() void
 
