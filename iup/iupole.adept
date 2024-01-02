@@ -1,0 +1,3 @@
+foreign IupOleControl(progid *ubyte) *Ihandle
+
+foreign IupOleControlOpen() int
