@@ -1,0 +1,39 @@
+foreign IupConfig() *Ihandle
+
+foreign IupConfigLoad(ih *Ihandle) int
+foreign IupConfigSave(ih *Ihandle) int
+
+/****************************************************************/
+
+foreign IupConfigSetVariableStr(ih *Ihandle, group *ubyte, key *ubyte, value *ubyte) void
+foreign IupConfigSetVariableStrId(ih *Ihandle, group *ubyte, key *ubyte, id int, value *ubyte) void
+foreign IupConfigSetVariableInt(ih *Ihandle, group *ubyte, key *ubyte, value int) void
+foreign IupConfigSetVariableIntId(ih *Ihandle, group *ubyte, key *ubyte, id int, value int) void
+foreign IupConfigSetVariableDouble(ih *Ihandle, group *ubyte, key *ubyte, value double) void
+foreign IupConfigSetVariableDoubleId(ih *Ihandle, group *ubyte, key *ubyte, id int, value double) void
+
+foreign IupConfigGetVariableStr(ih *Ihandle, group *ubyte, key *ubyte) *ubyte
+foreign IupConfigGetVariableStrId(ih *Ihandle, group *ubyte, key *ubyte, id int) *ubyte
+foreign IupConfigGetVariableInt(ih *Ihandle, group *ubyte, key *ubyte) int
+foreign IupConfigGetVariableIntId(ih *Ihandle, group *ubyte, key *ubyte, id int) int
+foreign IupConfigGetVariableDouble(ih *Ihandle, group *ubyte, key *ubyte) double
+foreign IupConfigGetVariableDoubleId(ih *Ihandle, group *ubyte, key *ubyte, id int) double
+
+foreign IupConfigGetVariableStrDef(ih *Ihandle, group *ubyte, key *ubyte, def_ *ubyte) *ubyte
+foreign IupConfigGetVariableStrIdDef(ih *Ihandle, group *ubyte, key *ubyte, id int, def_ *ubyte) *ubyte
+foreign IupConfigGetVariableIntDef(ih *Ihandle, group *ubyte, key *ubyte, def_ int) int
+foreign IupConfigGetVariableIntIdDef(ih *Ihandle, group *ubyte, key *ubyte, id int, def_ int) int
+foreign IupConfigGetVariableDoubleDef(ih *Ihandle, group *ubyte, key *ubyte, def_ double) double
+foreign IupConfigGetVariableDoubleIdDef(ih *Ihandle, group *ubyte, key *ubyte, id int, def_ double) double
+
+foreign IupConfigCopy(ih1 *Ihandle, ih2 *Ihandle, exclude_prefix *ubyte) void
+
+/****************************************************************/
+
+foreign IupConfigSetListVariable(ih *Ihandle, group *ubyte, key *ubyte, value *ubyte, add int) void
+
+foreign IupConfigRecentInit(ih *Ihandle, menu *Ihandle, recent_cb Icallback, max_recent int) void
+foreign IupConfigRecentUpdate(ih *Ihandle, filename *ubyte) void
+
+foreign IupConfigDialogShow(ih *Ihandle, dialog *Ihandle, name *ubyte) void
+foreign IupConfigDialogClosed(ih *Ihandle, dialog *Ihandle, name *ubyte) void
