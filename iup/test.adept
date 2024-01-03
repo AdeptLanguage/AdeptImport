@@ -1,0 +1,11 @@
+import 'libiup.adept'
+
+func main(argc int, argv **ubyte) int
+{
+  IupOpen(&argc, &argv)
+  
+  IupMessage('Hello World 1', 'Hello world from IUP.')
+  
+  IupClose()
+  return 0
+}
