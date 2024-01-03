@@ -1,0 +1,51 @@
+#define HAVE_SCINTILLA false
+#define HAVE_IUPLUAMATRIX false
+#define HAVE_IM false
+
+struct _cdCanvas()
+alias cdCanvas = _cdCanvas
+
+struct _cdContext()
+alias cdContext = _cdContext
+
+foreign 'freetype6.dll'
+foreign 'ftgl.dll'
+foreign 'iup.dll'
+foreign 'iup_mglplot.dll'
+foreign 'iup_plot.dll'
+foreign 'iup_scintilla.dll'
+foreign 'iupcd.dll'
+foreign 'iupcontrols.dll'
+foreign 'iupfiledlg.dll'
+foreign 'iupgl.dll'
+foreign 'iupglcontrols.dll'
+foreign 'iupim.dll'
+foreign 'iupimglib.dll'
+foreign 'iupole.dll'
+foreign 'iuptuio.dll'
+foreign 'iupweb.dll'
+foreign 'zlib1.dll'
+
+#if HAVE_IUPLUAMATRIX
+foreign 'iupluamatrix.dll'
+#end
+
+import 'iup.adept'
+import 'iup_config.adept'
+import 'iup_mglplot.adept'
+import 'iup_plot.adept'
+import 'iup_scintilla.adept'
+import 'iup_varg.adept'
+import 'iupcbs.adept'
+import 'iupcontrols.adept'
+import 'iupdef.adept'
+import 'iupdraw.adept'
+import 'iupdraw_cd.adept'
+import 'iupfiledlg.adept'
+import 'iupgl.adept'
+import 'iupglcontrols.adept'
+import 'iupim.adept'
+import 'iupkey.adept'
+import 'iupole.adept'
+import 'iuptuio.adept'
+import 'iupweb.adept'
