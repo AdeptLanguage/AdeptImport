@@ -1,0 +1,26 @@
+foreign IupGLControlsOpen() int
+
+foreign IupGLCanvasBoxv(children **Ihandle) *Ihandle
+foreign IupGLCanvasBox(child *Ihandle, ...) *Ihandle
+
+foreign IupGLSubCanvas() *Ihandle
+
+foreign IupGLLabel(title *ubyte) *Ihandle
+foreign IupGLSeparator() *Ihandle
+foreign IupGLButton(title *ubyte) *Ihandle
+foreign IupGLToggle(title *ubyte) *Ihandle
+foreign IupGLLink(url *ubyte, title *ubyte) *Ihandle
+foreign IupGLProgressBar() *Ihandle
+foreign IupGLVal() *Ihandle
+foreign IupGLFrame(child *Ihandle) *Ihandle
+foreign IupGLExpander(child *Ihandle) *Ihandle
+foreign IupGLScrollBox(child *Ihandle) *Ihandle
+foreign IupGLSizeBox(child *Ihandle) *Ihandle
+foreign IupGLText() *Ihandle
+
+
+/* Utilities */
+foreign IupGLDrawImage(ih *Ihandle, name *ubyte, x int, y int, active int) void
+foreign IupGLDrawText(ih *Ihandle, str *ubyte, len int, x int, y int) void
+foreign IupGLDrawGetTextSize(ih *Ihandle, str *ubyte, w *int, h *int) void
+foreign IupGLDrawGetImageInfo(name *ubyte, w *int, h *int, bpp *int) void

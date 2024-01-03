@@ -1,0 +1,11 @@
+foreign IupControlsOpen() int
+
+foreign IupCells() *Ihandle
+foreign IupMatrix(action *ubyte) *Ihandle
+foreign IupMatrixList() *Ihandle
+foreign IupMatrixEx() *Ihandle
+
+#if HAVE_IUPLUAMATRIX
+foreign IupMatrixSetFormula(ih *Ihandle, col int, formula *ubyte, init *ubyte) void
+foreign IupMatrixSetDynamic(ih *Ihandle, init *ubyte) void
+#end

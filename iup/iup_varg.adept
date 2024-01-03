@@ -1,0 +1,27 @@
+foreign IupLogV(type *ubyte, format *ubyte, arglist va_list) void
+
+foreign IupSetAttV(handle_name *ubyte, ih *Ihandle, name *ubyte, arglist va_list) *Ihandle
+
+foreign IupSetStrfV(ih *Ihandle, name *ubyte, format *ubyte, arglist va_list) void
+foreign IupSetStrfIdV(ih *Ihandle, name *ubyte, id int, format *ubyte, arglist va_list) void
+foreign IupSetStrfId2V(ih *Ihandle, name *ubyte, lin int, col int, format *ubyte, arglist va_list) void
+
+foreign IupSetCallbacksV(ih *Ihandle, name *ubyte, func_ Icallback, arglist va_list) *Ihandle
+
+foreign IupCreateV(classname *ubyte, first ptr, arglist va_list) *Ihandle
+foreign IupVboxV(child *Ihandle, arglist va_list) *Ihandle
+foreign IupZboxV(child *Ihandle, arglist va_list) *Ihandle
+foreign IupHboxV(child *Ihandle,arglist va_list) *Ihandle
+foreign IupNormalizerV(ih_first *Ihandle, arglist va_list) *Ihandle
+foreign IupCboxV(child *Ihandle, arglist va_list) *Ihandle
+foreign IupGridBoxV(child *Ihandle, arglist va_list) *Ihandle
+foreign IupMultiBoxV(child *Ihandle, arglist va_list) *Ihandle
+foreign IupMenuV(child *Ihandle,arglist va_list) *Ihandle
+foreign IupTabsV(child *Ihandle, arglist va_list) *Ihandle
+foreign IupFlatTabsV(child *Ihandle, arglist va_list) *Ihandle
+
+foreign IupMessageV(title *ubyte, format *ubyte, arglist va_list) void
+foreign IupParamBoxV(param *Ihandle, arglist va_list) *Ihandle
+foreign IupGetParamV(title *ubyte, action Iparamcb, user_data ptr, format *ubyte, arglist va_list) int
+
+foreign IupGLCanvasBoxV(child *Ihandle, arglist va_list) *Ihandle

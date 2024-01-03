@@ -1,0 +1,15 @@
+foreign IupImOpen() void
+
+foreign IupLoadImage(filename *ubyte) *Ihandle
+foreign IupSaveImage(ih *Ihandle, filename *ubyte, format *ubyte) int
+
+foreign IupLoadAnimation(filename *ubyte) *Ihandle
+foreign IupLoadAnimationFrames(filename_list **ubyte, file_count int) *Ihandle
+
+#if HAVE_IM
+foreign IupGetNativeHandleImage(handle ptr) *imImage
+foreign IupGetImageNativeHandle(image *imImage) ptr
+
+foreign IupImageFromImImage(image *imImage) *Ihandle
+foreign IupImageToImImage(iup_image *Ihandle) *imImage
+#end

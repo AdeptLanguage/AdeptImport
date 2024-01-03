@@ -1,0 +1,27 @@
+/* all functions can be used only in IUP canvas and inside the ACTION callback */
+
+foreign IupDrawBegin(ih *Ihandle) void
+foreign IupDrawEnd(ih *Ihandle) void
+
+/* all functions can be called only between calls to Begin and End */
+
+foreign IupDrawSetClipRect(ih *Ihandle, x1 int, y1 int, x2 int, y2 int) void
+foreign IupDrawGetClipRect(ih *Ihandle, x1 *int, y1 *int, x2 *int, y2 *int) void
+foreign IupDrawResetClip(ih *Ihandle) void
+
+/* color controlled by the attribute DRAWCOLOR */
+/* line style or fill controlled by the attribute DRAWSTYLE */
+
+foreign IupDrawParentBackground(ih *Ihandle) void
+foreign IupDrawLine(ih *Ihandle, x1 int, y1 int, x2 int, y2 int) void
+foreign IupDrawRectangle(ih *Ihandle, x1 int, y1 int, x2 int, y2 int) void
+foreign IupDrawArc(ih *Ihandle, x1 int, y1 int, x2 int, y2 int, a1 double, a2 double) void
+foreign IupDrawPolygon(ih *Ihandle, points *int, count int) void
+foreign IupDrawText(ih *Ihandle, text *ubyte, len int, x int, y int, w int, h int) void
+foreign IupDrawImage(ih *Ihandle, name *ubyte, x int, y int, w int, h int) void
+foreign IupDrawSelectRect(ih *Ihandle, x1 int, y1 int, x2 int, y2 int) void
+foreign IupDrawFocusRect(ih *Ihandle, x1 int, y1 int, x2 int, y2 int) void
+
+foreign IupDrawGetSize(ih *Ihandle, w *int, h *int) void
+foreign IupDrawGetTextSize(ih *Ihandle, text *ubyte, len int, w *int, h *int) void
+foreign IupDrawGetImageInfo(name *ubyte, w *int, h *int, bpp *int) void

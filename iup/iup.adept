@@ -1,0 +1,498 @@
+define IUP_NAME = 'IUP - Portable User Interface'
+define IUP_DESCRIPTION = 'Multi-platform Toolkit for Building Graphical User Interfaces'
+define IUP_COPYRIGHT = 'Copyright (C) 1994-2023 Tecgraf/PUC-Rio'
+define IUP_VERSION = '3.31'         /* bug fixes are reported only by IupVersion functions */
+define IUP_VERSION_NUMBER = 331000
+define IUP_VERSION_DATE = '2023/10/13'  /* does not include bug fix releases */
+
+struct Ihandle_()
+
+alias Ihandle = Ihandle_
+
+alias Icallback = func(*Ihandle) int
+
+/************************************************************************/
+/*                        Main API                                      */
+/************************************************************************/
+
+foreign IupOpen (argc *int, argv ***ubyte) int
+foreign IupClose() void
+foreign IupIsOpened() int
+
+foreign IupImageLibOpen() void
+
+foreign IupMainLoop() int
+foreign IupLoopStep() int
+foreign IupLoopStepWait() int
+foreign IupMainLoopLevel() int
+foreign IupFlush() void
+foreign IupExitLoop() void
+foreign IupPostMessage(ih *Ihandle, s *ubyte, i int, d double, p ptr) void
+
+foreign IupRecordInput(filename *ubyte, mode int) int
+foreign IupPlayInput(filename *ubyte) int
+
+foreign IupUpdate(ih *Ihandle) void
+foreign IupUpdateChildren(ih *Ihandle) void
+foreign IupRedraw(ih *Ihandle, children int) void
+foreign IupRefresh(ih *Ihandle) void
+foreign IupRefreshChildren(ih *Ihandle) void
+
+foreign IupExecute(filename *ubyte, parameters *ubyte) int
+foreign IupExecuteWait(filename *ubyte, parameters *ubyte) int
+foreign IupHelp(url *ubyte) int
+foreign IupLog(type *ubyte, format *ubyte, ...) void
+
+foreign IupLoad(filename *ubyte) *ubyte
+foreign IupLoadBuffer(buffer *ubyte) *ubyte
+
+foreign IupVersion() *ubyte
+foreign IupVersionDate() *ubyte
+foreign IupVersionNumber() int
+foreign IupVersionShow() void
+
+foreign IupSetLanguage(lng *ubyte) void
+foreign IupGetLanguage() *ubyte
+foreign IupSetLanguageString(name *ubyte, str *ubyte) void
+foreign IupStoreLanguageString(name *ubyte, str *ubyte) void
+foreign IupGetLanguageString(name *ubyte) *ubyte
+foreign IupSetLanguagePack(ih *Ihandle) void
+
+foreign IupDestroy(ih *Ihandle) void
+foreign IupDetach(child *Ihandle) void
+foreign IupAppend(ih *Ihandle, child *Ihandle) *Ihandle
+foreign IupInsert(ih *Ihandle, ref_child *Ihandle, child *Ihandle) *Ihandle
+foreign IupGetChild(ih *Ihandle, pos int) *Ihandle
+foreign IupGetChildPos(ih *Ihandle, child *Ihandle) int
+foreign IupGetChildCount(ih *Ihandle) int
+foreign IupGetNextChild(ih *Ihandle, child *Ihandle) *Ihandle
+foreign IupGetBrother(ih *Ihandle) *Ihandle
+foreign IupGetParent(ih *Ihandle) *Ihandle
+foreign IupGetDialog(ih *Ihandle) *Ihandle
+foreign IupGetDialogChild(ih *Ihandle, name *ubyte) *Ihandle
+foreign IupReparent(ih *Ihandle, new_parent *Ihandle, ref_child *Ihandle) int
+
+foreign IupPopup(ih *Ihandle, x int, y int) int
+foreign IupShow(ih *Ihandle) int
+foreign IupShowXY(ih *Ihandle, x int, y int) int
+foreign IupHide(ih *Ihandle) int
+foreign IupMap(ih *Ihandle) int
+foreign IupUnmap(ih *Ihandle) void
+
+foreign IupResetAttribute(ih *Ihandle, name *ubyte) void
+foreign IupGetAllAttributes(ih *Ihandle, names **ubyte, n int) int
+foreign IupCopyAttributes(src_ih *Ihandle, dst_ih *Ihandle) void
+foreign IupSetAtt(handle_name *ubyte, ih *Ihandle, name *ubyte, ...) *Ihandle
+foreign IupSetAttributes(ih *Ihandle, str *ubyte) *Ihandle
+foreign IupGetAttributes(ih *Ihandle) *ubyte
+
+foreign IupSetAttribute(ih *Ihandle, name *ubyte, value *ubyte) void
+foreign IupSetStrAttribute(ih *Ihandle, name *ubyte, value *ubyte) void
+foreign IupSetStrf(ih *Ihandle, name *ubyte, format *ubyte, ...) void
+foreign IupSetInt(ih *Ihandle, name *ubyte, value int) void
+foreign IupSetFloat(ih *Ihandle, name *ubyte, value float) void
+foreign IupSetDouble(ih *Ihandle, name *ubyte, value double) void
+foreign IupSetRGB(ih *Ihandle, name *ubyte, r ubyte, g ubyte, b ubyte) void
+foreign IupSetRGBA(ih *Ihandle, name *ubyte, r ubyte, g ubyte, b ubyte, a ubyte) void
+
+foreign IupGetAttribute(ih *Ihandle, name *ubyte) *ubyte
+foreign IupGetInt(ih *Ihandle, name *ubyte) int
+foreign IupGetInt2(ih *Ihandle, name *ubyte) int
+foreign IupGetIntInt(ih *Ihandle, name *ubyte, i1 *int, i2 *int) int
+foreign IupGetFloat(ih *Ihandle, name *ubyte) float
+foreign IupGetDouble(ih *Ihandle, name *ubyte) double
+foreign IupGetRGB(ih *Ihandle, name *ubyte, r *ubyte, g *ubyte, b *ubyte) void
+foreign IupGetRGBA(ih *Ihandle, name *ubyte, r *ubyte, g *ubyte, b *ubyte, a *ubyte) void
+
+foreign IupSetAttributeId(ih *Ihandle, name *ubyte, id int, value *ubyte) void
+foreign IupSetStrAttributeId(ih *Ihandle, name *ubyte, id int, value *ubyte) void
+foreign IupSetStrfId(ih *Ihandle, name *ubyte, id int, format *ubyte, ...) void
+foreign IupSetIntId(ih *Ihandle, name *ubyte, id int, value int) void
+foreign IupSetFloatId(ih *Ihandle, name *ubyte, id int, value float) void
+foreign IupSetDoubleId(ih *Ihandle, name *ubyte, id int, value double) void
+foreign IupSetRGBId(ih *Ihandle, name *ubyte, id int, r ubyte, g ubyte, b ubyte) void
+
+foreign IupGetAttributeId(ih *Ihandle, name *ubyte, id int) *ubyte
+foreign IupGetIntId(ih *Ihandle, name *ubyte, id int) int
+foreign IupGetFloatId(ih *Ihandle, name *ubyte, id int) float
+foreign IupGetDoubleId(ih *Ihandle, name *ubyte, id int) double
+foreign IupGetRGBId(ih *Ihandle, name *ubyte, id int, r *ubyte, g *ubyte, b *ubyte) void
+
+foreign IupSetAttributeId2(ih *Ihandle, name *ubyte, lin int, col int, value *ubyte) void
+foreign IupSetStrAttributeId2(ih *Ihandle, name *ubyte, lin int, col int, value *ubyte) void
+foreign IupSetStrfId2(ih *Ihandle, name *ubyte, lin int, col int, format *ubyte, ...) void
+foreign IupSetIntId2(ih *Ihandle, name *ubyte, lin int, col int, value int) void
+foreign IupSetFloatId2(ih *Ihandle, name *ubyte, lin int, col int, value float) void
+foreign IupSetDoubleId2(ih *Ihandle, name *ubyte, lin int, col int, value double) void
+foreign IupSetRGBId2(ih *Ihandle, name *ubyte, lin int, col int, r ubyte, g ubyte, b ubyte) void
+
+foreign IupGetAttributeId2(ih *Ihandle, name *ubyte, lin int, col int) *ubyte
+foreign IupGetIntId2(ih *Ihandle, name *ubyte, lin int, col int) int
+foreign IupGetFloatId2(ih *Ihandle, name *ubyte, lin int, col int) float
+foreign IupGetDoubleId2(ih *Ihandle, name *ubyte, lin int, col int) double
+foreign IupGetRGBId2(ih *Ihandle, name *ubyte, lin int, col int, r *ubyte, g *ubyte, b *ubyte) void
+
+foreign IupSetGlobal(name *ubyte, value *ubyte) void
+foreign IupSetStrGlobal(name *ubyte, value *ubyte) void
+foreign IupGetGlobal(name *ubyte) *ubyte
+
+foreign IupSetFocus(ih *Ihandle) *Ihandle
+foreign IupGetFocus() *Ihandle
+foreign IupPreviousField(ih *Ihandle) *Ihandle
+foreign IupNextField(ih *Ihandle) *Ihandle
+
+foreign IupGetCallback(ih *Ihandle, name *ubyte) Icallback
+foreign IupSetCallback(ih *Ihandle, name *ubyte, func_ Icallback) Icallback
+foreign IupSetCallbacks(ih *Ihandle, name *ubyte, func_ Icallback, ...) *Ihandle
+
+foreign IupGetFunction(name *ubyte) Icallback
+foreign  IupSetFunction(name *ubyte, func_ Icallback) Icallback
+
+foreign IupGetHandle(name *ubyte) *Ihandle
+foreign IupSetHandle(name *ubyte, ih *Ihandle) *Ihandle
+foreign IupGetAllNames(names **ubyte, n int) int
+foreign IupGetAllDialogs(names **ubyte, n int) int
+foreign IupGetName(ih *Ihandle) *ubyte
+
+foreign IupSetAttributeHandle(ih *Ihandle, name *ubyte, ih_named *Ihandle) void
+foreign IupGetAttributeHandle(ih *Ihandle, name *ubyte) *Ihandle
+foreign IupSetAttributeHandleId(ih *Ihandle, name *ubyte, id int, ih_named *Ihandle) void
+foreign IupGetAttributeHandleId(ih *Ihandle, name *ubyte, id int) *Ihandle
+foreign IupSetAttributeHandleId2(ih *Ihandle, name *ubyte, lin int, col int, ih_named *Ihandle) void
+foreign IupGetAttributeHandleId2(ih *Ihandle, name *ubyte, lin int, col int) *Ihandle
+
+foreign IupGetClassName(ih *Ihandle) *ubyte
+foreign IupGetClassType(ih *Ihandle) *ubyte
+foreign IupGetAllClasses(names **ubyte, n int) int
+foreign IupGetClassAttributes(classname *ubyte, names **ubyte, n int) int
+foreign IupGetClassCallbacks(classname *ubyte, names **ubyte, n int) int
+foreign IupSaveClassAttributes(ih *Ihandle) void
+foreign IupCopyClassAttributes(src_ih *Ihandle, dst_ih *Ihandle) void
+foreign IupSetClassDefaultAttribute(classname *ubyte, name *ubyte, value *ubyte) void
+foreign IupClassMatch(ih *Ihandle, classname *ubyte) int
+
+foreign IupCreate(classname *ubyte) *Ihandle
+foreign IupCreatev(classname *ubyte, params *ptr) *Ihandle
+foreign IupCreatep(classname *ubyte, first ptr, ...) *Ihandle
+
+/************************************************************************/
+/*                        Elements                                      */
+/************************************************************************/
+
+foreign IupFill() *Ihandle
+foreign IupSpace() *Ihandle
+
+foreign IupRadio(child *Ihandle) *Ihandle
+foreign IupVbox(child *Ihandle, ...) *Ihandle
+foreign IupVboxv(children **Ihandle) *Ihandle
+foreign IupZbox(child *Ihandle, ...) *Ihandle
+foreign IupZboxv(children **Ihandle) *Ihandle
+foreign IupHbox(child *Ihandle, ...) *Ihandle
+foreign IupHboxv(children **Ihandle) *Ihandle
+
+foreign IupNormalizer(ih_first *Ihandle, ...) *Ihandle
+foreign IupNormalizerv(ih_list **Ihandle) *Ihandle
+
+foreign IupCbox(child *Ihandle, ...) *Ihandle
+foreign IupCboxv(children **Ihandle) *Ihandle
+foreign IupSbox(child *Ihandle) *Ihandle
+foreign IupSplit(child1 *Ihandle, child2 *Ihandle) *Ihandle
+foreign IupScrollBox(child *Ihandle) *Ihandle
+foreign IupFlatScrollBox(child *Ihandle) *Ihandle
+foreign IupGridBox(child *Ihandle, ...) *Ihandle
+foreign IupGridBoxv(children **Ihandle) *Ihandle
+foreign IupMultiBox(child *Ihandle, ...) *Ihandle
+foreign IupMultiBoxv(children **Ihandle) *Ihandle
+foreign IupExpander(child *Ihandle) *Ihandle
+foreign IupDetachBox(child *Ihandle) *Ihandle
+foreign IupBackgroundBox(child *Ihandle) *Ihandle
+
+foreign IupFrame(child *Ihandle) *Ihandle
+foreign IupFlatFrame(child *Ihandle) *Ihandle
+
+foreign IupImage(width int, height int, pixels *ubyte) *Ihandle
+foreign IupImageRGB(width int, height int, pixels *ubyte) *Ihandle
+foreign IupImageRGBA(width int, height int, pixels *ubyte) *Ihandle
+
+foreign IupItem(title *ubyte, action *ubyte) *Ihandle
+foreign IupSubmenu(title *ubyte, child *Ihandle) *Ihandle
+foreign IupSeparator() *Ihandle
+foreign IupMenu(child *Ihandle, ...) *Ihandle
+foreign IupMenuv(children **Ihandle) *Ihandle
+
+foreign IupButton(title *ubyte, action *ubyte) *Ihandle
+foreign IupFlatButton(title *ubyte) *Ihandle
+foreign IupFlatToggle(title *ubyte) *Ihandle
+foreign IupDropButton(dropchild *Ihandle) *Ihandle
+foreign IupFlatLabel(title *ubyte) *Ihandle
+foreign IupFlatSeparator() *Ihandle
+foreign IupCanvas(action *ubyte) *Ihandle
+foreign IupDialog(child *Ihandle) *Ihandle
+foreign IupUser() *Ihandle
+foreign IupThread() *Ihandle
+foreign IupLabel(title *ubyte) *Ihandle
+foreign IupList(action *ubyte) *Ihandle
+foreign IupFlatList() *Ihandle
+foreign IupText(action *ubyte) *Ihandle
+foreign IupMultiLine(action *ubyte) *Ihandle
+foreign IupToggle(title *ubyte, action *ubyte) *Ihandle
+foreign IupTimer() *Ihandle
+foreign IupClipboard() *Ihandle
+foreign IupProgressBar() *Ihandle
+foreign IupVal(type *ubyte) *Ihandle
+foreign IupFlatVal(type *ubyte) *Ihandle
+foreign IupFlatTree() *Ihandle
+foreign IupTabs(child *Ihandle, ...) *Ihandle
+foreign IupTabsv(children **Ihandle) *Ihandle
+foreign IupFlatTabs(first *Ihandle, ...) *Ihandle
+foreign IupFlatTabsv(children **Ihandle) *Ihandle
+foreign IupTree() *Ihandle
+foreign IupLink(url *ubyte, title *ubyte) *Ihandle
+foreign IupAnimatedLabel(animation *Ihandle) *Ihandle
+foreign IupDatePick() *Ihandle
+foreign IupCalendar() *Ihandle
+foreign IupColorbar() *Ihandle
+foreign IupGauge() *Ihandle
+foreign IupDial(type *ubyte) *Ihandle
+foreign IupColorBrowser() *Ihandle
+
+/* Old controls, use SPIN attribute of IupText */
+foreign IupSpin() *Ihandle
+foreign IupSpinbox(child *Ihandle) *Ihandle
+
+/************************************************************************/
+/*                      Utilities                                       */
+/************************************************************************/
+
+/* String compare utility */
+foreign IupStringCompare(str1 *ubyte, str2 *ubyte, casesensitive int, lexicographic int) int
+
+/* IupImage utilities */
+foreign IupSaveImageAsText(ih *Ihandle, filename *ubyte, format *ubyte, name *ubyte) int
+foreign IupImageGetHandle(name *ubyte) *Ihandle
+
+/* IupText and IupScintilla utilities */
+foreign IupTextConvertLinColToPos(ih *Ihandle, lin int, col int, pos *int) void
+foreign IupTextConvertPosToLinCol(ih *Ihandle, pos int, lin *int, col *int) void
+
+/* IupText, IupList, IupTree, IupMatrix and IupScintilla utility */
+foreign IupConvertXYToPos(ih *Ihandle, x int, y int) int
+
+/* OLD names, kept for backward compatibility, will never be removed. */
+foreign IupStoreGlobal(name *ubyte, value *ubyte) void
+foreign IupStoreAttribute(ih *Ihandle, name *ubyte, value *ubyte) void
+foreign IupSetfAttribute(ih *Ihandle, name *ubyte, format *ubyte, ...) void
+foreign IupStoreAttributeId(ih *Ihandle, name *ubyte, id int, value *ubyte) void
+foreign IupSetfAttributeId(ih *Ihandle, name *ubyte, id int, f *ubyte, ...) void
+foreign IupStoreAttributeId2(ih *Ihandle, name *ubyte, lin int, col int, value *ubyte) void
+foreign IupSetfAttributeId2(ih *Ihandle, name *ubyte, lin int, col int, format *ubyte, ...) void
+
+/* IupTree and IupFlatTree utilities (work for both) */
+foreign IupTreeSetUserId(ih *Ihandle, id int, userid ptr) int
+foreign IupTreeGetUserId(ih *Ihandle, id int) ptr
+foreign IupTreeGetId(ih *Ihandle, userid ptr) int
+foreign IupTreeSetAttributeHandle(ih *Ihandle, name *ubyte, id int, ih_named *Ihandle) void /* deprecated, use IupSetAttributeHandleId */
+
+/************************************************************************/
+/*                      Pre-defined dialogs                           */
+/************************************************************************/
+
+foreign IupFileDlg() *Ihandle
+foreign IupMessageDlg() *Ihandle
+foreign IupColorDlg() *Ihandle
+foreign IupFontDlg() *Ihandle
+foreign IupProgressDlg() *Ihandle
+
+foreign IupGetFile(arq *ubyte) int
+foreign IupMessage(title *ubyte, msg *ubyte) void
+foreign IupMessagef(title *ubyte, format *ubyte, ...) void
+foreign IupMessageError(parent *Ihandle, message *ubyte) void
+foreign IupMessageAlarm(parent *Ihandle, title *ubyte, message *ubyte, buttons *ubyte) int
+foreign IupAlarm(title *ubyte, msg *ubyte, b1 *ubyte, b2 *ubyte, b3 *ubyte) int
+foreign IupScanf(format *ubyte, ...) int
+foreign IupListDialog(type int, title *ubyte, size int, list **ubyte, op int, max_col int, max_lin int, marks *int) int
+foreign IupGetText(title *ubyte, text *ubyte, maxsize int) int
+foreign IupGetColor(x int, y int, r *ubyte, g *ubyte, b *ubyte) int
+
+alias Iparamcb = func(*Ihandle, int, ptr) int
+foreign IupGetParam(title *ubyte, action Iparamcb, user_data ptr, format *ubyte, ...) int
+foreign IupGetParamv(title *ubyte, action Iparamcb, user_data ptr, format *ubyte, param_count int, param_extra int, param_data *ptr) int
+foreign IupParam(format *ubyte) *Ihandle
+foreign IupParamBox(param *Ihandle, ...) *Ihandle
+foreign IupParamBoxv(param_array **Ihandle) *Ihandle
+
+foreign IupLayoutDialog(dialog *Ihandle) *Ihandle
+foreign IupElementPropertiesDialog(parent *Ihandle, elem *Ihandle) *Ihandle
+foreign IupGlobalsDialog() *Ihandle
+foreign IupClassInfoDialog(parent *Ihandle) *Ihandle
+
+/************************************************************************/
+/*                   Common Flags and Return Values                     */
+/************************************************************************/
+define IUP_ERROR      = 1
+define IUP_NOERROR    = 0
+define IUP_OPENED     = -1
+define IUP_INVALID    = -1
+define IUP_INVALID_ID = -10
+
+/************************************************************************/
+/*                   Callback Return Values                             */
+/************************************************************************/
+define IUP_IGNORE    = -1
+define IUP_DEFAULT   = -2
+define IUP_CLOSE     = -3
+define IUP_CONTINUE  = -4
+
+/************************************************************************/
+/*           IupPopup and IupShowXY Parameter Values                    */
+/************************************************************************/
+define IUP_CENTER        = 0xFFFF  /* 65535 */
+define IUP_LEFT          = 0xFFFE  /* 65534 */
+define IUP_RIGHT         = 0xFFFD  /* 65533 */
+define IUP_MOUSEPOS      = 0xFFFC  /* 65532 */
+define IUP_CURRENT       = 0xFFFB  /* 65531 */
+define IUP_CENTERPARENT  = 0xFFFA  /* 65530 */
+define IUP_LEFTPARENT    = 0xFFF9  /* 65529 */
+define IUP_RIGHTPARENT   = 0xFFF8  /* 65528 */
+define IUP_TOP           = IUP_LEFT
+define IUP_BOTTOM        = IUP_RIGHT
+define IUP_TOPPARENT     = IUP_LEFTPARENT
+define IUP_BOTTOMPARENT  = IUP_RIGHTPARENT
+
+/************************************************************************/
+/*               SHOW_CB Callback Values                                */
+/************************************************************************/
+foreign enum SHOW_CB (
+	IUP_SHOW,
+	IUP_RESTORE,
+	IUP_MINIMIZE,
+	IUP_MAXIMIZE,
+	IUP_HIDE
+)
+
+/************************************************************************/
+/*               SCROLL_CB Callback Values                              */
+/************************************************************************/
+foreign enum SCROLL_CB (
+	IUP_SBUP,
+	IUP_SBDN,
+	IUP_SBPGUP,
+	IUP_SBPGDN,
+	IUP_SBPOSV,
+	IUP_SBDRAGV,
+	IUP_SBLEFT,
+	IUP_SBRIGHT,
+	IUP_SBPGLEFT,
+	IUP_SBPGRIGHT,
+	IUP_SBPOSH,
+	IUP_SBDRAGH
+)
+
+/************************************************************************/
+/*               Mouse Button Values and Macros                         */
+/************************************************************************/
+define IUP_BUTTON1   = '1'
+define IUP_BUTTON2   = '2'
+define IUP_BUTTON3   = '3'
+define IUP_BUTTON4   = '4'
+define IUP_BUTTON5   = '5'
+
+func iup_isshift(_s *ubyte) bool   =  (_s[0]=='S'ub)
+func iup_iscontrol(_s *ubyte) bool =  (_s[1]=='C'ub)
+func iup_isbutton1(_s *ubyte) bool =  (_s[2]=='1'ub)
+func iup_isbutton2(_s *ubyte) bool =  (_s[3]=='2'ub)
+func iup_isbutton3(_s *ubyte) bool =  (_s[4]=='3'ub)
+func iup_isdouble(_s *ubyte) bool  =  (_s[5]=='D'ub)
+func iup_isalt(_s *ubyte) bool     =  (_s[6]=='A'ub)
+func iup_issys(_s *ubyte) bool     =  (_s[7]=='Y'ub)
+func iup_isbutton4(_s *ubyte) bool =  (_s[8]=='4'ub)
+func iup_isbutton5(_s *ubyte) bool =  (_s[9]=='5'ub)
+
+/* Old definitions for backward compatibility */
+func alias isshift(*ubyte)   =>  iup_isshift
+func alias iscontrol(*ubyte) =>  iup_iscontrol
+func alias isbutton1(*ubyte) =>  iup_isbutton1
+func alias isbutton2(*ubyte) =>  iup_isbutton2
+func alias isbutton3(*ubyte) =>  iup_isbutton3
+func alias isdouble(*ubyte)  =>  iup_isdouble
+func alias isalt(*ubyte)     =>  iup_isalt
+func alias issys(*ubyte)     =>  iup_issys
+func alias isbutton4(*ubyte) =>  iup_isbutton4
+func alias isbutton5(*ubyte) =>  iup_isbutton5
+
+/************************************************************************/
+/*                      Pre-Defined Masks                               */
+/************************************************************************/
+define IUP_MASK_FLOAT       = '[+/-]?(/d+/.?/d*|/./d+)'
+define IUP_MASK_UFLOAT      = '(/d+/.?/d*|/./d+)'
+define IUP_MASK_EFLOAT      = '[+/-]?(/d+/.?/d*|/./d+)([eE][+/-]?/d+)?'
+define IUP_MASK_UEFLOAT     = '(/d+/.?/d*|/./d+)([eE][+/-]?/d+)?'
+define IUP_MASK_FLOATCOMMA  = '[+/-]?(/d+/,?/d*|/,/d+)'
+define IUP_MASK_UFLOATCOMMA = '(/d+/,?/d*|/,/d+)'
+define IUP_MASK_INT         = '[+/-]?/d+'
+define IUP_MASK_UINT        = '/d+'
+
+/* Old definitions for backward compatibility */
+define IUPMASK_FLOAT     = IUP_MASK_FLOAT
+define IUPMASK_UFLOAT    = IUP_MASK_UFLOAT
+define IUPMASK_EFLOAT    = IUP_MASK_EFLOAT
+define IUPMASK_INT       = IUP_MASK_INT
+define IUPMASK_UINT      = IUP_MASK_UINT
+
+/************************************************************************/
+/*                   IupGetParam Callback situations                    */
+/************************************************************************/
+define IUP_GETPARAM_BUTTON1 = -1
+define IUP_GETPARAM_INIT    = -2
+define IUP_GETPARAM_BUTTON2 = -3
+define IUP_GETPARAM_BUTTON3 = -4
+define IUP_GETPARAM_CLOSE   = -5
+define IUP_GETPARAM_MAP     = -6
+define IUP_GETPARAM_OK      = IUP_GETPARAM_BUTTON1
+define IUP_GETPARAM_CANCEL  = IUP_GETPARAM_BUTTON2
+define IUP_GETPARAM_HELP    = IUP_GETPARAM_BUTTON3
+
+/************************************************************************/
+/*                   Used by IupColorbar                                */
+/************************************************************************/
+define IUP_PRIMARY   = -1
+define IUP_SECONDARY = -2
+
+/************************************************************************/
+/*                   Record Input Modes                                 */
+/************************************************************************/
+foreign enum IUP_REC (
+	IUP_RECBINARY,
+	IUP_RECTEXT
+)
+
+/************************************************************************/
+/*              Replacement for the WinMain in Windows,                 */
+/*        this allows the application to start from "main".             */
+/************************************************************************/
+
+//func IupMain (argc int, argv **ubyte) int
+//alias main(int, **ubyte) = IupMain
+
+/******************************************************************************
+ * Copyright (C) 1994-2019 Tecgraf/PUC-Rio.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ ******************************************************************************/

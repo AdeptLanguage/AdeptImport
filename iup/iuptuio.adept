@@ -1,0 +1,3 @@
+foreign IupTuioOpen() int
+
+foreign IupTuioClient(port int) *Ihandle
