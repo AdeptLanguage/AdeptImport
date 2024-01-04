@@ -1,0 +1,23 @@
+foreign 'tinyfiledialogs64.dll'
+
+foreign tinyfd_getGlobalChar(aCharVariableName *ubyte) *ubyte
+
+foreign tinyfd_getGlobalInt(aIntVariableName *ubyte) int
+
+foreign tinyfd_setGlobalInt(aIntVariableName *ubyte, aValue int) int
+
+foreign tinyfd_beep() void
+
+foreign tinyfd_notifyPopup(aTitle *ubyte, aMessage *ubyte, aIconType *ubyte) int
+
+foreign tinyfd_messageBox(aTitle *ubyte, aMessage *ubyte, aDialogType *ubyte, aIconType *ubyte, aDefaultButton int) int
+
+foreign tinyfd_inputBox(aTitle *ubyte, aMessage *ubyte, aDefaultInput *ubyte) *ubyte
+
+foreign tinyfd_saveFileDialog(aTitle *ubyte, aDefaultPathAndFile *ubyte, aNumOfFilterPatterns int, aFilterPatterns **ubyte, aSingleFilterDescription *ubyte) *ubyte
+
+foreign tinyfd_openFileDialog(aTitle *ubyte, aDefaultPathAndFile *ubyte, aNumOfFilterPatterns int, aFilterPatterns **ubyte, aSingleFilterDescription *ubyte, aAllowMultipleSelects int) *ubyte
+
+foreign tinyfd_selectFolderDialog(aTitle *ubyte, aDefaultPath *ubyte) *ubyte
+
+foreign tinyfd_colorChooser(aTitle *ubyte, aDefaultHexRGB *ubyte, charaDefaultRGB [3] ubyte, aoResultRGB [3] ubyte) *ubyte
