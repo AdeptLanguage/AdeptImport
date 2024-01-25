@@ -1142,7 +1142,7 @@ func lowercase(this *String) String {
 }
 
 func String\isWhitespace(c ubyte) bool {
-    return c == ' 'ub || c == '\n' || c == '\t' || c == '\r' || c == 0x0B /*'\v'ub*/ || c == 0x0C /*'\f'ub*/
+    return c == ' 'ub || c == '\n'ub || c == '\t'ub || c == '\r'ub || c == 0x0B /*'\v'ub*/ || c == 0x0C /*'\f'ub*/
 }
 
 func trim(this *String) void {
