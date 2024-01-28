@@ -1297,14 +1297,14 @@ func escape(this *String, escape_mode String\EscapeMode = ::BASIC, quote String 
 
     each ubyte in *this {
         switch it {
-        case '\r', result.append("\\r")
-        case '\n', result.append("\\n")
-        case '\t', result.append("\\t")
-        case '\b', result.append("\\b")
-        case '\f', result.append("\\f")
+        case '\r'ub, result.append("\\r")
+        case '\n'ub, result.append("\\n")
+        case '\t'ub, result.append("\\t")
+        case '\b'ub, result.append("\\b")
+        case '\f'ub, result.append("\\f")
         default
             if it == quote {
-                result.append('\\')
+                result.append('\\'ub)
             }
             result.append(it)
         }
