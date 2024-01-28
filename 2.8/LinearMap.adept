@@ -18,6 +18,15 @@ record <$K, $V> LinearMap (elements <<$K, $V> AsymmetricPair> List) {
         return none()
     }
 
+    func getPointer(key $K) *$V {
+        each <$K, $V> AsymmetricPair in static this.elements {
+            if it.first == key {
+                return &it.second
+            }
+        }
+        return null
+    }
+
     func set(key POD $K, value POD $V) {
         key = POD __pass__(key)
 
