@@ -1285,3 +1285,34 @@ func toString(value POD String) String {
         return true
     }
 #end
+
+enum String\EscapeMode (BASIC)
+
+func escape(this *String, escape_mode String\EscapeMode = ::BASIC, quote String = "\"", surround bool = true) String {
+    result String
+
+    if surround {
+        result.append(quote)
+    }
+
+    each ubyte in *this {
+        switch it {
+        case '\r', result.append("\\r")
+        case '\n', result.append("\\n")
+        case '\t', result.append("\\t")
+        case '\b', result.append("\\b")
+        case '\f', result.append("\\f")
+        default
+            if it == quote {
+                result.append('\\')
+            }
+            result.append(it)
+        }
+    }
+
+    if surround {
+        result.append(quote)
+    }
+
+    return result.commit()
+}

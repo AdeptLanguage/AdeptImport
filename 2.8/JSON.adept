@@ -472,9 +472,8 @@ func JSON\serialize(fields <String, JSON> LinearMap) String {
     result String = "{".toOwned()
     
     each <String, JSON> AsymmetricPair in static elements {
-        result.append("\"")
-        result.append(it.first)
-        result.append("\":")
+        result.append(it.first.escape())
+        result.append(":")
         result.append(it.second.serialize())
 
         if idx + 1 < elements.length {
@@ -491,7 +490,7 @@ func serialize(this *JSON) String {
     case ::UNDEFINED, return "undefined"
     case ::NULL,      return "null"
     case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
-    case ::STRING,    return sprintf("\"%S\"", (this.internals as *JSONString).value)
+    case ::STRING,    return sprintf("%S", (this.internals as *JSONString).value.escape())
     case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
     case ::ARRAY,     return JSON\serialize(this.internals as *JSONArray.elements)
     case ::OBJECT,    return JSON\serialize(this.internals as *JSONObject.fields)
@@ -507,7 +506,7 @@ func toString(this *JSON) String {
     exhaustive switch this.kind() {
     case ::NULL,      return "null"
     case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
-    case ::STRING,    return sprintf("\"%S\"", (this.internals as *JSONString).value)
+    case ::STRING,    return sprintf("%S", (this.internals as *JSONString).value.escape())
     case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
     case ::ARRAY,     return toString(this.internals as *JSONArray.elements)
     case ::OBJECT,    return toString(this.internals as *JSONObject.fields, "\"")

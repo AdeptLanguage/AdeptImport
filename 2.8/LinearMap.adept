@@ -109,9 +109,12 @@ func toString(map <$K, $V> LinearMap, quote String = "", friendly bool = true) S
     result.append(spacer);
 
     each <$K, $V> AsymmetricPair in static map.elements {
-        result.append(quote)
-        result.append(toString(it.first))
-        result.append(quote)
+        if quote == "" {
+            result.append(toString(it.first))
+        } else {
+            result.append(toString(it.first).escape(::BASIC, quote))
+        }
+
         result.append(":")
         result.append(spacer);
 
