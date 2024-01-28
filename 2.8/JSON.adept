@@ -632,10 +632,16 @@ func JSON\parseString(content String, out stride *usize = null) JSON {
     until i >= content.length || (content[i] == '"'ub && !escape_active) {
         if escape_active {
             switch content[i] {
+            case 'r'ub,  string.append('\r'ub)
             case 'n'ub,  string.append('\n'ub)
             case 't'ub,  string.append('\t'ub)
+            case 'b'ub,  string.append(0x08ub /* \b */)
+            case 'f'ub,  string.append(0x0Cub /* \f */)
             case '"'ub,  string.append('"'ub)
             case '\\'ub, string.append('\\'ub)
+            case '/'ub, string.append('/'ub)
+            // Warning: \u not supported
+            default     string.append(content[i])
             }
             escape_active = false
             i++
