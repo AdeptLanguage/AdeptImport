@@ -1303,7 +1303,7 @@ func escape(this *String, escape_mode String\EscapeMode = ::BASIC, quote String 
         case '\b'ub, result.append("\\b")
         case '\f'ub, result.append("\\f")
         default
-            if it == quote {
+            if StringView(&it, 1) == quote {
                 result.append('\\'ub)
             }
             result.append(it)
