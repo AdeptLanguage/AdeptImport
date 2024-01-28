@@ -1288,7 +1288,7 @@ func toString(value POD String) String {
 
 enum String\EscapeMode (BASIC)
 
-func escape(this *String, escape_mode String\EscapeMode = ::BASIC, quote String = "\"", surround bool = true) String {
+func escape(this *String, _escape_mode String\EscapeMode = ::BASIC, quote String = "\"", surround bool = true) String {
     result String
 
     if surround {
