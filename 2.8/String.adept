@@ -1201,7 +1201,11 @@ func trimmedView(this *String) StringView {
 }
 
 func toString(value POD String) String {
-    return value
+    if value.ownership == ::OWN {
+        return value.reference()
+    } else {
+        return value
+    }
 }
 
 // Deprecated '%' operator on String
@@ -1295,7 +1299,7 @@ func escape(this *String, _escape_mode String\EscapeMode = ::BASIC, quote String
         result.append(quote)
     }
 
-    each ubyte in *this {
+    each ubyte in static *this {
         switch it {
         case '\r'ub, result.append("\\r")
         case '\n'ub, result.append("\\n")

@@ -1,1 +1,168 @@
-import '2.5/VariadicArray.adept'
+
+#default variadic_array_sanity_checks   true
+#default variadic_array_use_typeinfo    __typeinfo__
+#default variadic_array_error_with_type true
+
+#if variadic_array_use_typeinfo
+    #unless __typeinfo__
+        #print_error "ERROR: VariadicArray requires runtime type information to be enabled when 'variadic_array_use_typeinfo' is true"
+        #halt
+    #end
+    
+    import Anything
+#end
+
+import String
+
+#if !variadic_array_use_typeinfo
+    struct VariadicArray (items ptr, next ptr, bytes usize, length usize, index usize)
+#else
+    struct VariadicArray (items ptr, next ptr, bytes usize, length usize, index usize, types **AnyType)
+#end
+
+func __variadic_array__(pointer ptr, bytes usize, length usize, _maybe_types ptr) VariadicArray {
+    va POD VariadicArray = undef
+    va.items = pointer
+    va.next = pointer
+    va.bytes = bytes
+    va.length = length
+    va.index = 0
+    
+    #if variadic_array_use_typeinfo
+    va.types = _maybe_types as ptr
+    #end
+    
+    return va
+}
+
+func hasNext(this *VariadicArray) bool {
+    return this.index < this.length
+}
+
+func reset(this *VariadicArray) {
+    this.next = this.items
+    this.length = 0
+}
+
+#if variadic_array_use_typeinfo
+    func read(this *VariadicArray) Anything {
+        // NOTE: It is the callee's responsibility to ensure __defer__ is called on the values that need it
+        
+        #if variadic_array_sanity_checks
+        if this.index >= this.length {
+            printf('VariadicArray Error: read() called when no items left\n')
+            return Anything(null)
+        }
+        #end
+        
+        item POD Anything = Anything(this.next, this.types[this.index], Ownership::REFERENCE, null)
+        this.next += cast ptr this.types[this.index].size
+        this.index++
+        return item
+    }
+    
+    func getNextType(this *VariadicArray) *AnyType {
+        return this.hasNext() ? this.types[this.index] : null as *AnyType
+    }
+#else
+    func getNextType(this *VariadicArray) ptr = null
+#end
+
+func read(this *VariadicArray, out item *$T) {
+    // NOTE: It is the callee's responsibility to ensure __defer__ is called on the values that need it
+    
+    if this.index >= this.length {
+        #if variadic_array_error_with_type
+        printf('VariadicArray Error: read(*%s) called when no items left\n', typenameof $T)
+        #else
+        printf('VariadicArray Error: read(*$T) called when no items left\n')
+        #end
+        
+        return
+    }
+    
+    *item = POD *cast *$T this.next
+    this.next += cast ptr sizeof $T
+    this.index++
+}
+
+func readString(this *VariadicArray) String {
+    value POD String
+    this.read(&value)
+    return value.commit()
+}
+
+func readPODString(this *VariadicArray) String {
+    value POD String = undef
+    this.read(&value)
+    return value
+}
+
+func readCString(this *VariadicArray) *ubyte {
+    this.read(undef value *ubyte)
+    return value
+}
+
+func readPtr(this *VariadicArray) ptr {
+    this.read(undef value ptr)
+    return value
+}
+
+func readBool(this *VariadicArray) bool {
+    this.read(undef value bool)
+    return value
+}
+
+func readByte(this *VariadicArray) byte {
+    this.read(undef value byte)
+    return value
+}
+
+func readUbyte(this *VariadicArray) ubyte {
+    this.read(undef value ubyte)
+    return value
+}
+
+func readShort(this *VariadicArray) short {
+    this.read(undef value short)
+    return value
+}
+
+func readUshort(this *VariadicArray) ushort {
+    this.read(undef value ushort)
+    return value
+}
+
+func readInt(this *VariadicArray) int {
+    this.read(undef value int)
+    return value
+}
+
+func readUint(this *VariadicArray) uint {
+    this.read(undef value uint)
+    return value
+}
+
+func readLong(this *VariadicArray) long {
+    this.read(undef value long)
+    return value
+}
+
+func readUlong(this *VariadicArray) ulong {
+    this.read(undef value ulong)
+    return value
+}
+
+func readUsize(this *VariadicArray) usize {
+    return this.readUlong()
+}
+
+func readFloat(this *VariadicArray) float {
+    this.read(undef value float)
+    return value
+}
+
+func readDouble(this *VariadicArray) double {
+    this.read(undef value double)
+    return value
+}

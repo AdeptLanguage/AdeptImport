@@ -204,6 +204,20 @@ struct JSON (internals *JSONData, ownership Ownership) {
         return JSON\undefined()
     }
 
+    func toOwned JSON {
+        #if JSON_error_on_donor_usage
+            this.assertNotDonor('toOwned', true)
+        #end
+
+        if this.ownership == ::GIVEN {
+            return *this
+        } else if this.ownership == ::OWN {
+            return this.commit()
+        } else {
+            return this.clone()
+        }
+    }
+
     func __assign__(other POD JSON) {
         exhaustive switch other.ownership {
         case ::OWN
@@ -490,7 +504,7 @@ func serialize(this *JSON) String {
     case ::UNDEFINED, return "undefined"
     case ::NULL,      return "null"
     case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
-    case ::STRING,    return sprintf("%S", (this.internals as *JSONString).value.escape())
+    case ::STRING,    return (this.internals as *JSONString).value.escape()
     case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
     case ::ARRAY,     return JSON\serialize(this.internals as *JSONArray.elements)
     case ::OBJECT,    return JSON\serialize(this.internals as *JSONObject.fields)
@@ -506,7 +520,7 @@ func toString(this *JSON) String {
     exhaustive switch this.kind() {
     case ::NULL,      return "null"
     case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
-    case ::STRING,    return sprintf("%S", (this.internals as *JSONString).value.escape())
+    case ::STRING,    return (this.internals as *JSONString).value.escape()
     case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
     case ::ARRAY,     return toString(this.internals as *JSONArray.elements)
     case ::OBJECT,    return toString(this.internals as *JSONObject.fields, "\"")
@@ -638,7 +652,7 @@ func JSON\parseString(content String, out stride *usize = null) JSON {
             case 'f'ub,  string.append('\f'ub)
             case '"'ub,  string.append('"'ub)
             case '\\'ub, string.append('\\'ub)
-            case '/'ub, string.append('/'ub)
+            case '/'ub,  string.append('/'ub)
             // Warning: \u not supported
             default     string.append(content[i])
             }
