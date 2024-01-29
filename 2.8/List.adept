@@ -448,7 +448,7 @@ func last(this *<$T> List) *$T {
         this.assertNotDonor('last', true)
     #end
 
-    return this.length ? this.items at (this.length - 1) : null
+    return this.length ? this.items at (this.length - 1) : null as *$T
 }
 
 func contains(this *<$T> List, value $~T) bool {
