@@ -505,7 +505,7 @@ func serialize(this *JSON) String {
     case ::NULL,      return "null"
     case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
     case ::STRING,    return (this.internals as *JSONString).value.escape()
-    case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
+    case ::NUMBER,    return JSON\withoutTrailingZero(toString((this.internals as *JSONNumber).value))
     case ::ARRAY,     return JSON\serialize(this.internals as *JSONArray.elements)
     case ::OBJECT,    return JSON\serialize(this.internals as *JSONObject.fields)
     }
@@ -521,7 +521,7 @@ func toString(this *JSON) String {
     case ::NULL,      return "null"
     case ::BOOLEAN,   return (this.internals as *JSONBoolean).value ? "true" : "false" 
     case ::STRING,    return (this.internals as *JSONString).value.escape()
-    case ::NUMBER,    return toString((this.internals as *JSONNumber).value)
+    case ::NUMBER,    return JSON\withoutTrailingZero(toString((this.internals as *JSONNumber).value))
     case ::ARRAY,     return toString(this.internals as *JSONArray.elements)
     case ::OBJECT,    return toString(this.internals as *JSONObject.fields, "\"")
     case ::UNDEFINED, return "undefined"
@@ -531,6 +531,14 @@ func toString(this *JSON) String {
 }
 
 func toString(json JSON) String = json.toString()
+
+func JSON\withoutTrailingZero(number String) String {
+    if number.endsWith(".0") {
+        number.reduce(2)
+    }
+
+    return number.commit()
+}
 
 func JSONFromString(content String, out stride *usize = null) JSON {
     content = content.trimmedView()
