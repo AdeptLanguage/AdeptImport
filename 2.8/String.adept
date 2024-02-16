@@ -221,6 +221,10 @@ record String (array *ubyte, length, capacity usize, ownership StringOwnership) 
             }
         }
     }
+
+    func reserveAdditional(expected_added usize) {
+        this.reserve(this.length + expected_added)
+    }
 }
 
 func __pass__(string POD String) String {
