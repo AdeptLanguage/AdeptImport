@@ -270,7 +270,7 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         memmove(this.items at index, this.items at (index + 1), (this.length - index) * sizeof $T)
     }
 
-    func reserve(count usize) {
+    func reserve(capacity usize) {
         #if List_error_on_donor_usage
             this.assertNotDonor('reserve', true)
         #end
@@ -280,14 +280,18 @@ struct <$T> List (items *$T, length, capacity usize, ownership Ownership) {
         #end
         
         if this.items == null {
-            *this = POD List(new undef $T * count, 0, count, ::OWN)
-        } else if this.capacity < count {
-            resized *$T = memcpy(new undef $T * count, this.items, sizeof $T * this.length)
+            *this = POD List(new undef $T * capacity, 0, capacity, ::OWN)
+        } else if this.capacity < capacity {
+            resized *$T = memcpy(new undef $T * capacity, this.items, sizeof $T * this.length)
             delete this.items
             this.items = resized
-            this.capacity = count
+            this.capacity = capacity
             this.ownership = ::OWN
         }
+    }
+
+    func reserveAdditional(expected_added usize) {
+        this.reserve(this.length + expected_added)
     }
 
     func get(index usize) $T {

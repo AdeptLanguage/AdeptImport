@@ -1,0 +1,78 @@
+
+record Hash (raw ulong)
+
+func __equals__(a, b Hash) bool = a.raw == b.raw
+func __less_than__(a, b Hash) bool = a.raw < b.raw
+func __less_than_or_equal__(a, b Hash) bool = a.raw <= b.raw
+func __greater_than__(a, b Hash) bool = a.raw > b.raw
+func __greater_than_or_equal__(a, b Hash) bool = a.raw >= b.raw
+
+func toHash(string String) Hash {
+    // djb2 by Dan Bernstein
+
+    hash ulong = 5381
+
+    each ubyte in static string {
+        hash = ((hash << 5) + hash) + it
+    }
+    
+    return Hash(hash)
+}
+
+func toHash(value bool) Hash {
+    return toHash(value as uint)
+}
+
+func toHash(value byte) Hash {
+    return toHash(value as uint)
+}
+
+func toHash(value ubyte) Hash {
+    return toHash(value as uint)
+}
+
+func toHash(value short) Hash {
+    return toHash(value as uint)
+}
+
+func toHash(value ushort) Hash {
+    return toHash(value as uint)
+}
+
+func toHash(value int) Hash {
+    return toHash(value as uint)
+}
+
+func toHash(value uint) Hash {
+    // https://stackoverflow.com/a/12996028
+    x ulong = value as ulong
+    x = ((x >> 16) ^ x) * 0x45d9f3bui
+    x = ((x >> 16) ^ x) * 0x45d9f3bui
+    x = (x >> 16) ^ x
+    return Hash(x)
+}
+
+func toHash(value long) Hash {
+    return toHash(value as ulong)
+}
+
+func toHash(value ulong) Hash {
+    // https://stackoverflow.com/a/12996028
+    value = (value ^ (value >> 30)) * 0xBF58476D1CE4E5B9ul
+    value = (value ^ (value >> 27)) * 0x94D049BB133111EBul
+    value = value ^ (value >> 31)
+    return Hash(value)
+}
+
+func toHash(value float) Hash {
+    return toHash(*(&value as *uint))
+}
+
+func toHash(value double) Hash {
+    return toHash(*(&value as *ulong))
+}
+
+func toHash(value usize) Hash {
+    return toHash(value as ulong)
+}
+

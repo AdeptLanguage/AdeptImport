@@ -1,0 +1,131 @@
+
+import Ownership
+import Pair
+import Array
+import Optional
+import Hash
+import del
+
+#default HashMap\ignore_unstable_warning false
+
+#unless HashMap\ignore_unstable_warning
+    #warning "2.8/HashMap is unstable"
+#end
+
+define HashMap\default_capacity = 16
+
+record <$K, $V> HashMap\Bucket (key $K, value $V, next *<$K, $V> HashMap\Bucket) {
+    func __defer__ {
+        del(this.next)
+    }
+}
+
+record <$K, $V> HashMap (buckets <*<$K, $V> HashMap\Bucket> Array, length usize) {
+    func __defer__ {
+        each *<$K, $V> HashMap\Bucket in static this.buckets {
+            del(it)
+        }
+        delete this.buckets.items
+    }
+
+    func add(key POD $K) *$V {
+        if this.length >= this.buckets.length / 4 * 3 {
+            this.doubleSize()
+        }
+
+        stationary_key POD $K = key
+        existing *$V = this.getPointer(stationary_key)
+
+        if existing {
+            existing.__defer__()
+            memset(existing, 0, sizeof $V)
+            return existing
+        }
+
+        hash Hash = toHash(stationary_key)
+        bucket_index ulong = hash.raw & this.mask()
+
+        // Prepend to linked list
+        old_bucket *<$K, $V> HashMap\Bucket = this.buckets[bucket_index]
+        new_bucket *<$K, $V> HashMap\Bucket = new <$K, $V> HashMap\Bucket
+        new_bucket.key = POD stationary_key
+        new_bucket.next = old_bucket
+
+        this.buckets[bucket_index] = new_bucket
+        return &new_bucket.value
+    }
+
+    func add(key POD $K, value POD $V) {
+        *this.add(key) = value
+    }
+
+    func set(key POD $K, value POD $V) {
+        this.add(key, value)
+    }
+
+    func put(key POD $K, value POD $V) {
+        this.add(key, value)
+    }
+
+    func mask() ulong {
+        return this.buckets.length as ulong - 1
+    }
+
+    func doubleSize() {
+        if this.buckets.length == 0 {
+            // Initialize with default size
+            new_capacity usize = HashMap\default_capacity
+            this.buckets.items = new *<$K, $V> HashMap\Bucket * new_capacity
+            this.buckets.length = new_capacity
+            return
+        }
+
+        // Double current size
+        new_capacity usize = this.buckets.length * 2
+        new_items **<$K, $V> HashMap\Bucket = new *<$K, $V> HashMap\Bucket * new_capacity
+        assert new_items != null
+
+        // Rehash old items
+        each *<$K, $V> HashMap\Bucket in static this.buckets {
+            bucket *<$K, $V> HashMap\Bucket = it
+
+            while bucket {
+                next *<$K, $V> HashMap\Bucket = bucket.next
+
+                hash Hash = toHash(bucket.key)
+                bucket_index ulong = hash.raw & (new_capacity - 1) as ulong
+
+                bucket.next = new_items[bucket_index]
+                new_items[bucket_index] = bucket
+
+                bucket = next
+            }
+        }
+
+        delete this.buckets.items
+        this.buckets.items = new_items
+        this.buckets.length = new_capacity
+    }
+
+    func getPointer(key $K) *$V {
+        hash Hash = toHash(key)
+        bucket_index ulong = hash.raw & this.mask()
+        bucket *<$K, $V> HashMap\Bucket = this.buckets[bucket_index]
+
+        while bucket {
+            if bucket.key == key {
+                return &bucket.value
+            }
+
+            bucket = bucket.next
+        }
+
+        return null
+    }
+
+    func get(key $K) <$V> Optional {
+        pointer *$V = this.getPointer(key)
+        return pointer ? some(*pointer) : none() ~> <$V> Optional
+    }
+}
+
