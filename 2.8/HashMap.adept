@@ -52,6 +52,7 @@ record <$K, $V> HashMap (buckets <*<$K, $V> HashMap\Bucket> Array, length usize)
         new_bucket.next = old_bucket
 
         this.buckets[bucket_index] = new_bucket
+        this.length++
         return &new_bucket.value
     }
 
