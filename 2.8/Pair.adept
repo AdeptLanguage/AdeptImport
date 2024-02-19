@@ -1,15 +1,34 @@
-import '2.7/Pair.adept'
 
-func clone(this *<$T> Pair) <$T> Pair {
-    result POD <$T> Pair
-    result.first = this.first.clone()
-    result.second = this.second.clone()
-    return result
+#default Pair_include_pre_2_8_compatibility true
+
+record <$T, $S> Pair (first $T, second $S) {
+    func clone() <$T, $S> Pair {
+        result POD <$T, $S> Pair
+        result.first = this.first.clone()
+        result.second = this.second.clone()
+        return result
+    }
 }
 
-func clone(this *<$T, $S> AsymmetricPair) <$T, $S> AsymmetricPair {
-    result POD <$T, $S> AsymmetricPair
-    result.first = this.first.clone()
-    result.second = this.second.clone()
-    return result
-}
+alias <$T> Pair = <$T, $T> Pair
+
+#if Pair_include_pre_2_8_compatibility
+    // For backwards-compatibility
+    alias <$T, $S> AsymmetricPair = <$T, $S> Pair
+
+    // For backwards-compatibility
+    func pair(first, second $T) <$T> Pair {
+        return Pair(first, second)
+    }
+
+    // For backwards-compatibility
+    func asymmetricPair(first $T, second $S) <$T, $S> Pair {
+        return Pair(first, second)
+    }
+
+    // For backwards-compatibility
+    func AsymmetricPair(first $T, second $S) <$T, $S> Pair {
+        return Pair(first, second)
+    }
+#end
+
