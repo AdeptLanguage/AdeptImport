@@ -14,7 +14,7 @@ import del
 
 define HashMap\default_capacity = 16
 
-record <$K, $V> HashMap\Bucket (key $K, value $V, next *<$K, $V> HashMap\Bucket) {
+record <$K, $V> HashMap\Bucket (pair <$K, $V> Pair, next *<$K, $V> HashMap\Bucket) {
     func __defer__ {
         del(this.next)
     }
@@ -48,12 +48,12 @@ record <$K, $V> HashMap (buckets <*<$K, $V> HashMap\Bucket> Array, length usize)
         // Prepend to linked list
         old_bucket *<$K, $V> HashMap\Bucket = this.buckets[bucket_index]
         new_bucket *<$K, $V> HashMap\Bucket = new <$K, $V> HashMap\Bucket
-        new_bucket.key = POD stationary_key
+        new_bucket.pair.first = POD stationary_key
         new_bucket.next = old_bucket
 
         this.buckets[bucket_index] = new_bucket
         this.length++
-        return &new_bucket.value
+        return &new_bucket.pair.second
     }
 
     func add(key POD $K, value POD $V) {
@@ -93,7 +93,7 @@ record <$K, $V> HashMap (buckets <*<$K, $V> HashMap\Bucket> Array, length usize)
             while bucket {
                 next *<$K, $V> HashMap\Bucket = bucket.next
 
-                hash Hash = toHash(bucket.key)
+                hash Hash = toHash(bucket.pair.first)
                 bucket_index ulong = hash.raw & (new_capacity - 1) as ulong
 
                 bucket.next = new_items[bucket_index]
@@ -114,8 +114,8 @@ record <$K, $V> HashMap (buckets <*<$K, $V> HashMap\Bucket> Array, length usize)
         bucket *<$K, $V> HashMap\Bucket = this.buckets[bucket_index]
 
         while bucket {
-            if bucket.key == key {
-                return &bucket.value
+            if bucket.pair.first == key {
+                return &bucket.pair.second
             }
 
             bucket = bucket.next
@@ -127,6 +127,98 @@ record <$K, $V> HashMap (buckets <*<$K, $V> HashMap\Bucket> Array, length usize)
     func get(key $K) <$V> Optional {
         pointer *$V = this.getPointer(key)
         return pointer ? some(*pointer) : none() ~> <$V> Optional
+    }
+
+    func remove(key $K) successful {
+        hash Hash = toHash(key)
+        bucket_index ulong = hash.raw & this.mask()
+        bucket *<$K, $V> HashMap\Bucket = this.buckets[bucket_index]
+
+        unless bucket {
+            return false
+        }
+
+        if bucket.pair.first == key {
+            this.buckets[bucket_index] = bucket.next
+            del(bucket)
+            this.length--
+            return true
+        }
+
+        prev *<$K, $V> HashMap\Bucket = bucket
+        bucket = bucket.next
+
+        while bucket {
+            if bucket.pair.first == key {
+                prev.next = bucket.next
+                del(bucket)
+                this.length--
+                return true
+            }
+
+            prev = bucket
+            bucket = bucket.next
+        }
+
+        return false
+    }
+
+    func iterator() <$K, $V> HashMap\Iterator {
+        return HashMap\Iterator(this)
+    }
+}
+
+struct <$K, $V> HashMap\Iterator (hashmap *<$K, $V> HashMap, index usize, has_anchor bool, bucket *<$K, $V> HashMap\Bucket) {
+    constructor(hashmap *<$K, $V> HashMap) {
+        this.hashmap = hashmap
+        this.index = 0
+        this.has_anchor = false
+        this.bucket = null
+    }
+
+    func next() *<$K, $V> Pair {
+        unless this.hashmap, return null
+
+        if !this.has_anchor {
+            // Return first pair, and remember it as last processed
+            return this.internal\tryAnchor()
+        }
+
+        // If out of buckets, return null
+        if this.bucket == null {
+            return null
+        }
+        
+        // Otherwise, find the next bucket
+        bucket *<$K, $V> HashMap\Bucket = this.bucket.next
+
+        while bucket == null {
+            this.index++
+
+            if this.index >= this.hashmap.buckets.length { 
+                // Out of buckets
+                this.bucket = null
+                return null
+            }
+
+            bucket = this.hashmap.buckets[this.index]
+        }
+
+        this.bucket = bucket
+        return &this.bucket.pair
+    }
+
+    func internal\tryAnchor() *<$K, $V> Pair {
+        each *<$K, $V> HashMap\Bucket in this.hashmap.buckets {
+            if it != null {
+                this.index = idx
+                this.bucket = it
+                this.has_anchor = true
+                return &it.pair
+            }
+        }
+
+        return null
     }
 }
 
