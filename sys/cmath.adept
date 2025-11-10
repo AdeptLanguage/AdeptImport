@@ -1,9 +1,7 @@
 
 #if __linux__
     pragma libm
-#end
-
-#if __unix__
+#elif __unix__ && !__macos__
     // Catch all for Unix-like operating systems
     pragma libm
 #end
