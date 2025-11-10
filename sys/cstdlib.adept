@@ -9,6 +9,9 @@
 #elif __linux__
     // GNU/Linux requires RAND_MAX to be 0x7fffffffff
     RAND_MAX == 0x7fffffff
+#elif __unix__
+    // Catch all for Unix-like operating systems
+    RAND_MAX == 0x7fffffff
 #elif __wasm__
     // Regardless of whether the consumer wants to use mt19937 or Math.random for the implementation,
     // we use the common RAND_MAX value of 2^31-1
